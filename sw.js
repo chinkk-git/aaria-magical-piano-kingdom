@@ -1,9 +1,9 @@
-const CACHE='aaria-piano-v1.4.0';
+const CACHE='aaria-piano-v1.4.1';
 const ORT='./lib/onnxruntime-web@1.30.0/dist/';
 const ASSETS=[
  './','./index.html','./song-import.js','./omr-worker.js','./manifest.webmanifest',
  './icon-192.png','./icon-512.png','./icon-maskable-512.png','./apple-touch-icon.png',
- './score-1.png','./score-2.png','./score-3.png','./OMR-THIRD-PARTY-NOTICES.md','./vendor/omr-licenses/partsong-LICENSE',
+ './OMR-THIRD-PARTY-NOTICES.md','./vendor/omr-licenses/partsong-LICENSE',
  './omr/partsong_omr.wasm','./omr/partsong_omr_fused.wasm','./omr/partsong_omr_threads.wasm','./omr/partsong_omr_threads_fused.wasm',
  './omr/encoder_pool.mjs','./omr/encoder_worker.mjs','./omr/encoder_gpu.mjs','./omr/encoder_gpu_math.mjs','./omr/encoder_gpu_kernels.mjs',
  `${ORT}ort.webgpu.min.mjs`,`${ORT}ort-wasm-simd-threaded.asyncify.mjs`,`${ORT}ort-wasm-simd-threaded.asyncify.wasm`
