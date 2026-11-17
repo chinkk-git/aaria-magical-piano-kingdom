@@ -2,7 +2,7 @@
   "id":"./",
   "name":"Aaria's Magical Piano Kingdom",
   "short_name":"Aaria Piano",
-  "description":"Practise the Dalmatian Cradle Song with a magical interactive piano. The transcription remains provisional.",
+  "description":"Practise songs with a magical interactive piano, falling notes, Listen and Learn modes, and offline support.",
   "start_url":"./",
   "scope":"./",
   "display":"standalone",
