@@ -1,4 +1,4 @@
-const CACHE='aaria-piano-v1.1.2';
+const CACHE='aaria-piano-v1.2.1';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-maskable-512.png','./apple-touch-icon.png'];
 self.addEventListener('install',event=>{event.waitUntil((async()=>{const cache=await caches.open(CACHE);for(const asset of ASSETS){const url=new URL(asset,self.registration.scope);if(asset==='./'||asset==='./index.html')url.searchParams.set('release',CACHE);const response=await fetch(url,{cache:'reload'});if(!response.ok)throw new Error(`Offline asset failed: ${asset} (${response.status})`);await cache.put(asset,response)}await self.skipWaiting()})())});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('aaria-piano-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()))});
