@@ -22,3 +22,16 @@ GitHub Pages serves the app over HTTPS through a GitHub Actions deployment. The 
 
 ## Device verification
 Desktop/browser checks do not replace Android or iPhone hardware testing. Confirm touch alignment, swipe, audio timing, home-screen launch, and offline playback on target phones.
+
+## My Songs and data protection
+- **My Songs** is available from the piano screen. It combines the two bundled songs with locally saved photo-created songs and provides title search, favorites, recently played, Play, and Practice actions.
+- Existing photo-created songs in `aaria-piano-custom-songs-v1` are read without changing their song IDs or event data, then copied additively into IndexedDB. IndexedDB becomes the durable local catalogue for newly saved songs; the legacy localStorage entry is kept as a compatibility mirror where browser quota allows.
+- Identical OMR results use a content fingerprint so retries do not add another copy. A matching song already in the library is opened without replacing its title or stored notes.
+- **Back up My Songs** exports user-created songs and library marks to a JSON file. **Restore songs** validates the complete backup before adding songs; matching IDs are skipped. The backup stays on the device unless the user chooses to move it. Browser storage can still be cleared by the user, browser settings, or the operating system; keep the exported backup somewhere safe.
+
+## Piano Hero — real keyboard visual guide
+- The home experience is being rebuilt around an animated perspective note highway, a purple-and-gold castle scene, the supplied Aaria face-and-hair reference, and a large reference keyboard that follows the current musical passage.
+- Follow Along and Practice Together run a silent visual guide for Aaria’s real keyboard. Listen First plays the built-in reference tone. Each mode starts with a visible three-second countdown. The app does not use a microphone or award playing-accuracy scores.
+- Magic Zoom changes the reference keyboard window; measure navigation, loop length, and tempo are on the practice dock. The keyboard setup is optional and can remain “I’m not sure”; it explains Middle C as C4 and can record key count and lowest note when known.
+- Hand colours can be hidden. A finger number is displayed only if a song record contains a 1–5 finger value explicitly marked verified.
+- Current viewport and playback interaction changes are on the development branch only. The approved screenshot remains the design reference; full visual matching, avatar review, mobile hardware checks, and creator interruption recovery still require verification.
