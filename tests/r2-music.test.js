@@ -21,13 +21,14 @@ const generated = music.generateArrangements(source);
 assert.ok(['Basic', 'Medium', 'Advanced'].includes(estimate.level));
 assert.equal(estimate.method, 'early-rule-estimate');
 assert.ok(estimate.reasons.length > 0);
-assert.equal(generated.versions.advanced.events.length, source.events.length);
+assert.equal(generated.versions.advanced, undefined, 'a Medium estimate must not be mislabeled Advanced');
 assert.ok(generated.versions.basic.events.length < source.events.length);
 assert.ok(generated.versions.medium.events.length < source.events.length);
 assert.equal(generated.versions.basic.total, source.barLengths.length);
 assert.equal(generated.versions.medium.total, source.barLengths.length);
-assert.deepEqual(generated.unavailable, []);
+assert.deepEqual(generated.unavailable, ['advanced']);
 assert.equal(JSON.stringify(source.events), before, 'generation must preserve the original');
+const advancedScore={barLengths:[8,8],events:[]};for(let bar=1;bar<=2;bar++)for(let at=0;at<8;at++)for(const midi of [48,55,60,72,88,40])advancedScore.events.push({bar,at,dur:1,midi,hand:midi<60?'left':'right'});const advanced=music.generateArrangements(advancedScore);assert.equal(music.metrics(advancedScore).level,'Advanced');assert.equal(advanced.versions.advanced.events.length,advancedScore.events.length);
 for (const version of Object.values(generated.versions)) {
   assert.ok(version.events.every(event => event.midi >= 21 && event.midi <= 108));
   assert.ok(version.events.every(event => event.bar >= 1 && event.bar <= version.total));
