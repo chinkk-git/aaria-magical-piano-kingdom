@@ -32,7 +32,7 @@
   }
   function makeVersion(score,events,label){return{label,events:events.map(cloneEvent),total:score.barLengths.length,barLengths:score.barLengths.slice(),bpm:score.bpm||72,source:label==='Advanced'?'recognized-original':'generated-rule-based',validation:'structural-only'};}
   function generateArrangements(score){
-    validateScore(score);const groups=grouped(score),original=score.events.map(cloneEvent),versions={advanced:makeVersion(score,original,'Advanced')};
+    validateScore(score);const groups=grouped(score),original=score.events.map(cloneEvent),versions={};const estimate=metrics(score);if(estimate.level==='Advanced')versions.advanced=makeVersion(score,original,'Advanced');
     const basic=[];
     for(let bar=1;bar<=score.barLengths.length;bar++){
       const inBar=groups.filter(g=>g.bar===bar);const byBeat=new Map();
