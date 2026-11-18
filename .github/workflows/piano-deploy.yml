@@ -39,7 +39,9 @@ jobs:
           cp index.html song-import.js my-songs.js sw.js hero-scene.svg manifest.webmanifest icon-192.png icon-512.png icon-maskable-512.png apple-touch-icon.png _site/
           mkdir -p _site/assets/piano-hero-v2
           cp assets/aari-avatar-reference.png assets/piano-hero-approved-art.png _site/assets/
-          cp assets/piano-hero-v2/*.png _site/assets/piano-hero-v2/
+          for asset in aaria_puppy kingdom_title castle_waterfall magical_moon music_notes flowers home_button settings_button zoom_button; do
+            cp "assets/piano-hero-v2/${asset}.png" _site/assets/piano-hero-v2/
+          done
           cp piano-hero-v2.css _site/
           cp omr-source/omr-worker.js _site/
           cp -R omr-source/omr/. _site/omr/
