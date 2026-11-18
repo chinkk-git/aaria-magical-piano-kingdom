@@ -20,11 +20,12 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check r2-music.js
+          node --check r2-image.js
           node --check song-import.js
           node --check my-songs.js
           node --check tests/r2-music.test.js
       - name: Test difficulty and arrangement rules
-        run: node --test tests/r2-music.test.js
+        run: node --test tests/r2-music.test.js tests/r2-image.test.js
       - name: Test existing piano geometry
         run: node tests/piano-geometry.test.js
       - name: Validate supplied SVG assets
