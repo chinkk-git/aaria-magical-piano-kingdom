@@ -1,0 +1,72 @@
+/* Approved Piano Hero v2 art + two presentation shells around one shared player. */
+:root{--hero-gold:#ffe18f;--hero-purple:#2c0b5c;--hero-lilac:#bf7cff}
+body{background-color:#13052f;background-image:radial-gradient(ellipse at 50% 0,#53227c 0,#23104d 42%,#100629 100%)}
+main{background:linear-gradient(180deg,#10062940,#10062922 42%,#10062955)}
+.kingdom-brand{width:clamp(205px,27vw,360px);height:clamp(52px,8vh,82px);font-size:0;color:transparent;text-shadow:none;background:url('./assets/piano-hero-v2/kingdom_title.png') center/contain no-repeat;flex:none}
+.hero-stage{grid-template-columns:minmax(110px,15%) minmax(0,1fr);background-color:#19073d;background-image:url('./assets/piano-hero-v2/music_notes.png'),url('./assets/piano-hero-v2/flowers.png'),url('./assets/piano-hero-v2/castle_waterfall.png'),url('./assets/piano-hero-v2/magical_moon.png'),linear-gradient(110deg,#1a073dcc,#32115c66 54%,#12072c99);background-repeat:no-repeat;background-position:right 1% 26%,right 0 bottom 2%,right 11% top 0,right top 0,center;background-size:18% auto,39% auto,31% auto,23% auto,cover}
+.hero-stage::before{background:radial-gradient(ellipse at 53% 60%,#b847ff18,transparent 56%),linear-gradient(180deg,#150a3520,transparent 45%,#0c092b42)}
+.aria-guide .avatar-frame{width:min(100%,230px);height:auto;aspect-ratio:500/416;min-height:0;border:0;border-radius:0;overflow:visible;background:transparent;box-shadow:none}
+.aria-guide .aria-avatar{position:absolute;inset:0;background-image:url('./assets/piano-hero-v2/aaria_puppy.png');background-size:contain;background-position:center;background-repeat:no-repeat;filter:drop-shadow(0 5px 12px #14042088);mask-image:none}
+.aria-guide .avatar-crown{display:none}
+.aria-guide .aria-message{max-width:190px;border-color:#ffe19a99;background:#2b155cdd;font-size:clamp(10px,1vw,13px)}
+.highway-panel{grid-column:2;background-image:none}
+.highway-head{background:#24104ff5}
+#handStatus{display:none}
+.stage-legend{background:#180b3ff2}
+#openMySongs{width:58px;height:62px;min-width:58px;padding:0;border:0;background:transparent url('./assets/piano-hero-v2/home_button.png') center/contain no-repeat;color:transparent;box-shadow:none}
+#setupKeyboard{width:54px;height:62px;min-width:54px;padding:0;border:0;background:transparent url('./assets/piano-hero-v2/settings_button.png') center/contain no-repeat;color:transparent;box-shadow:none}
+#zoomKeys{width:68px;height:52px;min-height:44px;padding:0;border:0;background:transparent url('./assets/piano-hero-v2/zoom_button.png') center/contain no-repeat;color:transparent;font-size:0;box-shadow:none}
+#zoomKeys:focus-visible,#openMySongs:focus-visible,#setupKeyboard:focus-visible{outline:3px solid #fff1bd;outline-offset:2px}
+.keyboard-panel{box-shadow:0 -4px 24px #c360ff3d,0 8px 0 #27134e}
+.keyboard-panel .keys{filter:drop-shadow(0 7px 7px #09031999)}
+.keyboard-panel .white{border-color:#70438f;background:linear-gradient(#fffefa 0%,#f8eaff 72%,#d3b3ed 100%);box-shadow:inset 0 -5px #aa79ca,0 5px 0 #60367c}
+.keyboard-panel .black{background:linear-gradient(110deg,#65536f,#100a1c 54%,#453052);box-shadow:0 5px 0 #090510}
+.keyboard-panel .white.guide-lit,.keyboard-panel .black.guide-lit{filter:brightness(1.08)}
+.playback-mode-controls{display:flex;align-items:center;justify-content:center;gap:7px}
+.playback-mode-controls .mode-choice{min-height:42px;min-width:104px;padding:8px 14px;border:1px solid #f6d48d;border-radius:14px;background:linear-gradient(130deg,#7c3ac4,#382077);color:#fff;font-size:14px;font-weight:850;box-shadow:0 4px 14px #0b0628}
+#primaryModeButton{background:linear-gradient(130deg,#ffe58d,#f8b94e);color:#32124c;border-color:#fff4bd}
+#secondaryModeButton{background:linear-gradient(130deg,#7750aa,#413078)}
+#setupKeyboardInline{display:none!important}
+#countdown:not([hidden]){position:fixed;inset:20% 10%;z-index:50;border:1px solid #ffe18f;border-radius:24px;background:#160c49e8;backdrop-filter:blur(5px)}
+.piano-world-setting{padding:12px;border:1px solid #f5d58b99;border-radius:14px;background:#ffffff12}
+.piano-world-setting select{display:block;width:100%;margin-top:7px;min-height:46px}
+.keyboard-settings-details{display:grid;gap:13px;padding:12px;border-radius:14px;background:#ffffff0a}
+.keyboard-settings-details summary{color:#ffe4a4;font-weight:800;cursor:pointer}
+.classic-song-title{display:none}
+
+/* Classic keeps its own familiar screen and controls; only the shell changes. */
+html[data-piano-layout="classic"] body{background:#15112c; background-image:radial-gradient(ellipse at 50% 0,#4c2b85 0,#211445 34%,#0e0e2b 80%)}
+main[data-piano-layout="classic"]{height:100dvh;max-width:900px;display:grid;grid-template-rows:auto auto minmax(150px,1fr) auto;gap:7px;padding:max(8px,env(safe-area-inset-top)) 10px max(8px,env(safe-area-inset-bottom));overflow:hidden;background:transparent}
+main[data-piano-layout="classic"] .compact-title{order:1;min-height:42px;justify-content:flex-start;gap:8px;padding:3px 4px;color:#fff0ff}
+main[data-piano-layout="classic"] .kingdom-brand{display:none}
+main[data-piano-layout="classic"] .classic-song-title{display:block;order:-1;flex:1;min-width:85px;color:#ffe8aa;font-weight:850;font-size:clamp(14px,2vw,20px);text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
+main[data-piano-layout="classic"] .top-favorite{margin-left:0}
+main[data-piano-layout="classic"] .hero-stage,main[data-piano-layout="classic"] .keyboard-panel,main[data-piano-layout="classic"] .highway-panel{display:contents}
+main[data-piano-layout="classic"] .aria-guide,main[data-piano-layout="classic"] .highway-head,main[data-piano-layout="classic"] .stage-legend,main[data-piano-layout="classic"] .keyboard-heading,main[data-piano-layout="classic"] .physical-range{display:none!important}
+main[data-piano-layout="classic"] #player{order:2;display:flex;flex-direction:column;gap:5px;margin:0;padding:9px 11px;border:1px solid #dfbaff42;border-radius:17px;background:linear-gradient(140deg,#ffffff18,#ffffff07);box-shadow:0 8px 24px #0004}
+main[data-piano-layout="classic"] .playback-mode-controls{order:1;justify-content:flex-start;gap:6px}
+main[data-piano-layout="classic"] .playback-mode-controls .mode-choice{min-width:84px;min-height:38px;padding:7px 12px;border-radius:12px;font-size:13px}
+main[data-piano-layout="classic"] #primaryModeButton{background:linear-gradient(130deg,#9d5cf0,#6e6bff);color:#fff;border-color:#ffffff44}
+main[data-piano-layout="classic"] #secondaryModeButton{background:#ffffff19;color:#fff;border-color:#ffffff44}
+main[data-piano-layout="classic"] .extras{order:3;justify-content:flex-start;gap:12px}
+main[data-piano-layout="classic"] #status{order:4;min-height:18px;text-align:left;color:#ffe3b4}
+main[data-piano-layout="classic"] .progress{order:5}
+main[data-piano-layout="classic"] #position{order:6;text-align:left}
+main[data-piano-layout="classic"] #rain{order:3;width:100%;height:100%;min-height:0!important;max-height:none!important;border:2px solid #dca8ff5c!important;border-radius:12px;background:#100c25!important;box-shadow:inset 0 0 24px #b84cff2b,0 0 28px #6c4ac844!important;touch-action:none}
+main[data-piano-layout="classic"] #keys{order:4;height:clamp(72px,14vh,115px);margin:0;filter:none}
+main[data-piano-layout="classic"] #keys .white{border-radius:0 0 9px 9px;font-size:clamp(8px,1.2vw,12px);background:linear-gradient(#fff,#c9d4e6);border:1px solid #444;box-shadow:none;color:#333}
+main[data-piano-layout="classic"] #keys .black{border-radius:0 0 8px 8px;background:linear-gradient(#333,#080808);box-shadow:none}
+main[data-piano-layout="classic"] #keys .lit,main[data-piano-layout="classic"] #keys .guide-lit{background:#f5bc50!important;color:#111!important;box-shadow:0 0 16px #ffe173!important}
+main[data-piano-layout="classic"] #restart,main[data-piano-layout="classic"] #prev,main[data-piano-layout="classic"] #next{min-height:38px}
+main[data-piano-layout="classic"] #countdown:not([hidden]){inset:20% 8%;min-height:200px}
+@media(max-width:900px) and (orientation:landscape){.kingdom-brand{width:clamp(175px,24vw,270px);height:clamp(45px,8vh,62px)}.aria-guide .avatar-frame{width:min(100%,180px)}main[data-piano-layout="hero"] .hero-stage{grid-template-columns:minmax(90px,13%) minmax(0,1fr)}main[data-piano-layout="hero"] .hero-stage{gap:5px;padding:5px}}
+@media(orientation:portrait){.kingdom-brand{width:min(58vw,280px);height:48px;background-position:center}main[data-piano-layout="hero"] .hero-stage{grid-template-columns:minmax(64px,20%) minmax(0,1fr);gap:4px;padding:4px}.aria-guide .avatar-frame{width:min(100%,155px)}#openMySongs,#setupKeyboard{width:43px;height:48px;min-width:43px}#zoomKeys{width:56px;height:42px}}
+@media(max-width:540px){.kingdom-brand{font-size:0;width:100%;height:38px;background-size:auto 38px}.aria-guide .avatar-frame{width:100%;min-height:0}.aria-guide .aria-message{display:none}main[data-piano-layout="hero"] .hero-stage{grid-template-columns:minmax(54px,18%) minmax(0,1fr);gap:2px;padding:3px}main[data-piano-layout="hero"] #player{padding:5px 6px}main[data-piano-layout="hero"] #restart,main[data-piano-layout="hero"] #prev,main[data-piano-layout="hero"] #next{display:none!important}main[data-piano-layout="hero"] .playback-mode-controls{gap:4px}main[data-piano-layout="hero"] .playback-mode-controls .mode-choice{min-width:88px;min-height:36px;padding:5px 8px;font-size:12px}main[data-piano-layout="classic"]{padding:5px;gap:4px}main[data-piano-layout="classic"] .panel{padding:6px}main[data-piano-layout="classic"] .controls button{padding:7px 8px}.classic-song-title{font-size:13px!important}}
+@media(max-height:600px) and (orientation:landscape){main[data-piano-layout="classic"]{grid-template-rows:auto auto minmax(100px,1fr) auto;padding:4px 8px;gap:4px}main[data-piano-layout="classic"] #keys{height:clamp(48px,14vh,72px)}main[data-piano-layout="hero"] .hero-stage{grid-template-columns:minmax(75px,12%) minmax(0,1fr)}}
+@media(prefers-reduced-motion:reduce){.hero-stage,.aria-guide .avatar-frame{animation:none!important}}
+/* Unified Magical Play Along keeps only its three primary playback actions. */
+main[data-piano-layout="hero"] #restart,
+main[data-piano-layout="hero"] #prev,
+main[data-piano-layout="hero"] #next{display:none!important}
+main[data-piano-layout="hero"] .hero-stage::before{pointer-events:none}
+main[data-piano-layout="classic"] .hero-stage::before{display:none}

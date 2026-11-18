@@ -22,3 +22,19 @@ GitHub Pages serves the app over HTTPS through a GitHub Actions deployment. The 
 
 ## Device verification
 Desktop/browser checks do not replace Android or iPhone hardware testing. Confirm touch alignment, swipe, audio timing, home-screen launch, and offline playback on target phones.
+
+## My Songs and data protection
+- **My Songs** is available from the piano screen. It combines the two bundled songs with locally saved photo-created songs and provides title search, favorites, recently played, Play, and Practice actions.
+- Existing photo-created songs in `aaria-piano-custom-songs-v1` are read without changing their song IDs or event data, then copied additively into IndexedDB. IndexedDB becomes the durable local catalogue for newly saved songs; the legacy localStorage entry is kept as a compatibility mirror where browser quota allows.
+- Identical OMR results use a content fingerprint so retries do not add another copy. A matching song already in the library is opened without replacing its title or stored notes.
+- **Back up My Songs** exports user-created songs and library marks to a JSON file. **Restore songs** validates the complete backup before adding songs; matching IDs are skipped. The backup stays on the device unless the user chooses to move it. Browser storage can still be cleared by the user, browser settings, or the operating system; keep the exported backup somewhere safe.
+
+## Piano World layouts
+- **Classic Piano** is the default when “aaria-piano-layout-v1” has no saved value. It retains the production-style Play/Learn controls and shared song transport.
+- **Magical Piano Hero** is optional in Settings → Choose Your Piano World. Its single Play Along action counts down, then scrolls the live note highway for the player’s physical piano. Listen is a separate audio demonstration with synchronized notes and reference-key highlights.
+- Both layouts use the same song selection, playback state, custom-song storage and reference-key DOM. Layout choice is stored locally; changing layouts does not intentionally reset the current song position.
+- The app does not listen to or score a player’s acoustic/electronic piano. The visual guide remains useful without USB, MIDI or microphone input.
+- Tempo, pause/resume and section loop controls remain available. Keyboard range setup and Magic Zoom are optional.
+
+## Approved Piano Hero component bundle v2
+The 21 owner-approved transparent PNG components are retained under `assets/piano-hero-v2/`. The optional Magical Piano Hero uses the approved Aaria-and-puppy art, title, castle, moon, music-note, flower, home, settings and zoom artwork. It has one Play Along action and a secondary Listen action; both layouts share the song library, playback engine and reference keyboard. Classic Piano is the default when no saved preference exists. The live highway, falling notes, keyboard labels and synchronized key highlights are rendered by the app canvas and DOM keyboard. Components with baked sample notes or duplicate controls remain in the source bundle but are excluded from the rendered interface and Pages asset copy.
