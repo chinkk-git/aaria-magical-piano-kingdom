@@ -30,16 +30,46 @@ const xml=`<?xml version="1.0" encoding="UTF-8"?>
 <note><pitch><step>G</step><octave>4</octave></pitch><duration>1</duration><type>quarter</type></note><barline location="right"><bar-style>light-heavy</bar-style></barline></measure></part></score-partwise>`;
 const expected=[67,69,71,72,74,72,71,67];
 function analyse(result){return result.events||[]}
-async function recognize(page,b64){
- const pngBytes=Array.from(Buffer.from(b64,'base64'));
- return page.evaluate(async encodedBytes=>new Promise((resolve,reject)=>{
-  const worker=new Worker('./omr-worker.js',{type:'module'});let id=0;const pending=new Map();let readyResolve,readyReject;
-  const ready=new Promise((r,j)=>{readyResolve=r;readyReject=j});const timer=setTimeout(()=>{readyReject(Error('OMR engine did not initialize within 10 minutes'))},600000);
-  worker.onmessage=({data})=>{if(data.type==='progress')return;if(data.type==='ready'){clearTimeout(timer);readyResolve();return}if(data.type==='error'&&data.id==null){readyReject(Error(data.msg||'OMR init failed'));return}if(data.type==='result'||data.type==='error'){const t=pending.get(data.id);if(!t)return;pending.delete(data.id);data.type==='result'?t.resolve(data):t.reject(Error(data.msg||'OMR step failed'))}};
-  worker.onerror=e=>readyReject(Error(e.message||'OMR worker error'));worker.postMessage({type:'init',noGpu:true,ios:false});
-  const ask=(data,transfer=[])=>new Promise((r,j)=>{const n=++id,timer=setTimeout(()=>{pending.delete(n);j(Error('OMR '+data.type+' timed out after 10 minutes'))},600000);pending.set(n,{resolve:v=>{clearTimeout(timer);r(v)},reject:e=>{clearTimeout(timer);j(e)}});worker.postMessage({...data,id:n},transfer)});
-  (async()=>{try{await ready;const bytes=Uint8Array.from(encodedBytes);const layoutBytes=bytes.slice();const layout=await ask({type:'layout',image:layoutBytes.buffer},[layoutBytes.buffer]);const readBytes=bytes.slice();const read=await ask({type:'recognise',image:readBytes.buffer,classes:layout.classes},[readBytes.buffer]);worker.terminate();resolve(read.xml)}catch(e){worker.terminate();reject(e)}})()
- }))
+async function recognize(page,b64,phase='online'){
+ const encodedBytes=Array.from(Buffer.from(b64,'base64'));
+ return page.evaluate(({encodedBytes,phase})=>new Promise((resolve,reject)=>{
+  const started=performance.now();let stage='initialize',initMs=0,layoutMs=0,recognitionMs=0;
+  const worker=new Worker('./omr-worker.js',{type:'module'});let id=0;const pending=new Map();
+  let readyResolve,readyReject;
+  const ready=new Promise((r,j)=>{readyResolve=r;readyReject=j});
+  const initTimer=setTimeout(()=>readyReject(Error('worker init timed out after 10 minutes')),600000);
+  worker.onmessage=({data})=>{
+   if(data.type==='progress')return;
+   if(data.type==='ready'){clearTimeout(initTimer);initMs=performance.now()-started;readyResolve();return}
+   if(data.type==='error'&&data.id==null){readyReject(Error(data.msg||'worker init failed'));return}
+   if(data.type==='result'||data.type==='error'){
+    const task=pending.get(data.id);if(!task)return;pending.delete(data.id);
+    data.type==='result'?task.resolve(data):task.reject(Error(data.msg||'OMR step failed'));
+   }
+  };
+  worker.onerror=e=>readyReject(Error(e.message||'OMR worker error'));
+  worker.postMessage({type:'init',noGpu:true,ios:false});
+  const ask=(data,transfer=[])=>new Promise((resolve,reject)=>{
+   const n=++id,t=performance.now();
+   const timer=setTimeout(()=>{pending.delete(n);reject(Error(data.type+' timed out after 10 minutes'))},600000);
+   pending.set(n,{resolve:value=>{clearTimeout(timer);resolve({value,ms:performance.now()-t})},reject:error=>{clearTimeout(timer);reject(error)}});
+   worker.postMessage({...data,id:n},transfer);
+  });
+  (async()=>{
+   try{
+    await ready;
+    stage='layout';const bytes=Uint8Array.from(encodedBytes);
+    const layoutBytes=bytes.slice(),layoutResult=await ask({type:'layout',image:layoutBytes.buffer},[layoutBytes.buffer]);
+    layoutMs=layoutResult.ms;
+    stage='recognise';const readBytes=bytes.slice();
+    const readResult=await ask({type:'recognise',image:readBytes.buffer,classes:layoutResult.value.classes},[readBytes.buffer]);
+    recognitionMs=readResult.ms;worker.terminate();
+    resolve({xml:readResult.value.xml,timing:{phase,initializationMs:+initMs.toFixed(1),layoutMs:+layoutMs.toFixed(1),recognitionMs:+recognitionMs.toFixed(1),totalMs:+(performance.now()-started).toFixed(1)}});
+   }catch(error){
+    worker.terminate();reject(Error(`OMR ${phase} failed during ${stage} after ${Math.round(performance.now()-started)} ms: ${error.message||error}`));
+   }
+  })();
+ }),{encodedBytes,phase});
 }
 async function summarize(page,scoreXml){
  return page.evaluate(source=>{
@@ -56,8 +86,11 @@ async function summarize(page,scoreXml){
  const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
  const context=await browser.newContext({viewport:{width:1600,height:1200},serviceWorkers:'allow'});
  const page=await context.newPage();
+ const origin=`http://127.0.0.1:${server.address().port}`;
+ let offlinePhase=false;const externalRequests=[];
+ page.on('request',request=>{if(offlinePhase){try{if(new URL(request.url()).origin!==origin)externalRequests.push(request.url())}catch{}}});
  try{
-  await page.goto(`http://127.0.0.1:${server.address().port}/index.html`,{waitUntil:'networkidle'});
+  await page.goto(`${origin}/index.html`,{waitUntil:'networkidle'});
   await page.waitForFunction(()=>window.AariaR2Installer?.state==='ready',null,{timeout:600000});
   await page.evaluate(async()=>{await navigator.serviceWorker.ready;for(let i=0;i<100&&!navigator.serviceWorker.controller;i++)await new Promise(r=>setTimeout(r,100));if(!navigator.serviceWorker.controller)throw Error('PWA service worker did not take control')});
   const fixtureSvg='<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="360" viewBox="0 0 1500 360"><rect width="1500" height="360" fill="white"/><g stroke="#111" stroke-width="3"><path d="M80 160H1400"/><path d="M80 184H1400"/><path d="M80 208H1400"/><path d="M80 232H1400"/><path d="M80 256H1400"/><path d="M740 160V256"/><path d="M1390 160V256"/></g><text x="95" y="246" font-family="serif" font-size="92">𝄞</text><g fill="#111" stroke="#111" stroke-width="5">'+[[260,232],[390,220],[520,208],[650,196],[850,184],[980,196],[1110,208],[1240,232]].map(([x,y])=>'<ellipse cx="'+x+'" cy="'+y+'" rx="13" ry="9" transform="rotate(-18 '+x+' '+y+')"/><path d="M'+(x+11)+' '+(y-2)+'V'+(y-76)+'"/>').join('')+'</g></svg>';
@@ -65,15 +98,23 @@ async function summarize(page,scoreXml){
   const b64=Buffer.from(pngDataUrl.slice(pngDataUrl.indexOf(',')+1),'base64').toString('base64');
   assert.match(b64,/^[A-Za-z0-9+/]+={0,2}$/,'rendered score fixture is PNG base64');
   assert.equal(Buffer.from(b64,'base64').subarray(0,8).toString('hex'),'89504e470d0a1a0a','rendered score fixture has a PNG signature');
-  const onlineXml=await recognize(page,b64);const online=await summarize(page,onlineXml);
+  const onlineResult=await recognize(page,b64,'online');const online=await summarize(page,onlineResult.xml);
   const match=(events)=>events.filter((e,i)=>e.midi===expected[i]&&e.bar===Math.floor(i/4)+1&&Math.abs(e.at-(i%4))<=0.25&&Math.abs(e.dur-1)<=0.25).length;
-  const hits=match(online);console.log('OMR GROUND TRUTH ONLINE',JSON.stringify({expected,observed:online,hits,total:expected.length,xml:onlineXml.slice(0,500)}));
+  const hits=match(online);console.log('OMR ENGINE TIMING ONLINE',JSON.stringify(onlineResult.timing));
+  console.log('OMR GROUND TRUTH ONLINE',JSON.stringify({expected,observed:online,hits,total:expected.length,xml:onlineResult.xml.slice(0,500)}));
   assert.ok(online.length>=6&&hits>=6,`online OMR ground truth below 6/8 exact pitch+onset+duration; observed ${online.length}, matched ${hits}/8`);
-  await context.setOffline(true);
+  const playable=await page.evaluate(events=>{const score={events:events.map(e=>({...e,hand:'right',part:'piano-rh'})),barLengths:[4,4],bpm:72};const valid=window.AariaR2Music.validateScore(score);const difficulty=window.AariaR2Music.metrics(score);const arrangements=window.AariaR2Music.generateArrangements(score,{scoreVerified:true});return{valid,difficulty,arrangementNames:Object.keys(arrangements.versions),basicEvents:arrangements.versions.basic?.events||null}},online);
+  assert.equal(playable.valid,true);assert.ok(playable.arrangementNames.includes('basic'),'recognized notes convert to a playable Basic arrangement');
+  console.log('OMR PLAYABLE SCORE CONVERSION',JSON.stringify(playable));
+  offlinePhase=true;await context.setOffline(true);
   await page.reload({waitUntil:'domcontentloaded'});
-  const offlineXml=await recognize(page,b64);const offline=await summarize(page,offlineXml);const offlineHits=match(offline);
-  console.log('OMR GROUND TRUTH OFFLINE',JSON.stringify({observed:offline,hits:offlineHits,total:expected.length}));
+  await page.waitForFunction(()=>window.AariaR2Installer?.state==='ready',null,{timeout:600000});
+  const offlineResult=await recognize(page,b64,'offline');const offline=await summarize(page,offlineResult.xml);const offlineHits=match(offline);
+  console.log('OMR ENGINE TIMING OFFLINE',JSON.stringify(offlineResult.timing));
+  console.log('OMR GROUND TRUTH OFFLINE',JSON.stringify({expected,observed:offline,hits:offlineHits,total:expected.length}));
   assert.ok(offline.length>=6&&offlineHits>=6,`offline OMR ground truth below 6/8 exact pitch+onset+duration; observed ${offline.length}, matched ${offlineHits}/8`);
+  assert.deepEqual(externalRequests,[],'offline recognition made no external requests');
+  console.log('OFFLINE EXTERNAL REQUESTS',JSON.stringify(externalRequests));
   const caches=await page.evaluate(async()=>({serviceWorkerControlled:!!navigator.serviceWorker.controller,modelCache:(await caches.keys()).filter(k=>k==='partscanner-models-v1')}));
   assert.equal(caches.serviceWorkerControlled,true);assert.deepEqual(caches.modelCache,['partscanner-models-v1']);
   console.log('Actual pinned Partsong OMR passed online and offline against a rendered two-measure MusicXML ground truth. This is a single-fixture smoke, not a general accuracy claim.');
