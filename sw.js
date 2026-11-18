@@ -1,7 +1,7 @@
-const CACHE='aaria-piano-v1.9.0';
+const CACHE='aaria-piano-v1.10.0';
 const ORT='./lib/onnxruntime-web@1.30.0/dist/';
 const ASSETS=[
- './','./index.html','./piano-hero-v2.css?v=aaria-piano-v1.9.0','./song-import.js?v=aaria-piano-v1.6.1','./my-songs.js?v=aaria-piano-v1.6.1','./hero-scene.svg','./assets/aari-avatar-reference.png','./assets/piano-hero-approved-art.png','./assets/piano-hero-v2/aaria_puppy.png','./assets/piano-hero-v2/kingdom_title.png','./assets/piano-hero-v2/castle_waterfall.png','./assets/piano-hero-v2/magical_moon.png','./assets/piano-hero-v2/music_notes.png','./assets/piano-hero-v2/flowers.png','./assets/piano-hero-v2/home_button.png','./assets/piano-hero-v2/settings_button.png','./assets/piano-hero-v2/zoom_button.png','./omr-worker.js','./manifest.webmanifest',
+ './','./index.html','./piano-hero-v2.css?v=aaria-piano-v1.10.0','./song-import.js?v=aaria-piano-v1.6.1','./my-songs.js?v=aaria-piano-v1.6.1','./hero-scene.svg','./assets/aari-avatar-reference.png','./assets/piano-hero-approved-art.png','./assets/piano-hero-v2/aaria_puppy.png','./assets/piano-hero-v2/kingdom_title.png','./assets/piano-hero-v2/castle_waterfall.png','./assets/piano-hero-v2/magical_moon.png','./assets/piano-hero-v2/music_notes.png','./assets/piano-hero-v2/flowers.png','./assets/piano-hero-v2/home_button.png','./assets/piano-hero-v2/settings_button.png','./assets/piano-hero-v2/zoom_button.png','./omr-worker.js','./manifest.webmanifest',
  './icon-192.png','./icon-512.png','./icon-maskable-512.png','./apple-touch-icon.png',
  './OMR-THIRD-PARTY-NOTICES.md','./vendor/omr-licenses/partsong-LICENSE',
  './omr/partsong_omr.wasm','./omr/partsong_omr_fused.wasm','./omr/partsong_omr_threads.wasm','./omr/partsong_omr_threads_fused.wasm',
