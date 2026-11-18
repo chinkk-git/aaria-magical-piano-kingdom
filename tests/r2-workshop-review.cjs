@@ -29,6 +29,7 @@ const workerStub=`let requests=0;const xml=${JSON.stringify(xml)};self.onmessage
  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
   await page.route('**/omr-worker.js',route=>route.fulfill({status:200,contentType:'text/javascript',body:workerStub}));
+  await page.route('**/r2-install.js*',route=>route.fulfill({status:200,contentType:'text/javascript',body:"(()=>{const g=document.getElementById('release2InstallGate'),a=document.getElementById('pianoApp');if(g){g.hidden=true;g.setAttribute('aria-busy','false')}if(a){a.inert=false;a.removeAttribute('aria-hidden')}window.AariaR2Installer={state:'ready'}})()"}));
   await page.goto(`http://127.0.0.1:${server.address().port}/index.html`,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.PianoKingdomLibrary?.saveSong);
   await page.locator('#openMySongs').click();await page.locator('#makeNewSong').click();
