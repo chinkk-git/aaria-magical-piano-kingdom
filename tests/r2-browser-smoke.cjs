@@ -27,8 +27,7 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   assert.equal(await dlg.evaluate(el=>el.open),false,'legacy saved song migrated and plays in this visit');
   await page.locator('#openMySongs').click();
   const builtIn=page.locator('.library-card').filter({hasText:'Cradle Song'});await builtIn.waitFor();
-  console.log('BUILTIN CARD',JSON.stringify({text:await builtIn.innerText(),id:await builtIn.locator('[data-action="play"]').getAttribute('data-id')}));
-  await builtIn.getByRole('button',{name:'▶ Play'}).click();console.log('BUILT-IN RESULT',JSON.stringify(await page.evaluate(()=>({value:document.querySelector('#songSelect')?.value,options:[...document.querySelector('#songSelect')?.options||[]].map(x=>[x.value,x.textContent]),status:document.querySelector('#status')?.textContent,active:document.querySelector('#songTitle')?.textContent,cradle:window.PianoKingdomLibrary.songs.cradle?.title}))));await page.waitForFunction(()=>document.querySelector('#songSelect')?.value==='cradle');
+  await builtIn.getByRole('button',{name:'▶ Play'}).click();await page.waitForFunction(()=>document.querySelector('#songSelect')?.value==='cradle');
   assert.equal(await dlg.evaluate(el=>el.open),false,'built-in song selection closes the Library');
   await page.locator('#openMySongs').click();
   const card=page.locator('.library-card').filter({hasText:'Release 2 Browser Check'});await card.waitFor();
