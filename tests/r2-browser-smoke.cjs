@@ -10,6 +10,7 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
  const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block',reducedMotion:'reduce'});
+ await context.addInitScript(()=>localStorage.setItem('aaria-piano-custom-songs-v1',JSON.stringify([{id:'custom-legacy-preserved',title:'Legacy Saved Song',events:[{bar:1,at:0,dur:2,midi:60,hand:'right'}],total:1,barLengths:[8],bpm:80,imported:true}])));
  const page=await context.newPage(),pageErrors=[];page.on('pageerror',e=>pageErrors.push(e.message));
  try{
   await page.route('**/omr-worker.js',route=>route.fulfill({status:200,contentType:'text/javascript',body:'/* test worker intentionally waits for cancellation */'}));
@@ -17,10 +18,15 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   await page.waitForFunction(()=>window.PianoKingdomLibrary?.saveSong);
   const appReady=await page.evaluate(()=>({library:!!window.PianoKingdomLibrary,omr:!!window.AariaR2Music,quality:!!window.AariaR2Image}));
   assert.deepEqual(appReady,{library:true,omr:true,quality:true});
+  await page.waitForFunction(()=>window.PianoKingdomLibrary.songs['custom-legacy-preserved']);
   await page.evaluate(async()=>{const events=[];for(let beat=0;beat<4;beat++){events.push({bar:1,at:beat*2,dur:2,midi:60+beat*2,hand:'right',part:'piano-rh'},{bar:1,at:beat*2,dur:2,midi:48+beat*2,hand:'left',part:'piano-lh'},{bar:1,at:beat*2,dur:2,midi:55+beat*2,hand:'left',part:'piano-lh'})}const score={events,total:1,barLengths:[8],bpm:90};const generated=window.AariaR2Music.generateArrangements(score,{scoreVerified:true});const song={id:'custom-r2-browser-smoke',title:'Release 2 Browser Check',...score,imported:true,difficulty:window.AariaR2Music.metrics(score),arrangements:generated.versions};await window.PianoKingdomLibrary.saveSong(song);window.PianoKingdomLibrary.addSong(song,{select:false})});
   await page.locator('#openMySongs').click();
   const dlg=page.locator('#mySongsDialog');await dlg.waitFor({state:'visible'});
-  const builtIn=page.locator('.library-card').filter({hasText:'Dalmatian Cradle Song'});await builtIn.waitFor();
+  const legacy=page.locator('.library-card').filter({hasText:'Legacy Saved Song'});await legacy.waitFor();
+  await legacy.getByRole('button',{name:'▶ Play'}).click();await page.waitForFunction(()=>document.querySelector('#songSelect')?.value==='custom-legacy-preserved');
+  assert.equal(await dlg.evaluate(el=>el.open),false,'legacy saved song migrated and plays in this visit');
+  await page.locator('#openMySongs').click();
+  const builtIn=page.locator('.library-card').filter({hasText:'Cradle Song'});await builtIn.waitFor();
   await builtIn.getByRole('button',{name:'▶ Play'}).click();await page.waitForFunction(()=>document.querySelector('#songSelect')?.value==='cradle');
   assert.equal(await dlg.evaluate(el=>el.open),false,'built-in song selection closes the Library');
   await page.locator('#openMySongs').click();
