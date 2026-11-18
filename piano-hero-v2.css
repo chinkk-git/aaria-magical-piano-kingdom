@@ -187,6 +187,6 @@ main[data-piano-layout="hero"] .aria-guide{display:none!important}
 main[data-piano-layout="hero"] #keys.range-shift{opacity:.22;transform:scaleY(.96)}
 
 /* v1.12 Android portrait fix: the legacy inline .rain height:auto!important
-   left the canvas at its intrinsic 2:1 height on narrow screens. Pin its bottom
-   to the same keybed boundary used by the absolute keyboard. */
-main[data-piano-layout="hero"] #rain{bottom:var(--keybed-height)!important;height:auto!important}
+   overrode the Hero sizing and left the canvas at its intrinsic 2:1 height.
+   Explicitly size it to the playfield above the exact keyboard boundary. */
+main[data-piano-layout="hero"] #rain{bottom:auto!important;height:calc(100% - var(--keybed-height))!important}
