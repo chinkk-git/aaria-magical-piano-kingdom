@@ -1,4 +1,4 @@
-const CACHE='aaria-piano-v1.12.0';
+const CACHE='aaria-piano-v1.13.0';
 const ORT='./lib/onnxruntime-web@1.30.0/dist/';
 const ASSETS=[
  './','./index.html','./piano-hero-v2.css?v=aaria-piano-v1.12.0','./piano-geometry.js','./song-import.js?v=aaria-piano-v1.6.1','./my-songs.js?v=aaria-piano-v1.6.1','./assets/piano-hero-v2/home_button.png','./assets/piano-hero-v2/settings_button.png','./omr-worker.js','./manifest.webmanifest',
