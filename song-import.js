@@ -100,11 +100,11 @@ async function imageBytes(file){
  bitmap.close?.();if(!blob)throw new Error('That picture could not be opened. Try another one.');return blob.arrayBuffer();
 }
 async function readPhoto(file,index,total){
- setStatus(`Reading picture ${index} of ${total}…`,true);progress.hidden=false;progress.max=100;progress.value=0;
- const img=await imageBytes(file);progress.value=5;
- const layoutImage=img.slice(0);const layout=await ask({type:'layout',image:layoutImage},[layoutImage]);progress.value=25;
- const result=await ask({type:'recognise',image:img,classes:layout.classes},[img]);progress.value=60;
- return parseMusicXML(result.xml);
+ progress.hidden=true;
+ setStatus(`Preparing picture ${index} of ${total}…`,true);const img=await imageBytes(file);
+ setStatus(`Checking the music page ${index} of ${total}…`,true);const layoutImage=img.slice(0);const layout=await ask({type:'layout',image:layoutImage},[layoutImage]);
+ setStatus(`Reading notes and rhythm ${index} of ${total}…`,true);const result=await ask({type:'recognise',image:img,classes:layout.classes},[img]);
+ setStatus(`Checking the recognized score ${index} of ${total}…`,true);return parseMusicXML(result.xml);
 }
 async function estimateStorage(){
  try{await navigator.storage?.persist?.();const q=await navigator.storage?.estimate?.();if(q?.quota&&q.quota-q.usage<190*1024*1024)throw new Error('space')}catch(e){if(e.message==='space')throw new Error('This device needs more free space for the music reader. Ask a grown-up to free some space, then try again.')}
@@ -119,7 +119,7 @@ function friendlyError(err){
 }
 async function fingerprint(value){if(globalThis.crypto?.subtle){const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value));return Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('')}let h=2166136261;for(let i=0;i<value.length;i++){h^=value.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(16)}
 async function createSong(){
- if(!photos.length||jobRunning)return;jobRunning=true;minimize.hidden=false;readyActions.hidden=true;make.textContent='✨ Making your song…';make.disabled=true;camera.disabled=true;gallery.disabled=true;titleInput.disabled=true;close.disabled=true;progress.hidden=false;progress.value=0;downloadedModels.clear();
+ if(!photos.length||jobRunning)return;jobRunning=true;minimize.hidden=false;readyActions.hidden=true;make.textContent='✨ Making your song…';make.disabled=true;camera.disabled=true;gallery.disabled=true;titleInput.disabled=true;close.disabled=true;progress.hidden=false;progress.removeAttribute('value');downloadedModels.clear();
  try{
   await estimateStorage();setStatus('Getting the music reader ready… This happens once.',true);await ensureWorker();
   const pages=[];for(let i=0;i<photos.length;i++)pages.push(await readPhoto(photos[i],i+1,photos.length));
