@@ -61,7 +61,7 @@ function parseMusicXML(source){
  const events=barLengths.flatMap((_,i)=>byBar[`${i+1}_events`]||[]).sort((a,b)=>a.bar-b.bar||a.at-b.at||a.midi-b.midi);
  const starts=[0];for(const len of barLengths)starts.push(starts.at(-1)+len);for(const e of events)e.absoluteStart=starts[e.bar-1]+e.at;
  const pendingTies=new Map(),merged=[];for(const e of events){const k=`${e.partKey}:${e.midi}`,previous=pendingTies.get(k);if(e.tieStop&&previous){previous.dur=e.absoluteStart+e.dur-previous.absoluteStart;if(e.tieStart)pendingTies.set(k,previous);else pendingTies.delete(k);continue}merged.push(e);if(e.tieStart)pendingTies.set(k,e)}
- const playable=merged.filter(e=>e.midi>=48&&e.midi<=84);if(playable.length!==merged.length)throw Error('Some notes are outside this piano’s playable range. Try a simpler score page.');
+ const playable=merged.filter(e=>e.midi>=21&&e.midi<=108);if(playable.length!==merged.length)throw Error('Some notes are beyond a full piano’s playable range. Try a different page.');
  if(playable.length>3000)throw Error('That page has too many notes. Try one page at a time.');
  const finalEvents=playable.map(({absoluteStart,partKey,tieStart,tieStop,...e})=>e);if(!finalEvents.length)throw Error('No piano notes were found. Try a clear photo of printed music.');
  return{events:finalEvents,barLengths,bpm:Math.max(30,Math.min(240,Math.round(bpm||72))),rawCount:notesSeen};
