@@ -24,8 +24,9 @@ jobs:
           node --check song-import.js
           node --check my-songs.js
           node --check tests/r2-music.test.js
+          node --check tests/r2-integration.test.js
       - name: Test difficulty and arrangement rules
-        run: node --test tests/r2-music.test.js tests/r2-image.test.js
+        run: node --test tests/r2-music.test.js tests/r2-image.test.js tests/r2-integration.test.js
       - name: Test existing piano geometry
         run: node tests/piano-geometry.test.js
       - name: Validate supplied SVG assets
