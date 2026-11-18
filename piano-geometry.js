@@ -7,14 +7,19 @@
   function measure(canvasRect,keyRects,devicePixelRatio=1){
     const width=Math.max(0,canvasRect.width),height=Math.max(0,canvasRect.height);
     const keys=new Map();
+    let whiteKeyTop=Infinity,anyKeyTop=Infinity;
     for(const item of keyRects){
       const r=item.rect||item;
       const left=r.left-canvasRect.left,right=r.right-canvasRect.left;
       const top=r.top-canvasRect.top,bottom=r.bottom-canvasRect.top;
+      anyKeyTop=Math.min(anyKeyTop,top);
+      if(!item.isBlack)whiteKeyTop=Math.min(whiteKeyTop,top);
       keys.set(Number(item.pitch),Object.freeze({pitch:Number(item.pitch),left,right,top,bottom,width:right-left,height:bottom-top,center:(left+right)/2,isBlack:!!item.isBlack}));
     }
     const pitches=[...keys.keys()].sort((a,b)=>a-b);
-    return Object.freeze({width,height,dpr:Math.max(1,Math.min(2,Number(devicePixelRatio)||1)),landingY:height,keys,low:pitches[0]??null,high:pitches[pitches.length-1]??null});
+    const keybedTop=Number.isFinite(whiteKeyTop)?whiteKeyTop:anyKeyTop;
+    const landingY=Number.isFinite(keybedTop)?clamp(keybedTop,0,height):height;
+    return Object.freeze({width,height,dpr:Math.max(1,Math.min(2,Number(devicePixelRatio)||1)),landingY,keys,low:pitches[0]??null,high:pitches[pitches.length-1]??null});
   }
   function projectLane(geometry,pitch,y,vanishX=geometry.width/2,horizonScale=.3){
     const key=geometry.keys.get(Number(pitch));
