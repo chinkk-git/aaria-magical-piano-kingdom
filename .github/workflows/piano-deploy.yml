@@ -36,7 +36,9 @@ jobs:
           cd ..
           rm -rf _site
           mkdir -p _site/omr _site/models _site/lib/onnxruntime-web@1.30.0 _site/vendor/omr-licenses
-          cp index.html song-import.js sw.js manifest.webmanifest icon-192.png icon-512.png icon-maskable-512.png apple-touch-icon.png _site/
+          cp index.html song-import.js my-songs.js sw.js hero-scene.svg manifest.webmanifest icon-192.png icon-512.png icon-maskable-512.png apple-touch-icon.png _site/
+          mkdir -p _site/assets
+          cp assets/aari-avatar-reference.png assets/piano-hero-approved-art.png _site/assets/
           cp omr-source/omr-worker.js _site/
           cp -R omr-source/omr/. _site/omr/
           cp -R omr-source/models/. _site/models/

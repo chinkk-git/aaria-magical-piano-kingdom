@@ -1,7 +1,7 @@
-const CACHE='aaria-piano-v1.6.0';
+const CACHE='aaria-piano-v1.6.1';
 const ORT='./lib/onnxruntime-web@1.30.0/dist/';
 const ASSETS=[
- './','./index.html','./song-import.js','./my-songs.js','./hero-scene.svg','./assets/aari-avatar-reference.png','./omr-worker.js','./manifest.webmanifest',
+ './','./index.html','./song-import.js?v=aaria-piano-v1.6.1','./my-songs.js?v=aaria-piano-v1.6.1','./hero-scene.svg','./assets/aari-avatar-reference.png','./assets/piano-hero-approved-art.png','./omr-worker.js','./manifest.webmanifest',
  './icon-192.png','./icon-512.png','./icon-maskable-512.png','./apple-touch-icon.png',
  './OMR-THIRD-PARTY-NOTICES.md','./vendor/omr-licenses/partsong-LICENSE',
  './omr/partsong_omr.wasm','./omr/partsong_omr_fused.wasm','./omr/partsong_omr_threads.wasm','./omr/partsong_omr_threads_fused.wasm',
