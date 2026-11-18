@@ -3,9 +3,6 @@ name: Release 2 validation
 on:
   pull_request:
     branches: [main]
-  push:
-    branches: ['release-2/**']
-
 permissions:
   contents: read
 
@@ -80,3 +77,11 @@ jobs:
           touch _site/.nojekyll
       - name: Test known score recognition online and offline
         run: node tests/r2-omr-ground-truth.cjs _site
+      - name: Upload temporary owner review site
+        if: always() && hashFiles('_site/index.html') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-2-v1-review-site
+          path: _site/
+          retention-days: 7
+          if-no-files-found: error
