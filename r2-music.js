@@ -37,7 +37,7 @@
     for(let bar=1;bar<=score.barLengths.length;bar++){
       const inBar=groups.filter(g=>g.bar===bar);const byBeat=new Map();
       for(const g of inBar){const beat=Math.floor(g.at/2+1e-7),candidate=g.events.slice().sort((a,b)=>b.midi-a.midi)[0];if(!byBeat.has(beat))byBeat.set(beat,candidate);else if(candidate.midi>byBeat.get(beat).midi)byBeat.set(beat,candidate)}
-      for(const e of byBeat.values())basic.push(cloneEvent(e));
+      for(const source of byBeat.values()){const e=cloneEvent(source);while(e.midi<48)e.midi+=12;while(e.midi>84)e.midi-=12;e.hand='right';e.part='piano-rh';basic.push(e)}
     }
     basic.sort((a,b)=>a.bar-b.bar||a.at-b.at||a.midi-b.midi);
     if(basic.length>0&&basic.length<original.length&&basic.every(e=>e.midi>=21&&e.midi<=108))versions.basic=makeVersion(score,basic,'Basic');
