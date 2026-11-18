@@ -25,6 +25,7 @@ assert.equal(generated.versions.advanced, undefined, 'a Medium estimate must not
 assert.ok(generated.versions.basic.events.length < source.events.length);
 assert.ok(generated.versions.medium.events.length < source.events.length);
 assert.equal(generated.versions.basic.total, source.barLengths.length);
+assert.ok(generated.versions.basic.events.every(event => event.hand === 'right' && event.midi >= 48 && event.midi <= 84), 'Basic stays in an accessible right-hand range');
 assert.equal(generated.versions.medium.total, source.barLengths.length);
 assert.deepEqual(generated.unavailable, ['advanced']);
 assert.equal(JSON.stringify(source.events), before, 'generation must preserve the original');
