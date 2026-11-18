@@ -1,0 +1,51 @@
+/* Owner-approved Piano Hero v2 components. The live canvas and DOM piano replace
+   the kit's static highway, note and keyboard renders so no baked notes/glows remain. */
+:root{--hero-gold:#ffe18f;--hero-purple:#2c0b5c;--hero-lilac:#bf7cff}
+body{background-color:#13052f;background-image:radial-gradient(ellipse at 50% 0,#53227c 0,#23104d 42%,#100629 100%)}
+main{background:linear-gradient(180deg,#10062940,#10062922 42%,#10062955)}
+.kingdom-brand{width:clamp(205px,27vw,360px);height:clamp(52px,8vh,82px);font-size:0;color:transparent;text-shadow:none;background:url('./assets/piano-hero-v2/kingdom_title.png') center/contain no-repeat;flex:none}
+.hero-stage{background-color:#19073d;background-image:url('./assets/piano-hero-v2/music_notes.png'),url('./assets/piano-hero-v2/flowers.png'),url('./assets/piano-hero-v2/castle_waterfall.png'),url('./assets/piano-hero-v2/magical_moon.png'),linear-gradient(110deg,#1a073dcc,#32115c66 54%,#12072c99);background-repeat:no-repeat;background-position:right 1% 26%,right 0 bottom 2%,right 11% top 0,right top 0,center;background-size:18% auto,39% auto,31% auto,23% auto,cover}
+.highway-panel{background-image:none}
+.highway-head{background:#24104ff5}
+.stage-legend{background:#180b3ff2}
+.hero-stage::before{background:radial-gradient(ellipse at 53% 60%,#b847ff18,transparent 56%),linear-gradient(180deg,#150a3520,transparent 45%,#0c092b42)}
+.aria-guide .avatar-frame{width:min(100%,230px);height:auto;aspect-ratio:500/416;min-height:0;border:0;border-radius:0;overflow:visible;background:transparent;box-shadow:none}
+.aria-guide .aria-avatar{position:absolute;inset:0;background-image:url('./assets/piano-hero-v2/aaria_puppy.png');background-size:contain;background-position:center;background-repeat:no-repeat;filter:drop-shadow(0 5px 12px #14042088);mask-image:none}
+.aria-guide .avatar-crown{display:none}
+.aria-guide .aria-message{max-width:220px;border-color:#ffe19a99;background:#2b155cdd}
+.scene-controls{align-self:center;min-height:230px;max-height:min(290px,54vh);padding:42px 13px 12px;border:0;border-radius:0;background:url('./assets/piano-hero-v2/mode_panel.png') center/100% 100% no-repeat;box-shadow:none;grid-template-rows:repeat(3,minmax(40px,1fr)) auto;gap:2px}
+.scene-controls>b{display:none}
+.scene-controls .mode-choice{min-height:40px;padding:3px 5px;border:0;border-radius:16px;background:transparent;color:transparent;font-size:0;box-shadow:none;outline-offset:1px}
+.scene-controls .mode-choice.active{background:#ffdf7a12;box-shadow:0 0 19px #ffe1737a,inset 0 0 0 2px #ffe48b66}
+.scene-controls .mode-choice:focus-visible{outline:3px solid #fff2be}
+.scene-controls p{margin:2px 2px 0;padding:4px 6px;border-radius:9px;background:#170835dc;color:#fff4d2;text-align:center;font-size:clamp(8px,.75vw,11px);line-height:1.2}
+#openMySongs{width:58px;height:62px;min-width:58px;padding:0;border:0;background:transparent url('./assets/piano-hero-v2/home_button.png') center/contain no-repeat;color:transparent;box-shadow:none}
+#setupKeyboard{width:54px;height:62px;min-width:54px;padding:0;border:0;background:transparent url('./assets/piano-hero-v2/settings_button.png') center/contain no-repeat;color:transparent;box-shadow:none}
+#zoomKeys{width:68px;height:52px;min-height:44px;padding:0;border:0;background:transparent url('./assets/piano-hero-v2/zoom_button.png') center/contain no-repeat;color:transparent;font-size:0;box-shadow:none}
+#zoomKeys:focus-visible,#openMySongs:focus-visible,#setupKeyboard:focus-visible{outline:3px solid #fff1bd;outline-offset:2px}
+.keyboard-panel{box-shadow:0 -4px 24px #c360ff3d,0 8px 0 #27134e}
+.keyboard-panel .keys{filter:drop-shadow(0 7px 7px #09031999)}
+.keyboard-panel .white{border-color:#70438f;background:linear-gradient(#fffefa 0%,#f8eaff 72%,#d3b3ed 100%);box-shadow:inset 0 -5px #aa79ca,0 5px 0 #60367c}
+.keyboard-panel .black{background:linear-gradient(110deg,#65536f,#100a1c 54%,#453052);box-shadow:0 5px 0 #090510}
+.keyboard-panel .white.guide-lit,.keyboard-panel .black.guide-lit{filter:brightness(1.08)}
+@media(max-width:900px) and (orientation:landscape){.kingdom-brand{width:clamp(175px,24vw,270px);height:clamp(45px,8vh,62px)}.aria-guide .avatar-frame{width:min(100%,180px)}.scene-controls{min-height:185px;max-height:43vh;padding:32px 10px 9px}.scene-controls p{font-size:8px}}
+@media(orientation:portrait){
+ .kingdom-brand{width:min(58vw,280px);height:48px;background-position:center}
+ .hero-stage{background-size:22% auto,48% auto,42% auto,28% auto,cover;background-position:right 0 top 30%,right 0 bottom 0,right 8% top 0,right top 0,center}
+ .aria-guide .avatar-frame{width:min(100%,155px)}
+ .scene-controls{min-height:0;max-height:none;padding:27px 8px 7px;background-size:100% 100%;grid-template-columns:1fr;gap:0}
+ .scene-controls .mode-choice{min-height:31px}
+ .scene-controls p{font-size:8px;padding:2px 3px}
+ #openMySongs,#setupKeyboard{width:43px;height:48px;min-width:43px}
+ #zoomKeys{width:56px;height:42px}
+}
+@media(max-width:540px){
+ .kingdom-brand{font-size:0;width:100%;height:38px;background-size:auto 38px}
+ .aria-guide .avatar-frame{width:100%;min-height:0}
+ .aria-guide .aria-message{font-size:9px;padding:4px 5px}
+ .hero-stage{background-size:26% auto,58% auto,48% auto,32% auto,cover}
+ .scene-controls{padding:21px 5px 5px}
+ .scene-controls .mode-choice{min-height:27px}
+ .scene-controls p{font-size:7px}
+}
+@media(prefers-reduced-motion:reduce){.hero-stage,.aria-guide .avatar-frame{animation:none!important}}
