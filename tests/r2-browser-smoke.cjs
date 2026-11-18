@@ -18,8 +18,7 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   const appReady=await page.evaluate(()=>({library:!!window.PianoKingdomLibrary,omr:!!window.AariaR2Music,quality:!!window.AariaR2Image}));
   assert.deepEqual(appReady,{library:true,omr:true,quality:true});
   await page.evaluate(async()=>{const events=[];for(let beat=0;beat<4;beat++){events.push({bar:1,at:beat*2,dur:2,midi:60+beat*2,hand:'right',part:'piano-rh'},{bar:1,at:beat*2,dur:2,midi:48+beat*2,hand:'left',part:'piano-lh'},{bar:1,at:beat*2,dur:2,midi:55+beat*2,hand:'left',part:'piano-lh'})}const score={events,total:1,barLengths:[8],bpm:90};const generated=window.AariaR2Music.generateArrangements(score,{scoreVerified:true});const song={id:'custom-r2-browser-smoke',title:'Release 2 Browser Check',...score,imported:true,difficulty:window.AariaR2Music.metrics(score),arrangements:generated.versions};await window.PianoKingdomLibrary.saveSong(song);window.PianoKingdomLibrary.addSong(song,{select:false})});
-  console.log('LIBRARY CONTROL',JSON.stringify(await page.locator('#openMySongs').evaluate(el=>({rect:(r=>({x:r.x,y:r.y,width:r.width,height:r.height}))(el.getBoundingClientRect()),display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,opacity:getComputedStyle(el).opacity,hidden:el.hidden,parentDisplay:getComputedStyle(el.parentElement).display,parentVisibility:getComputedStyle(el.parentElement).visibility,html:document.documentElement.dataset.pianoLayout,main:document.querySelector('main')?.dataset.pianoLayout}))));
-  await page.locator('#openMySongs').evaluate(el=>el.click());
+  await page.locator('#openMySongs').click();
   const dlg=page.locator('#mySongsDialog');await dlg.waitFor({state:'visible'});
   const card=page.locator('.library-card').filter({hasText:'Release 2 Browser Check'});await card.waitFor();
   assert.deepEqual(await card.locator('select option').evaluateAll(opts=>opts.map(o=>o.value)),['original','basic','medium']);
@@ -27,7 +26,7 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   await page.waitForFunction(()=>document.querySelector('#songSelect')?.value==='custom-r2-browser-smoke');
   assert.equal(await dlg.evaluate(el=>el.open),false,'selecting Play returns to the piano');
   const bounds=await page.locator('#openMySongs').boundingBox();assert.ok(bounds.height>=42,'song library control has a touch target');
-  await page.locator('#openMySongs').evaluate(el=>el.click());await page.locator('#makeNewSong').click();
+  await page.locator('#openMySongs').click();await page.locator('#makeNewSong').click();
   const wizard=page.locator('#localSongWizard');await wizard.waitFor({state:'visible'});
   assert.equal(await page.locator('.workshop-stage-list li[aria-current=step]').textContent(),'Capture');
   const svg='<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600"><rect width="1200" height="1600" fill="white"/><g stroke="black" stroke-width="5">'+[200,220,240,260,280].map(y=>`<path d="M90 ${y}H1110"/>`).join('')+'</g><g fill="black">'+[180,340,500,660,820,980].map((x,i)=>`<ellipse cx="${x}" cy="${215+(i%5)*10}" rx="15" ry="10"/>`).join('')+'</g></svg>';
