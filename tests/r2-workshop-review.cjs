@@ -40,7 +40,9 @@ const workerStub=`let requests=0;const xml=${JSON.stringify(xml)};self.onmessage
   await page.locator('#makeSong').click();
   await page.waitForFunction(()=>{const t=document.querySelector('#makeSong')?.textContent||'';return t.includes('Continue with photos')||t.includes('Reading music')||document.querySelector('#scoreReview:not([hidden])')});
   if((await page.locator('#makeSong').textContent()).includes('Continue with photos'))await page.locator('#makeSong').click();
-  await page.locator('#scoreReview').waitFor({state:'visible',timeout:30000});
+  await page.waitForFunction(()=>document.querySelector('#scoreReview:not([hidden])')||/couldn.t|could not|try again|needs more free space|Wi-Fi/i.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:30000});
+  const workshopStatus=await page.locator('#scoreImportStatus').textContent();
+  assert.equal(await page.locator('#scoreReview').isVisible(),true,`score review should open after recognition; workshop status: ${workshopStatus}`);
   assert.match(await page.locator('#scoreConfidenceNotice').textContent(),/not provided by the music reader/i);
   assert.equal(await page.locator('#scoreChecked').isDisabled(),true,'both measures must be inspected');
   await page.locator('#reviewMeasure').selectOption('2');assert.equal(await page.locator('#scoreChecked').isDisabled(),false);
