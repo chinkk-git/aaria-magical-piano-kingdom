@@ -35,7 +35,8 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   const box=await page.locator('#cropCanvas').boundingBox();await page.mouse.move(box.x+box.width*.1,box.y+box.height*.1);await page.mouse.down();await page.mouse.move(box.x+box.width*.9,box.y+box.height*.9,{steps:5});await page.mouse.up();await page.locator('#cropApply').click();
   assert.match(await page.locator('[data-photo-action="crop"]').textContent(),/Crop/);
   await page.locator('#makeSong').click();
-  await page.waitForFunction(()=>document.querySelector('#makeSong')?.textContent.includes('Reading music'));
+  await page.waitForFunction(()=>{const t=document.querySelector('#makeSong')?.textContent||'';return t.includes('Reading music')||t.includes('Continue with photos')});
+  if((await page.locator('#makeSong').textContent()).includes('Continue with photos')){await page.locator('#makeSong').click();await page.waitForFunction(()=>document.querySelector('#makeSong')?.textContent.includes('Reading music'))}
   await page.locator('#keepPlaying').click();assert.equal(await wizard.evaluate(el=>el.open),false,'Magic Bubble minimizes the workshop');
   const bubble=page.locator('.magic-song-bubble');await bubble.waitFor({state:'visible'});await bubble.click();assert.equal(await wizard.evaluate(el=>el.open),true,'Magic Bubble restores the workshop');
   await page.locator('#cancelSongJob').click();await page.waitForFunction(()=>document.querySelector('#makeSong')?.textContent.includes('Continue reading'));
