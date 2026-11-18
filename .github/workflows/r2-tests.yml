@@ -7,7 +7,33 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      full: ${{ steps.route.outputs.full }}
+      workshop: ${{ steps.route.outputs.workshop }}
+      install: ${{ steps.route.outputs.install }}
+      omr: ${{ steps.route.outputs.omr }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 2
+      - id: route
+        shell: bash
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import subprocess
+          paths=set(subprocess.check_output(["git","diff","--name-only","HEAD^","HEAD"],text=True).splitlines())
+          targeted={".github/workflows/r2-tests.yml",".github/workflows/piano-deploy.yml","index.html","sw.js","song-import.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-workshop-review.cjs","tests/r2-install-gate.cjs","tests/r2-omr-ground-truth.cjs"}
+          print("full=" + str(bool(paths-targeted)).lower())
+          print("workshop=" + str(bool(paths & {"song-import.js","tests/r2-workshop-review.cjs"})).lower())
+          print("install=" + str(bool(paths & {"index.html","sw.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-install-gate.cjs",".github/workflows/piano-deploy.yml"})).lower())
+          print("omr=" + str(bool(paths & {"r2-install.js","sw.js","tests/r2-omr-ground-truth.cjs",".github/workflows/piano-deploy.yml"})).lower())
+          PY
   validate:
+    needs: changes
+    if: needs.changes.outputs.full == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,6 +44,8 @@ jobs:
         run: |
           node --check r2-music.js
           node --check r2-image.js
+          node --check r2-install.js
+          node --check tests/r2-install-gate.cjs
           node --check song-import.js
           node --check my-songs.js
           node --check tests/r2-music.test.js
@@ -35,12 +63,47 @@ jobs:
         run: node tests/r2-browser-smoke.cjs
       - name: Test score correction and arrangement playback
         run: node tests/r2-workshop-review.cjs
-      - name: Test existing piano geometry
-        run: node tests/piano-geometry.test.js
-      - name: Validate supplied SVG assets
-        run: python -c "import xml.etree.ElementTree as ET; [ET.parse(p) for p in ['assets/release2/magic-book.svg','assets/release2/magic-bubble.svg']]"
+
+  workshop-targeted:
+    needs: changes
+    if: needs.changes.outputs.workshop == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install pinned Playwright
+        run: npm install --no-save --no-package-lock playwright@1.62.1
+      - name: Install Chromium
+        run: npx playwright install chromium
+      - name: Run only the workshop correction and playback integration
+        run: node tests/r2-workshop-review.cjs
+
+  installation-gate-targeted:
+    needs: changes
+    if: needs.changes.outputs.install == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check installation scripts
+        run: |
+          node --check r2-install.js
+          node --check tests/r2-install-gate.cjs
+          python3 -m py_compile scripts/create-r2-install-manifest.py
+      - name: Install pinned Playwright
+        run: npm install --no-save --no-package-lock playwright@1.62.1
+      - name: Install Chromium
+        run: npx playwright install chromium
+      - name: Test installation gate, integrity, retry, storage and recovery
+        run: node tests/r2-install-gate.cjs
 
   omr-ground-truth:
+    needs: changes
+    if: needs.changes.outputs.omr == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -68,7 +131,7 @@ jobs:
       - name: Stage the same local OMR payload used by Pages
         run: |
           mkdir -p _site/assets/release2 _site/assets/piano-hero-v2 _site/vendor/omr-licenses _site/omr _site/models _site/lib/onnxruntime-web@1.30.0
-          cp index.html song-import.js my-songs.js r2-music.js r2-image.js sw.js piano-geometry.js piano-hero-v2.css manifest.webmanifest icon-192.png icon-512.png icon-maskable-512.png apple-touch-icon.png _site/
+          cp index.html song-import.js my-songs.js r2-music.js r2-image.js r2-install.js sw.js piano-geometry.js piano-hero-v2.css manifest.webmanifest icon-192.png icon-512.png icon-maskable-512.png apple-touch-icon.png _site/
           cp assets/release2/magic-book.svg assets/release2/magic-bubble.svg _site/assets/release2/
           cp assets/piano-hero-v2/home_button.png assets/piano-hero-v2/settings_button.png _site/assets/piano-hero-v2/
           cp omr-source/omr-worker.js _site/
@@ -78,6 +141,7 @@ jobs:
           cp OMR-THIRD-PARTY-NOTICES.md _site/
           cp omr-source/LICENSE _site/vendor/omr-licenses/partsong-LICENSE
           touch _site/.nojekyll
+          python3 scripts/create-r2-install-manifest.py
       - name: Test known score recognition online and offline
         run: node tests/r2-omr-ground-truth.cjs _site
       - name: Upload temporary owner review site

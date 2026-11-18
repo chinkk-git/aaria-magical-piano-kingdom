@@ -57,6 +57,7 @@ async function summarize(page,scoreXml){
  const page=await context.newPage();
  try{
   await page.goto(`http://127.0.0.1:${server.address().port}/index.html`,{waitUntil:'networkidle'});
+  await page.waitForFunction(()=>window.AariaR2Installer?.state==='ready',null,{timeout:600000});
   await page.evaluate(async()=>{await navigator.serviceWorker.ready;for(let i=0;i<100&&!navigator.serviceWorker.controller;i++)await new Promise(r=>setTimeout(r,100));if(!navigator.serviceWorker.controller)throw Error('PWA service worker did not take control')});
   await page.addScriptTag({url:'/lib/opensheetmusicdisplay@2.2.0/build/opensheetmusicdisplay.min.js'});
   await page.evaluate(async source=>{const box=document.createElement('div');box.id='ground-truth-score';Object.assign(box.style,{position:'fixed',left:'0',top:'0',zIndex:'999999',width:'1500px',background:'#fff',padding:'40px',color:'#000'});document.body.append(box);const osmd=new opensheetmusicdisplay.OpenSheetMusicDisplay(box,{autoResize:false,drawTitle:true,drawPartNames:true});osmd.zoom=1.2;await osmd.load(source);osmd.render()},xml);
