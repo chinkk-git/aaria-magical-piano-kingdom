@@ -1,0 +1,37 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=process.env.R2_ROOT||path.resolve(__dirname,'..');
+const read=name=>fs.readFileSync(path.join(root,name),'utf8');
+const index=read('index.html');
+const importer=read('song-import.js');
+const library=read('my-songs.js');
+const sw=read('sw.js');
+const music=read('r2-music.js');
+
+for(const resource of ['./r2-music.js?v=aaria-piano-r2.1','./r2-image.js?v=aaria-piano-r2.1','./song-import.js?v=aaria-piano-r2.2','./my-songs.js?v=aaria-piano-r2.2']){
+  assert.ok(index.includes(resource),`index loads ${resource}`);
+  assert.ok(sw.includes(resource),`service worker precaches ${resource}`);
+}
+assert.match(sw,/const CACHE='aaria-piano-v1\.17\.0'/);
+assert.match(importer,/new Worker\('\.\/omr-worker\.js'/,'OMR worker is same-origin');
+assert.match(importer,/createImageBitmap\(cropFile/,'crop preview reads local image bytes');
+assert.match(importer,/AariaR2Image\.inspectPixels/,'local image quality check is wired');
+assert.match(importer,/completedPages/,'completed pages are checkpointed');
+assert.match(importer,/persistJob\(\)/,'workshop state is persisted');
+assert.match(importer,/cancelSongJob/,'job cancellation is accessible');
+assert.match(importer,/cancelRequested/,'cancel path is distinguished from retryable failure');
+assert.match(importer,/resumeRecoveredJob/,'recovery control is present');
+for(const action of ['down','up','earlier','later','shorter','longer','hand','remove'])assert.ok(importer.includes(`'${action}'`),`review correction supports ${action}`);
+assert.match(importer,/confidenceStatus:'not-provided-by-engine'/,'unavailable OMR confidence is stated honestly');
+assert.match(library,/aaria-piano-custom-songs-v1/,'legacy song storage key is retained');
+assert.match(library,/DB_VERSION=2/,'upgrade is versioned');
+assert.match(library,/createObjectStore\('sources'/,'private source pages have a separate local store');
+assert.match(library,/library\.saveSourceImages=persistSources/,'source images can be retained locally');
+assert.match(library,/store\.put\(song\)/,'song edits replace their saved record');
+assert.match(library,/tx\.objectStore\('sources'\)\.delete\(id\)/,'removing a song removes its local source pages');
+assert.match(music,/while\(e\.midi<48\)e\.midi\+=12/,'Basic arranges a one-hand playable pitch range');
+assert.match(music,/estimate\.level==='Advanced'/,'Advanced is offered only for advanced original scores');
+assert.ok(music.includes('recognized-original'),'Advanced preserves the recognized original');
+assert.ok(!importer.includes('62%'),'the illustrative 62% asset is not used as progress');
+console.log('R2 integration invariants passed');
