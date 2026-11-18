@@ -31,13 +31,14 @@ const xml=`<?xml version="1.0" encoding="UTF-8"?>
 const expected=[67,69,71,72,74,72,71,67];
 function analyse(result){return result.events||[]}
 async function recognize(page,b64){
- return page.evaluate(async b64=>new Promise((resolve,reject)=>{
+ const pngBytes=Array.from(Buffer.from(b64,'base64'));
+ return page.evaluate(async encodedBytes=>new Promise((resolve,reject)=>{
   const worker=new Worker('./omr-worker.js',{type:'module'});let id=0;const pending=new Map();let readyResolve,readyReject;
   const ready=new Promise((r,j)=>{readyResolve=r;readyReject=j});const timer=setTimeout(()=>{readyReject(Error('OMR engine did not initialize within 10 minutes'))},600000);
   worker.onmessage=({data})=>{if(data.type==='progress')return;if(data.type==='ready'){clearTimeout(timer);readyResolve();return}if(data.type==='error'&&data.id==null){readyReject(Error(data.msg||'OMR init failed'));return}if(data.type==='result'||data.type==='error'){const t=pending.get(data.id);if(!t)return;pending.delete(data.id);data.type==='result'?t.resolve(data):t.reject(Error(data.msg||'OMR step failed'))}};
   worker.onerror=e=>readyReject(Error(e.message||'OMR worker error'));worker.postMessage({type:'init',noGpu:true,ios:false});
   const ask=(data,transfer=[])=>new Promise((r,j)=>{const n=++id,timer=setTimeout(()=>{pending.delete(n);j(Error('OMR '+data.type+' timed out after 10 minutes'))},600000);pending.set(n,{resolve:v=>{clearTimeout(timer);r(v)},reject:e=>{clearTimeout(timer);j(e)}});worker.postMessage({...data,id:n},transfer)});
-  (async()=>{try{await ready;const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));const layoutBytes=bytes.slice();const layout=await ask({type:'layout',image:layoutBytes.buffer},[layoutBytes.buffer]);const readBytes=bytes.slice();const read=await ask({type:'recognise',image:readBytes.buffer,classes:layout.classes},[readBytes.buffer]);worker.terminate();resolve(read.xml)}catch(e){worker.terminate();reject(e)}})()
+  (async()=>{try{await ready;const bytes=Uint8Array.from(encodedBytes);const layoutBytes=bytes.slice();const layout=await ask({type:'layout',image:layoutBytes.buffer},[layoutBytes.buffer]);const readBytes=bytes.slice();const read=await ask({type:'recognise',image:readBytes.buffer,classes:layout.classes},[readBytes.buffer]);worker.terminate();resolve(read.xml)}catch(e){worker.terminate();reject(e)}})()
  }))
 }
 async function summarize(page,scoreXml){
