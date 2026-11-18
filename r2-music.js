@@ -30,9 +30,9 @@
     const level=scoreValue>=8?'Advanced':scoreValue>=4?'Medium':'Basic';
     return{level,score:scoreValue,reasons,measures:bars,noteCount:events.length,range,maxChord,offbeatRatio:offbeat,method:'early-rule-estimate',limitations:['This is an app estimate, not a formal exam grade.','The reader does not provide calibrated note confidence.','Key-signature, tempo, ornaments, and notation-specific difficulty are not fully assessed.']};
   }
-  function makeVersion(score,events,label){return{label,events:events.map(cloneEvent),total:score.barLengths.length,barLengths:score.barLengths.slice(),bpm:score.bpm||72,source:label==='Advanced'?'recognized-original':'generated-rule-based',validation:'structural-only'};}
-  function generateArrangements(score){
-    validateScore(score);const groups=grouped(score),original=score.events.map(cloneEvent),versions={};const estimate=metrics(score);if(estimate.level==='Advanced')versions.advanced=makeVersion(score,original,'Advanced');
+  function makeVersion(score,events,label){return{label,events:events.map(cloneEvent),total:score.barLengths.length,barLengths:score.barLengths.slice(),bpm:score.bpm||72,source:label==='Advanced'?'user-reviewed-original':'generated-rule-based',validation:'structural-only'};}
+  function generateArrangements(score,options={}){
+    validateScore(score);const groups=grouped(score),original=score.events.map(cloneEvent),versions={};const estimate=metrics(score);if(!options.scoreVerified)return{versions,unavailable:['basic','medium','advanced'],needsReview:true};if(estimate.level==='Advanced')versions.advanced=makeVersion(score,original,'Advanced');
     const basic=[];
     for(let bar=1;bar<=score.barLengths.length;bar++){
       const inBar=groups.filter(g=>g.bar===bar);const byBeat=new Map();
