@@ -185,3 +185,8 @@ main[data-piano-layout="classic"] #keys{position:relative}
 @media(orientation:landscape) and (max-height:540px){main[data-piano-layout="hero"]{gap:2px;padding:2px 5px}main[data-piano-layout="hero"] .compact-title{height:34px;min-height:34px}main[data-piano-layout="hero"] .hero-playfield{--keybed-height:clamp(56px,19vh,86px)}main[data-piano-layout="hero"] #player{grid-template-columns:minmax(70px,1fr) auto minmax(0,1fr);grid-template-rows:auto auto;padding:2px 5px;gap:1px 5px}main[data-piano-layout="hero"] .playback-mode-controls .mode-choice,main[data-piano-layout="hero"] #pause{min-height:28px;padding:3px 6px;font-size:10px}main[data-piano-layout="hero"] .extras{grid-column:1/4;grid-row:2}main[data-piano-layout="hero"] .extras label{font-size:8px}main[data-piano-layout="hero"] #position{display:none}}
 main[data-piano-layout="hero"] .aria-guide{display:none!important}
 main[data-piano-layout="hero"] #keys.range-shift{opacity:.22;transform:scaleY(.96)}
+
+/* v1.12 Android portrait fix: the legacy inline .rain height:auto!important
+   left the canvas at its intrinsic 2:1 height on narrow screens. Pin its bottom
+   to the same keybed boundary used by the absolute keyboard. */
+main[data-piano-layout="hero"] #rain{bottom:var(--keybed-height)!important;height:auto!important}
