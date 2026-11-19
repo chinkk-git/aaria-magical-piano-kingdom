@@ -32,15 +32,20 @@ assert.ok(index.includes('Check for Updates'),'Settings includes an update actio
 assert.ok(newWorker.includes("/^aaria-piano-v\\d+\\.\\d+\\.\\d+$/.test(key)"),'activation only removes prior versioned app-shell caches');
 assert.match(newWorker,/if\(!self\.registration\.active\)await self\.skipWaiting\(\)/,'updates wait for the user while first install still controls the app');
 assert.match(newWorker,/AARIA_ACTIVATE_UPDATE/,'Restart App activates a waiting update');
+assert.match(fs.readFileSync(path.join(root,'pwa-update.js'),'utf8'),/busy=true;check\.disabled=true;setStatus\('Checking…',true\);try\{if\(!root\.navigator\.onLine\)/,'the check is serialized before asynchronous multi-tab coordination');
 
 let servedWorker=oldWorker;
 let serveNewShell=false;
+let versionCheckRequests=0,versionCheckStatus=200,versionCheckWorker=null;
 const contentTypes={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.json':'application/json'};
 const server=http.createServer((req,res)=>{
-  const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
+  const requestUrl=new URL(req.url,'http://localhost');
+  const pathname=decodeURIComponent(requestUrl.pathname);
   if(pathname==='/sw.js'){
-    res.writeHead(200,{'content-type':contentTypes['.js'],'cache-control':'no-cache'});
-    res.end(servedWorker);return;
+    const isVersionCheck=requestUrl.searchParams.has('version-check');
+    if(isVersionCheck)versionCheckRequests++;
+    res.writeHead(isVersionCheck?versionCheckStatus:200,{'content-type':contentTypes['.js'],'cache-control':'no-cache'});
+    res.end(isVersionCheck?(versionCheckWorker||servedWorker):servedWorker);return;
   }
   if((pathname==='/'||pathname==='/index.html')&&!serveNewShell){
     res.writeHead(200,{'content-type':contentTypes['.html']});res.end(oldShell);return;
@@ -121,6 +126,38 @@ const server=http.createServer((req,res)=>{
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent==='Offline');
     await context.setOffline(false);
+
+    const beforeMultiTab=versionCheckRequests;
+    const busyTab=await context.newPage();
+    await busyTab.goto(origin+'/',{waitUntil:'domcontentloaded'});
+    await busyTab.waitForFunction(()=>!!window.AariaPwaUpdateCore);
+    await busyTab.evaluate(()=>{window.AariaPianoPlaybackIsBusy=()=>true});
+    await reopened.locator('#checkAppUpdate').click();
+    await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('Pause playback and finish'),{timeout:5000});
+    assert.equal(versionCheckRequests,beforeMultiTab,'an active second tab prevents the network version request');
+    await busyTab.close();
+
+    await reopened.evaluate(()=>{window.AariaSongImportIsBusy=()=>true});
+    const beforeImportBusy=versionCheckRequests;
+    await reopened.locator('#checkAppUpdate').click();
+    await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('Pause playback and finish'),{timeout:5000});
+    assert.equal(versionCheckRequests,beforeImportBusy,'an active import prevents the network version request');
+    await reopened.evaluate(()=>{window.AariaSongImportIsBusy=()=>false});
+
+    const beforeRapidClicks=versionCheckRequests;
+    await reopened.evaluate(()=>{const button=document.querySelector('#checkAppUpdate');button.dispatchEvent(new MouseEvent('click',{bubbles:true}));button.dispatchEvent(new MouseEvent('click',{bubbles:true}))});
+    await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes("You're up to date"),{timeout:15000});
+    assert.equal(versionCheckRequests-beforeRapidClicks,1,'rapid duplicate clicks issue exactly one version request');
+
+    versionCheckWorker=oldWorker;
+    await reopened.locator('#checkAppUpdate').click();
+    await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('published build is older'),{timeout:10000});
+    versionCheckWorker=null;
+
+    versionCheckStatus=503;
+    await reopened.locator('#checkAppUpdate').click();
+    await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('version could not be checked'),{timeout:10000});
+    versionCheckStatus=200;
 
     const result=await reopened.evaluate(async()=>{
       const keys=await caches.keys();
