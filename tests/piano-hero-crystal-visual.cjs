@@ -5,8 +5,7 @@ fs.rmSync(out,{recursive:true,force:true});fs.mkdirSync(out,{recursive:true});
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.json':'application/json','.webmanifest':'application/manifest+json'};
 const server=http.createServer((req,res)=>{const route=decodeURIComponent(new URL(req.url,'http://localhost').pathname),file=path.resolve(root,'.'+(route==='/'?'/index.html':route));if(!file.startsWith(root+path.sep)&&file!==root){res.writeHead(403).end();return}fs.readFile(file,(e,b)=>{if(e){res.writeHead(404).end('not found');return}res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream'}).end(b)})});
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
-async function stamp(page,label){await page.evaluate(({label,sha})=>{let e=document.getElementById('crystalEvidenceLabel');if(!e){e=document.createElement('div');e.id='crystalEvidenceLabel';Object.assign(e.style,{position:'fixed',right:'5px',top:'5px',zIndex:2147483647,padding:'4px 7px',border:'1px solid #f6d47c',borderRadius:'7px',background:'#0f0a1ddd',color:'#fff',font:'600 10px system-ui',pointerEvents:'none'});document.body.append(e)}e.textContent=label+' · '+innerWidth+'×'+innerHeight+' · '+sha.slice(0,12)},{label,sha})}
-async function snapshot(page,label,w,h,index){await page.setViewportSize({width:w,height:h});await wait(240);await stamp(page,label);await page.screenshot({path:path.join(out,String(index).padStart(2,'0')+'-'+label.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+w+'x'+h+'.png')})}
+async function snapshot(page,label,w,h,index){await page.setViewportSize({width:w,height:h});await wait(240);await page.screenshot({path:path.join(out,String(index).padStart(2,'0')+'-'+label.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+w+'x'+h+'.png')})}
 (async()=>{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
  const launchOptions={headless:true,args:['--no-sandbox']};if(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH)launchOptions.executablePath=process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
@@ -21,12 +20,12 @@ async function snapshot(page,label,w,h,index){await page.setViewportSize({width:
   // still shows the real running Piano Hero application and its live canvas.
   await page.evaluate(()=>{const gate=document.querySelector('#release2InstallGate'),app=document.querySelector('#pianoApp');if(gate)gate.hidden=true;if(app){app.inert=false;app.removeAttribute('aria-hidden')}document.body.classList.remove('r2-installing')});
   await page.waitForFunction(()=>document.querySelector('#rain')?.width>0&&document.querySelector('#keys [data-pitch]'),null,{timeout:20000});
-  await page.evaluate(()=>window.PianoHeroVisual.atmosphere(document.createElement('canvas').getContext('2d'),0,0,0,0,true,[]));
   await snapshot(page,'Ready idle',390,844,1);
   await page.locator('#secondaryModeButton').click();await wait(4200);
   await snapshot(page,'Live notes portrait',390,844,2);
-  await page.locator('#pause').click().catch(()=>{});await wait(300);
+  await page.locator('#pause').click();if(await page.locator('#pause').innerText()!=='▶ Resume')throw Error('Pause did not switch the active playback control to Resume.');await wait(300);
   await snapshot(page,'Paused portrait',390,844,3);
+  await page.locator('#pause').click();if(await page.locator('#pause').innerText()!=='⏸ Pause')throw Error('Resume did not restore the playback control.');await wait(300);
   for(const [label,w,h,i] of [['Phone landscape',844,390,4],['Tablet portrait',834,1194,5],['Tablet landscape',1194,834,6],['Laptop landscape',1440,900,7]])await snapshot(page,label,w,h,i);
   await page.emulateMedia({reducedMotion:'reduce'});await wait(350);
   const reduced=await page.evaluate(()=>matchMedia('(prefers-reduced-motion: reduce)').matches);if(!reduced)throw Error('Reduced-motion media preference was not applied.');
