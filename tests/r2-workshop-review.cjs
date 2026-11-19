@@ -68,8 +68,10 @@ const workerStub=`let requests=0;const xml=${JSON.stringify(xml)};self.onmessage
   assert.deepEqual(await page.evaluate(()=>EVENTS.map(n=>[n.bar,n.at,n.dur,n.midi])),playback.savedEvents,'saved song opens in playback with its selected arrangement');
   await page.locator('#openMySongs').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.locator('#closeMySongs').click();
   assert.match(await page.locator('#songPickerButton').textContent(),/Reviewed Workshop Song/,'song selector reflects selection');
+  await page.locator('#openMySongs').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.locator('#makeNewSong').click();await page.locator('#localSongWizard').waitFor({state:'visible'});
   await page.locator('#editSavedSong').click();await page.locator('#scoreReview').waitFor({state:'visible'});await page.locator('#cancelReview').click();
   assert.equal(await page.evaluate(expected=>window.PianoKingdomLibrary.songs[expected]?.title,id),'Reviewed Workshop Song','optional edit can be canceled while keeping the saved song');
+  await page.locator('#closeSongWizard').click();await page.locator('#localSongWizard').waitFor({state:'hidden'});
   const zoom=await page.locator('#keys .white').count();await page.locator('#zoomKeys').click();assert.equal(await page.locator('#keys .white').count(),8,'Zoom Keys changes the visible white key count');await page.locator('#zoomKeys').click();await page.locator('#zoomKeys').click();assert.equal(await page.locator('#keys .white').count(),zoom,'Zoom Keys cycles through its key ranges');
   assert.match(await page.locator('#speed').evaluate(e=>e.parentElement.textContent),/Speed/,'the playback slider uses the Speed label');
   await page.locator('#songPickerButton').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.screenshot({path:'/tmp/android-song-selector-open.png'});
