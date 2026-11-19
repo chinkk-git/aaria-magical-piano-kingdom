@@ -88,8 +88,6 @@ const server=http.createServer((req,res)=>{
       return keys.includes(name)&&!keys.includes('aaria-piano-v1.18.1');
     },shellName,{timeout:30000});
     await page.waitForFunction(()=>navigator.serviceWorker.controller&&navigator.serviceWorker.controller!==window.__oldServiceWorker,{timeout:10000});
-    await page.reload();
-    await page.waitForFunction(()=>!!navigator.serviceWorker.controller,{timeout:10000});
 
     const result=await page.evaluate(async()=>{
       const keys=await caches.keys();
