@@ -196,3 +196,5 @@ main[data-piano-layout="hero"] .compact-title #openMySongs{position:relative!imp
 main[data-piano-layout="hero"] .compact-title .song-picker{position:relative;z-index:3;flex:none;min-width:0}
 @media(max-width:540px){main[data-piano-layout="hero"] .compact-title{justify-content:flex-start;padding-left:max(4px,env(safe-area-inset-left));padding-right:max(4px,env(safe-area-inset-right));gap:4px}main[data-piano-layout="hero"] .compact-title #openMySongs{width:36px;min-width:36px;height:36px;min-height:36px}main[data-piano-layout="hero"] .compact-title .song-picker select{max-width:min(38vw,145px)}main[data-piano-layout="hero"] .compact-title .song-picker button{max-width:min(38vw,145px);font-size:11px;min-height:36px;padding:4px 6px}main[data-piano-layout="hero"] .compact-title .kingdom-brand{display:none}}
 @media(orientation:landscape) and (max-height:540px){main[data-piano-layout="hero"] .compact-title{flex-wrap:nowrap}main[data-piano-layout="hero"] .compact-title #openMySongs{width:34px;min-width:34px;height:32px;min-height:32px}}
+
+.app-build-info{margin:6px 0 0;color:#d2c2ea;font-size:12px;line-height:1.4}

@@ -2,11 +2,11 @@
 const assert=require('node:assert/strict'),crypto=require('node:crypto'),fs=require('node:fs'),http=require('node:http'),path=require('node:path'),zlib=require('node:zlib'),{chromium}=require('playwright');
 const root=path.resolve(__dirname,'..'),installer=fs.readFileSync(path.join(root,'r2-install.js'));
 const appIndex=fs.readFileSync(path.join(root,'index.html'),'utf8'),serviceWorker=fs.readFileSync(path.join(root,'sw.js'),'utf8');
-const installerVersion='aaria-piano-r2.4';
+const installerVersion='aaria-piano-r2.5';
 assert.match(appIndex,new RegExp('r2-install\\.js\\?v='+installerVersion));
-assert.match(serviceWorker,new RegExp("const CACHE='aaria-piano-v1\\.18\\.1'"));
+assert.match(serviceWorker,new RegExp("const CACHE='aaria-piano-v1\\.19\\.0'"));
 assert.match(serviceWorker,new RegExp('r2-install\\.js\\?v='+installerVersion));
-assert.ok(!serviceWorker.includes('r2-install.js?v=aaria-piano-r2.3'),'service-worker cache list must not pin the stale installer URL');
+assert.ok(!serviceWorker.includes('r2-install.js?v=aaria-piano-r2.4'),'service-worker cache list must not pin the stale installer URL');
 const payloads=[Buffer.from('verified-piano-runtime-bytes-01'),Buffer.from('verified-local-model-bytes-02')],chunkSize=8,digest=b=>crypto.createHash('sha256').update(b).digest('hex');
 const entries=payloads.map((b,i)=>({path:'./payload-'+i+'.bin',bytes:b.length,sha256:digest(b),chunkSize,chunks:Array.from({length:Math.ceil(b.length/chunkSize)},(_,n)=>digest(b.subarray(n*chunkSize,Math.min((n+1)*chunkSize,b.length))))}));
 const manifest={schemaVersion:1,version:'test-r2-1',totalBytes:payloads.reduce((n,b)=>n+b.length,0),files:entries};let mode='success',assetReads=0;
