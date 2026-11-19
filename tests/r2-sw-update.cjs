@@ -29,7 +29,9 @@ assert.match(installer,/__aariaPwaUpdateReloadBound/);
 assert.match(installer,/location\.reload\(\)/);
 assert.match(installer,/await registration\.update\(\)/,'the current shell explicitly checks for an update on each launch');
 assert.ok(index.includes('Check for Updates'),'Settings includes an update action');
-assert.ok(newWorker.includes("/^aaria-piano-v\\d+\\.\\d+\\.\\d+$/.test(key)"),'activation only removes prior versioned app-shell caches');\nassert.match(newWorker,/if\(!self\.registration\.active\)await self\.skipWaiting\(\)/,'updates wait for the user while first install still controls the app');\nassert.match(newWorker,/AARIA_ACTIVATE_UPDATE/,'Restart App activates a waiting update');
+assert.ok(newWorker.includes("/^aaria-piano-v\\d+\\.\\d+\\.\\d+$/.test(key)"),'activation only removes prior versioned app-shell caches');
+assert.match(newWorker,/if\(!self\.registration\.active\)await self\.skipWaiting\(\)/,'updates wait for the user while first install still controls the app');
+assert.match(newWorker,/AARIA_ACTIVATE_UPDATE/,'Restart App activates a waiting update');
 
 let servedWorker=oldWorker;
 let serveNewShell=false;
