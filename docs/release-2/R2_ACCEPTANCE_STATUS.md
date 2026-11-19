@@ -5,15 +5,15 @@
 
 | Gate | Status | Evidence / remaining action |
 |---|---|---|
-| R2-W1-01 Settings update action | **FAIL — missing** | Live Settings has a static build label and no Check for Updates button. Implement and test. |
-| R2-W1-02 Truthful import progress | **PARTIAL** | Real model bytes and page checkpoints exist; bubble status does not mirror actual stages. Add stage/retry/offline/storage/minimize coverage. |
-| R2-W1-03 Safe cancel | **FAIL — missing confirmation** | Cancel immediately terminates worker. Add confirmation and race-safe boundary tests. |
-| R2-W1-04 Play Again | **FAIL — missing** | Completion transitions to `stop`; no distinct Play Again action. Implement. |
-| R2-W1-05 State/label consistency | **PARTIAL** | No dedicated completed state; reproduction of old READY/Resume report remains unverified. Implement state fixes and test transitions. |
+| R2-W1-01 Settings update action | **IN REVIEW — CI PENDING** | Draft PR #40 adds the build display, update action and safe restart. Local syntax checks passed; initial CI found stale build expectations (fixed) and the actual-engine OMR job timed out. Awaiting updated CI and Android device test. |
+| R2-W1-02 Truthful import progress | **IN REVIEW — CI PENDING** | Draft PR #41 synchronizes the minimized bubble to existing byte/stage/page status. Existing model-download bytes and page checkpoints remain. Updated Workshop browser run #44597715880 is in progress; real-engine and device coverage remain pending. |
+| R2-W1-03 Safe cancel | **IN REVIEW — CI PENDING** | Draft PR #41 adds confirmation and a browser case for dismissal, confirmed stop, no partial save and re-entry. Updated CI is in progress. Save-boundary and real-device coverage remain pending. |
+| R2-W1-04 Play Again | **IN REVIEW — CI NOT YET REPORTED** | Draft PR #42 introduces a distinct completed state and Play Again restart to measure 1; stacked on #40. Chromium run and screenshots pending. |
+| R2-W1-05 State/label consistency | **IN REVIEW — CI NOT YET REPORTED** | Draft PR #42 synchronizes READY/Pause/Resume/completed labels and covers speed, loop, passage, Listen preference and Classic/Hero flows in Chromium. The historical READY/Resume screenshot was not independently available for reproduction. |
 | R2-W1-06 Actual OMR end-to-end | **BLOCKED / NOT TESTED** | Isolated actual-engine 8/8 recognition is recorded in historical CI. Actual parser → app save → reopen → playback semantic comparison has not been evidenced. |
 | R2-W1-07 OMR provenance | **BLOCKED — LEGAL REVIEW REQUIRED** | Reader code is AGPL-3.0; model weights/training-data rights and deployment obligations remain unresolved. See provenance review. |
 | R2-W1-08 Physical device/offline acceptance | **PENDING** | Chromium responsive test evidence exists. Physical Android/iPhone/iPad/MacBook results are not available; owner-run checklist refreshed separately. |
-| R2-W1-09 Control Tower reconciliation | **IN PROGRESS** | Issue #11 body still cites prior production commit. Add dated comment with current facts and draft PRs after implementation. |
+| R2-W1-09 Control Tower reconciliation | **IN PROGRESS** | A dated progress comment with the verified baseline, PR links, CI failures and pending gates was posted to Issue #11 on 2026-11-19. Final closeout remains pending updated CI and all blocked/unverified items. |
 
 ## Data-safety boundary
 
@@ -24,3 +24,12 @@
 ## Required completion evidence
 
 For each code PR: branch/head SHA, focused CI URL and conclusion, Chromium screenshots at relevant viewports, old-to-new worker upgrade, data-preservation fixtures, rollback note, and draft state. Any failed or unavailable check remains explicitly FAIL/BLOCKED/PENDING. Do not mark Release 2 owner-approved.
+
+
+## Progress since this snapshot — 2026-11-19
+
+Draft implementation PRs: [#40](https://github.com/chinkk-git/aaria-magical-piano-kingdom/pull/40) (update action), [#41](https://github.com/chinkk-git/aaria-magical-piano-kingdom/pull/41) (progress/cancel), and [#42](https://github.com/chinkk-git/aaria-magical-piano-kingdom/pull/42) (playback state). Checklist and audit updates remain in [PR #39](https://github.com/chinkk-git/aaria-magical-piano-kingdom/pull/39).
+
+The first update PR CI run [#44594125078](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44594125078) found tests still pinned to the old shell build, and its actual-engine OMR test timed out after 600 seconds with installation state `idle` and browser console `ERR_INVALID_URL`. The old-build expectations have been corrected; OMR semantic acceptance is still **BLOCKED / NOT VERIFIED**. The initial workshop run [#44595003522](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44595003522) found a broad test assertion that counted existing built-in songs; that assertion is narrowed, and updated run [#44597715880](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44597715880) is in progress.
+
+Physical-device checks remain pending. No implementation PR is merged/deployed and Release 2 is not owner-approved.

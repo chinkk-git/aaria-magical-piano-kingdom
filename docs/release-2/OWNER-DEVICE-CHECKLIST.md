@@ -8,7 +8,7 @@
 
 Record device model, Android version, Chrome version, app-installed state, date, result and any error. Use a test song/fixture where practical.
 
-- [ ] Open Settings; record installed build and check for update when Worker 1 PR-A is available.
+- [ ] Open Settings; record installed build and check for update using draft PR #40 (not merged; verification pending).
 - [ ] Install/update/reopen without uninstalling or clearing site data; verify the new build after restart.
 - [ ] Verify Library, saved-song count, favorites and recent song remain.
 - [ ] Check Magical Piano Hero in portrait and landscape: song picker, Zoom Keys, Home, Settings, Speed, Loop and measure selection.
@@ -86,3 +86,18 @@ Record device model, OS/browser version, installed/not-installed state, result, 
 ## Record results
 
 For each device, mark Pass / Fail / Not available and attach the browser/OS version. Do not interpret a failed device-only check as covered by desktop Chromium. Mobile operating systems may suspend background processing; the app must preserve resumable local work and state this limitation.
+
+
+## Worker 1 implementation tracker — updated 2026-11-19
+
+The production baseline remains main `f9739d0071e6e8586e3d9f1b5a049cea9b50534f`, live build `aaria-piano-v1.20.3`. All work below is draft-only; none has been merged or deployed.
+
+| Work | Draft PR / head | Current evidence |
+|---|---|---|
+| Audit and checklist refresh | [#39](https://github.com/chinkk-git/aaria-magical-piano-kingdom/pull/39), head `b4326827f598b0e38b73bca890640bb7ee7b548e` | Provenance and acceptance documents; Release 2 remains unapproved. |
+| Settings update check | [#40](https://github.com/chinkk-git/aaria-magical-piano-kingdom/pull/40), head `d70700aa925ee75de983ed2016cd4eb6f48be1c6` | Local syntax passed. First CI run [#44594125078](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44594125078) failed on stale v1.20.3 test expectations and an actual-engine OMR timeout; version expectations were fixed. New CI evidence pending. |
+| Workshop progress and cancel | [#41](https://github.com/chinkk-git/aaria-magical-piano-kingdom/pull/41), head `6034577cd40e2a0d27223084229c8ddc9fb9b4df` | First test run [#44595003522](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44595003522) exposed a test counting built-in songs as partial imports; assertion fixed. Updated validation [#44597715880](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44597715880) is in progress. |
+| Playback state and Play Again | [#42](https://github.com/chinkk-git/aaria-magical-piano-kingdom/pull/42), head `46f14ce157fd7667fdb97cc5ace173d719393310` | Stacked on #40 to isolate the shared player document; updated checks will run against that base. |
+| Physical Android acceptance | Not a code PR | Pending owner-run physical-device test. Chromium emulation is not physical-device evidence. |
+
+The owner-run device matrix above remains unchecked until physical evidence is supplied. The actual OMR image → MusicXML → app timing → save → reopen → playback semantic gate remains unverified; the first run timed out. License/provenance clearance remains **LEGAL REVIEW REQUIRED**.

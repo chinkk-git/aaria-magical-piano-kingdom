@@ -32,3 +32,19 @@
 3. Fix the playback completed/restart state and label synchronization in a focused draft PR.
 4. Execute the real OMR end-to-end semantic acceptance. If CI budget/device limits prevent that, record BLOCKED and provide a repeatable procedure.
 5. Keep the model provenance gate BLOCKED until qualified review decides redistribution rights.
+
+
+## Execution update — 2026-11-19
+
+The audit above records the verified main-branch state before code changes. Draft-only implementation now exists:
+
+| ID | Draft response | Current validation |
+|---|---|---|
+| R2-W1-01 | [PR #40](https://github.com/chinkk-git/aaria-magical-piano-kingdom/pull/40) adds Settings update reporting and a user-controlled restart. | Local syntax passed. First CI uncovered stale build-ID expectations (fixed). Real-engine OMR subtest timed out; rerun pending. |
+| R2-W1-02/03 | [PR #41](https://github.com/chinkk-git/aaria-magical-piano-kingdom/pull/41) mirrors stage/page/download status in the minimized bubble and confirms cancellation. | Initial test assertion counted built-in songs; fixed. Updated CI [#44597715880](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44597715880) is in progress. |
+| R2-W1-04/05 | [PR #42](https://github.com/chinkk-git/aaria-magical-piano-kingdom/pull/42) models COMPLETED and Play Again, and synchronizes Pause/Resume labels. | Stacked on #40. Chromium tests and screenshots await CI. |
+| R2-W1-06 | No correctness fix is claimed. | BLOCKED / UNVERIFIED: actual-engine app-level semantic path is still not proven; the first 600-second run reported installer idle and `ERR_INVALID_URL`. |
+| R2-W1-07 | [Provenance review](OMR_LICENSE_PROVENANCE_REVIEW.md). | LEGAL REVIEW REQUIRED; no distribution clearance claimed. |
+| R2-W1-08/09 | [Device checklist](OWNER-DEVICE-CHECKLIST.md); progress comment added to Issue #11. | Physical device is pending. Control Tower final reconciliation awaits current CI and owner review. |
+
+PR #39 and PRs #40–#42 remain drafts; none has been merged or deployed.
