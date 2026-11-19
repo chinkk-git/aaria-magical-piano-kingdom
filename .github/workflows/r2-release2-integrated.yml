@@ -1,0 +1,65 @@
+name: Release 2 Integrated Acceptance
+
+on:
+  pull_request:
+    branches: [feature/listen-default]
+    paths:
+      - index.html
+      - sw.js
+      - my-songs.js
+      - r2-install.js
+      - tests/r2-sw-update.cjs
+      - tests/r2-on-demand-installer.cjs
+      - tests/r2-delete-song.cjs
+      - tests/r2-note-explosion.cjs
+      - tests/r2-listen-preference.cjs
+      - .github/workflows/r2-release2-integrated.yml
+
+permissions:
+  contents: read
+
+jobs:
+  integrated-release-2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check focused test and application syntax
+        run: |
+          node --check sw.js
+          node --check r2-install.js
+          node --check my-songs.js
+          node --check tests/r2-sw-update.cjs
+          node --check tests/r2-on-demand-installer.cjs
+          node --check tests/r2-delete-song.cjs
+          node --check tests/r2-note-explosion.cjs
+          node --check tests/r2-listen-preference.cjs
+      - name: Install pinned Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install chromium
+      - name: Verify previous-PWA upgrade, close/reopen, and retained data
+        run: node tests/r2-sw-update.cjs
+      - name: Verify OMR stays on demand and does not block startup
+        run: node tests/r2-on-demand-installer.cjs
+      - name: Verify Delete Song, persistence, offline and storage safety
+        run: node tests/r2-delete-song.cjs
+      - name: Verify Listen preference and audio playback
+        run: node tests/r2-listen-preference.cjs
+      - name: Verify Magical Note Explosion in offline playback
+        run: node tests/r2-note-explosion.cjs
+      - name: Upload integrated screenshots and recording
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2-integrated-screenshots-and-recording-${{ github.event.pull_request.head.sha }}
+          path: |
+            /tmp/r2-delete-song/
+            /tmp/r2-note-explosion/
+            /tmp/r2-listen-preference/
+          retention-days: 14
+          if-no-files-found: warn
