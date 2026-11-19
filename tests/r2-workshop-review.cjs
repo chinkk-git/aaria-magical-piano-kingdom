@@ -47,6 +47,9 @@ const workerStub=`let requests=0;const xml=${JSON.stringify(xml)};self.onmessage
   assert.ok(id,'recognized score is saved automatically to the shared song catalog');
   const saved=await page.evaluate(expected=>window.PianoKingdomLibrary.songs[expected],id);
   assert.ok(saved.arrangements.basic?.events?.length,'valid Basic arrangement is available after recognition');
+  await page.locator('#playMySong').click();
+  await page.locator('#localSongWizard').waitFor({state:'hidden'});
+  await page.waitForFunction(expected=>document.querySelector('#songSelect')?.value===expected&&mode==='listen',id);
   await page.locator('#songPickerButton').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});
   await page.locator('.library-card').filter({hasText:'Reviewed Workshop Song'}).locator('select').selectOption('basic');
   await page.locator('.library-card').filter({hasText:'Reviewed Workshop Song'}).getByRole('button',{name:'Choose'}).click();
