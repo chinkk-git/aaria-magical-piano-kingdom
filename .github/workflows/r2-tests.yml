@@ -14,6 +14,7 @@ jobs:
       workshop: ${{ steps.route.outputs.workshop }}
       install: ${{ steps.route.outputs.install }}
       omr: ${{ steps.route.outputs.omr }}
+      visual: ${{ steps.route.outputs.visual }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,11 +26,12 @@ jobs:
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import subprocess
           paths=set(subprocess.check_output(["git","diff","--name-only","HEAD^","HEAD"],text=True).splitlines())
-          targeted={".github/workflows/r2-tests.yml",".github/workflows/piano-deploy.yml","index.html","sw.js","song-import.js","r2-music.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-workshop-review.cjs","tests/r2-install-gate.cjs","tests/r2-omr-ground-truth.cjs"}
+          targeted={".github/workflows/r2-tests.yml",".github/workflows/piano-deploy.yml","index.html","sw.js","song-import.js","r2-music.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-workshop-review.cjs","tests/r2-install-gate.cjs","tests/r2-omr-ground-truth.cjs","tests/r2-visual-gallery.cjs"}
           print("full=" + str(bool(paths-targeted)).lower())
           print("workshop=" + str(bool(paths & {"song-import.js","tests/r2-workshop-review.cjs"})).lower())
           print("install=" + str(bool(paths & {"index.html","sw.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-install-gate.cjs",".github/workflows/piano-deploy.yml"})).lower())
           print("omr=" + str(bool(paths & {"r2-music.js","r2-install.js","sw.js","tests/r2-omr-ground-truth.cjs",".github/workflows/piano-deploy.yml"})).lower())
+          print("visual=" + str("tests/r2-visual-gallery.cjs" in paths).lower())
           PY
   validate:
     needs: changes
@@ -100,6 +102,33 @@ jobs:
         run: npx playwright install chromium
       - name: Test installation gate, integrity, retry, storage and recovery
         run: node tests/r2-install-gate.cjs
+
+  visual-gallery:
+    needs: changes
+    if: needs.changes.outputs.visual == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install Playwright Chromium for screenshot capture
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install chromium
+      - name: Capture Release 2 development screens
+        env:
+          APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node tests/r2-visual-gallery.cjs
+      - name: Upload screenshot gallery
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-2-actual-screen-gallery-${{ github.event.pull_request.head.sha }}
+          path: release-2-actual-screen-gallery.zip
+          retention-days: 14
+          if-no-files-found: error
 
   omr-ground-truth:
     needs: changes
