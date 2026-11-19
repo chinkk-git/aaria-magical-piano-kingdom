@@ -5,7 +5,12 @@ from pathlib import Path
 ROOT = Path("_site")
 CHUNK = 4 * 1024 * 1024
 files = []
+OMR_PREFIXES = ("omr/", "models/", "lib/onnxruntime-web@1.30.0/")
+OMR_FILES = {"omr-worker.js"}
 for path in sorted(p for p in ROOT.rglob("*") if p.is_file() and p.name not in {"release2-install-manifest.json", ".nojekyll"}):
+    relative = path.relative_to(ROOT).as_posix()
+    if relative not in OMR_FILES and not relative.startswith(OMR_PREFIXES):
+        continue
     chunks = []
     digest = hashlib.sha256()
     size = 0

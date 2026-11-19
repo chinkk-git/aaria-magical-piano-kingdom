@@ -1,12 +1,8 @@
-const CACHE='aaria-piano-v1.19.0';
-const ORT='./lib/onnxruntime-web@1.30.0/dist/';
+const CACHE='aaria-piano-v1.20.0';
 const ASSETS=[
- './','./index.html','./assets/release2/magic-book.svg','./assets/release2/magic-bubble.svg','./r2-music.js?v=aaria-piano-r2.2','./r2-image.js?v=aaria-piano-r2.1','./piano-hero-v2.css?v=aaria-piano-v1.13.0','./piano-geometry.js','./song-import.js?v=aaria-piano-r2.3','./my-songs.js?v=aaria-piano-r2.3','./assets/piano-hero-v2/home_button.png','./assets/piano-hero-v2/settings_button.png','./omr-worker.js','./manifest.webmanifest','./r2-install.js?v=aaria-piano-r2.5','./release2-install-manifest.json',
+ './','./index.html','./assets/release2/magic-book.svg','./assets/release2/magic-bubble.svg','./r2-music.js?v=aaria-piano-r2.2','./r2-image.js?v=aaria-piano-r2.1','./piano-hero-v2.css?v=aaria-piano-v1.14.0','./piano-geometry.js','./song-import.js?v=aaria-piano-r2.4','./my-songs.js?v=aaria-piano-r2.4','./assets/piano-hero-v2/home_button.png','./assets/piano-hero-v2/settings_button.png','./omr-worker.js','./manifest.webmanifest','./r2-install.js?v=aaria-piano-r2.6','./release2-install-manifest.json',
  './icon-192.png','./icon-512.png','./icon-maskable-512.png','./apple-touch-icon.png',
  './OMR-THIRD-PARTY-NOTICES.md','./vendor/omr-licenses/partsong-LICENSE',
- './omr/partsong_omr.wasm','./omr/partsong_omr_fused.wasm','./omr/partsong_omr_threads.wasm','./omr/partsong_omr_threads_fused.wasm',
- './omr/encoder_pool.mjs','./omr/encoder_worker.mjs','./omr/encoder_gpu.mjs','./omr/encoder_gpu_math.mjs','./omr/encoder_gpu_kernels.mjs',
- `${ORT}ort.webgpu.min.mjs`,`${ORT}ort-wasm-simd-threaded.asyncify.mjs`,`${ORT}ort-wasm-simd-threaded.asyncify.wasm`
 ];
 self.addEventListener('install',event=>{event.waitUntil((async()=>{const cache=await caches.open(CACHE);for(const asset of ASSETS){const url=new URL(asset,self.registration.scope);if(asset==='./'||asset==='./index.html')url.searchParams.set('release',CACHE);const response=await fetch(url,{cache:'reload'});if(!response.ok)throw new Error(`Offline asset failed: ${asset} (${response.status})`);await cache.put(asset,response)}await self.skipWaiting()})())});
 async function cleanupPreviousShellCaches(){const keys=await caches.keys();await Promise.all(keys.filter(key=>(/^aaria-piano-v\d+\.\d+\.\d+$/.test(key)&&key!==CACHE)).map(key=>caches.delete(key)))}
