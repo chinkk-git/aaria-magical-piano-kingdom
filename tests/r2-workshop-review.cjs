@@ -21,7 +21,7 @@ const xml=`<?xml version="1.0"?><score-partwise version="3.1"><part-list><score-
 <note><pitch><step>F</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note><note><chord/><pitch><step>A</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note>
 <note><pitch><step>E</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note><note><chord/><pitch><step>G</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note>
 <note><pitch><step>D</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note><note><chord/><pitch><step>F</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note></measure></part></score-partwise>`;
-const workerStub=`let requests=0;const xml=${JSON.stringify(xml)};self.onmessage=({data})=>{if(data.type==='init'){self.postMessage({type:'ready'});return}if(data.type==='layout'){self.postMessage({type:'result',id:data.id,classes:[]});return}if(data.type==='recognise'){requests++;self.postMessage({type:'result',id:data.id,xml})}}`;
+const workerStub=`let requests=0,failFirstRecognition=true;const xml=${JSON.stringify(xml)};self.onmessage=({data})=>{if(data.type==='init'){self.postMessage({type:'ready'});return}if(data.type==='layout'){self.postMessage({type:'result',id:data.id,classes:[]});return}if(data.type==='recognise'){requests++;if(failFirstRecognition){failFirstRecognition=false;self.postMessage({type:'error',id:data.id,msg:'Simulated recognition failure'});return}self.postMessage({type:'result',id:data.id,xml})}}`;
 (async()=>{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox']});
@@ -41,10 +41,20 @@ const workerStub=`let requests=0;const xml=${JSON.stringify(xml)};self.onmessage
   await page.locator('#makeSong').click();
   await page.waitForFunction(()=>{const t=document.querySelector('#makeSong')?.textContent||'';return t.includes('Continue with photos')||t.includes('Reading music')||document.querySelector('#scoreReview:not([hidden])')});
   if((await page.locator('#makeSong').textContent()).includes('Continue with photos'))await page.locator('#makeSong').click();
-  await page.waitForFunction(()=>/Your magical song is ready|couldn.t|could not|try again|needs more free space|Wi-Fi/i.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:30000});
+  await page.waitForFunction(()=>document.querySelector('#makeSong')?.textContent.includes('Try again'),{timeout:30000});
+  assert.equal(await page.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).some(song=>song?.title==='Reviewed Workshop Song')),false,'recognition failure does not create a library record');
+  await page.evaluate(()=>{window.__originalSaveSong=window.PianoKingdomLibrary.saveSong;window.PianoKingdomLibrary.saveSong=async()=>{throw new Error('Simulated storage failure')}});
+  await page.locator('#makeSong').click();
+  await page.waitForFunction(()=>/This song could not be saved/i.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:30000});
+  assert.equal(await page.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).some(song=>song?.title==='Reviewed Workshop Song')),false,'storage failure does not claim a saved song');
+  assert.equal(await page.locator('#retrySongSave').isVisible(),true,'storage failure offers a retry');
+  await page.evaluate(()=>{window.PianoKingdomLibrary.saveSong=window.__originalSaveSong});
+  await page.locator('#retrySongSave').click();
+  await page.waitForFunction(()=>/Your magical song is ready/i.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:30000});
   assert.equal(await page.locator('#scoreReview').isVisible(),false,'recognition auto-saves without opening the optional editor');
   const id=await page.evaluate(()=>Object.keys(window.PianoKingdomLibrary.songs).find(k=>window.PianoKingdomLibrary.songs[k]?.title==='Reviewed Workshop Song'));
   assert.ok(id,'recognized score is saved automatically to the shared song catalog');
+  assert.equal(await page.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).filter(song=>song?.title==='Reviewed Workshop Song').length),1,'repeated save identity is represented by one library record');
   const saved=await page.evaluate(expected=>window.PianoKingdomLibrary.songs[expected],id);
   assert.ok(saved.arrangements.basic?.events?.length,'valid Basic arrangement is available after recognition');
   await page.locator('#playMySong').click();
