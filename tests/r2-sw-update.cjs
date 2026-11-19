@@ -12,7 +12,7 @@ const newWorker=fs.readFileSync(path.join(root,'sw.js'),'utf8');
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const installer=fs.readFileSync(path.join(root,'r2-install.js'),'utf8');
 const shellName='aaria-piano-v1.20.2';
-assert.match(newWorker,/const CACHE='aaria-piano-v1\.20\.1'/);
+assert.match(newWorker,/const CACHE='aaria-piano-v1\.20\.2'/);
 for(const url of [
   './r2-music.js?v=aaria-piano-r2.2',
   './r2-image.js?v=aaria-piano-r2.1',
