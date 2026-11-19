@@ -204,9 +204,46 @@ main[data-piano-layout="hero"] .compact-title{padding-left:max(4px,env(safe-area
 main[data-piano-layout="hero"] .compact-title .song-picker{order:1;flex:1 1 160px;min-width:0}
 main[data-piano-layout="hero"] .compact-title #zoomKeys{order:2;flex:0 0 auto}
 main[data-piano-layout="hero"] .compact-title #addSongOpen{order:3;flex:0 0 auto}
+
+/* Issue #11: the legacy short-viewport stylesheet hides .extras with
+   display:none!important. Keep Speed, Loop and measure selection available
+   in Android landscape by restoring the second row at usable touch sizes. */
+@media (orientation: landscape) and (max-height: 600px) {
+  main[data-piano-layout="hero"] #player {
+    grid-template-rows: minmax(34px, auto) minmax(36px, auto);
+    padding: 3px 6px;
+    gap: 2px 5px;
+  }
+  main[data-piano-layout="hero"] #player .extras {
+    display: flex !important;
+    grid-column: 1 / 4;
+    grid-row: 2;
+    align-items: center;
+    min-height: 36px;
+    justify-content: space-between;
+    gap: clamp(8px, 1.5vw, 14px);
+  }
+  main[data-piano-layout="hero"] #player .playback-mode-controls .mode-choice,
+  main[data-piano-layout="hero"] #player #pause {
+    min-height: 34px;
+    padding: 4px 8px;
+  }
+  main[data-piano-layout="hero"] #player .extras select {
+    min-height: 36px;
+  }
+  main[data-piano-layout="hero"] #player .extras input[type="range"] {
+    min-height: 32px;
+    touch-action: pan-x;
+  }
+}
 main[data-piano-layout="hero"] .compact-title #openMySongs{display:inline-flex!important;order:4;flex:0 0 auto;position:relative!important;inset:auto!important;margin:0!important;background-position:center;background-size:contain;background-repeat:no-repeat;color:transparent;z-index:3}
 main[data-piano-layout="hero"] .compact-title #setupKeyboard{order:5;flex:0 0 auto}
 main[data-piano-layout="hero"] .compact-title .kingdom-brand{order:6;flex:0 1 clamp(64px,12vw,136px);min-width:0}
+
+/* Keep the secondary playback row comfortable to tap on narrow portrait too. */
+main[data-piano-layout="hero"] #player .extras{min-height:36px}
+main[data-piano-layout="hero"] #player .extras select{min-height:36px}
+main[data-piano-layout="hero"] #player .extras input[type="range"]{min-height:32px;touch-action:pan-x}
 main[data-piano-layout="hero"] #heroPlayfield .magic-song-bubble{position:absolute;z-index:8;right:max(5px,env(safe-area-inset-right));top:clamp(42px,18%,calc(100% - var(--keybed-height) - 52px));bottom:auto;left:auto;transform:none;width:46px;height:46px;min-width:46px;min-height:46px;max-width:46px;padding:0;display:grid;place-items:center;border:1px solid #ffdc8f;border-radius:50%;background-image:url('./assets/release2/magic-bubble.svg'),linear-gradient(130deg,#623d9a,#31215f);background-size:27px 27px,cover;background-position:center;background-repeat:no-repeat;box-shadow:0 4px 16px #0009;color:transparent;font-size:0;touch-action:manipulation}
 main[data-piano-layout="hero"] #heroPlayfield .magic-song-bubble[hidden]{display:none}
 main[data-piano-layout="hero"] #heroPlayfield .magic-song-bubble:focus-visible{outline:3px solid #fff1bd;outline-offset:3px}
