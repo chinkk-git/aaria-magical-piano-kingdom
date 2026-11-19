@@ -144,41 +144,94 @@ const PianoHeroVisual=(()=>{
  const dust=Array.from({length:68},(_,i)=>({x:seeded(i*3+1),y:seeded(i*3+2),size:.45+seeded(i*3+3)*1.25,phase:seeded(i*7+4)*Math.PI*2,speed:.12+seeded(i*5+8)*.22,gold:i%3===0}));
  const stars=Array.from({length:12},(_,i)=>({x:.07+seeded(i*11+20)*.86,y:.06+seeded(i*11+21)*.78,phase:seeded(i*11+22)*Math.PI*2,size:1.8+seeded(i*11+23)*1.8,gold:i%2===0}));
  function atmosphere(ctx,w,h,hitY,now,reduced){
-  const moving=!reduced&&document.visibilityState!=='hidden',t=moving?now*.001:0;
-  const bloom=ctx.createRadialGradient(w*.5,0,1,w*.5,0,Math.max(80,w*.62));bloom.addColorStop(0,'#fff1c844');bloom.addColorStop(.12,'#d982ff25');bloom.addColorStop(1,'#9c50ff00');ctx.fillStyle=bloom;ctx.fillRect(0,0,w,hitY);
-  // Golden perspective borders with a moving highlight, below the notes.
-  for(const side of [-1,1]){
-   const edge=side<0?0:w,vanish=w*.5+(edge-w*.5)*.28;
-   ctx.beginPath();ctx.moveTo(vanish,0);ctx.lineTo(edge,hitY);ctx.strokeStyle='#ffdc7b';ctx.lineWidth=2.1;ctx.shadowColor='#ffb94f';ctx.shadowBlur=9;ctx.stroke();ctx.shadowBlur=0;
-   const shimmer= moving?((t*.115+(side<0?.12:.62))%1):.43,sy=hitY*shimmer,sx=w*.5+(edge-w*.5)*(.28+.72*shimmer);
-   const glint=ctx.createRadialGradient(sx,sy,0,sx,sy,15);glint.addColorStop(0,'#fff8d9dd');glint.addColorStop(.25,'#ffd3699c');glint.addColorStop(1,'#ffd36900');ctx.fillStyle=glint;ctx.fillRect(sx-15,sy-15,30,30);
+  const moving=!reduced&&document.visibilityState!=='hidden'&&['listen','follow','countdown'].includes(mode),t=moving?now*.001:0;
+  const pulse=moving?(0.92+0.08*Math.sin(t*1.15)):1;
+  // Layered violet and gold bloom concentrates at the highway's vanishing point.
+  const bloom=ctx.createRadialGradient(w*.5,0,1,w*.5,hitY*.14,Math.max(110,hitY*.72));
+  bloom.addColorStop(0,'#fff5d9'+Math.round(105*pulse).toString(16).padStart(2,'0'));
+  bloom.addColorStop(.09,'#ffd56b'+Math.round(57*pulse).toString(16).padStart(2,'0'));
+  bloom.addColorStop(.25,'#d982ff32');bloom.addColorStop(1,'#9c50ff00');
+  ctx.fillStyle=bloom;ctx.fillRect(0,0,w,Math.min(hitY,hitY*.72));
+  // A bright starburst at the vanishing point with soft, tapered rays.
+  const sx=w*.5,sy=Math.max(8,hitY*.025),burstR=Math.min(w*.23,hitY*.42);
+  const burst=ctx.createRadialGradient(sx,sy,0,sx,sy,burstR);
+  burst.addColorStop(0,'#fffef1'+Math.round(240*pulse).toString(16).padStart(2,'0'));
+  burst.addColorStop(.035,'#fff3c9'+Math.round(185*pulse).toString(16).padStart(2,'0'));
+  burst.addColorStop(.16,'#ffd66b55');burst.addColorStop(1,'#f3adff00');
+  ctx.fillStyle=burst;ctx.fillRect(sx-burstR,sy-burstR,burstR*2,burstR*2);
+  for(let i=0;i<11;i++){
+   const spread=(i-5)/5,reach=hitY*(.24+((i*7)%4)*.045),tipX=sx+spread*Math.min(w*.31,reach*.66);
+   ctx.beginPath();ctx.moveTo(sx+(i%2?1:-1),sy+3);
+   ctx.quadraticCurveTo(sx+spread*reach*.18,sy+reach*.34,tipX,sy+reach);
+   ctx.strokeStyle=i%3===0?'#fff0b95c':'#f1d9ff35';ctx.lineWidth=i%3===0?2.1:1.1;
+   ctx.shadowColor=i%3===0?'#ffdf86':'#d992ff';ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;
   }
-  // Slow flowing violet and gold ribbons follow the sides of the highway.
+  // Bright four-point star with a gentle pulse; kept above the note lanes.
+  const starR=clamp(w*.018,5,12);
+  ctx.save();ctx.translate(sx,sy);ctx.scale(pulse,pulse);
+  const star=ctx.createRadialGradient(0,0,0,0,0,starR*2.8);
+  star.addColorStop(0,'#ffffff');star.addColorStop(.22,'#fff6d2');star.addColorStop(1,'#ffcf6500');
+  ctx.fillStyle=star;ctx.beginPath();ctx.arc(0,0,starR*2.8,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fffdf0';ctx.beginPath();ctx.moveTo(0,-starR*2.2);ctx.quadraticCurveTo(starR*.18,-starR*.2,starR*2,0);ctx.quadraticCurveTo(starR*.18,starR*.2,0,starR*2.2);ctx.quadraticCurveTo(-starR*.18,starR*.2,-starR*2,0);ctx.quadraticCurveTo(-starR*.18,-starR*.2,0,-starR*2.2);ctx.fill();ctx.restore();
+  // Gold-lit perspective edges retain a bright core and soft reflected falloff.
+  for(const side of [-1,1]){
+   const edge=side<0?0:w,vanish=sx+(edge-sx)*.28;
+   const falloff=ctx.createLinearGradient(side<0?0:w,0,vanish,0);
+   falloff.addColorStop(0,'#ffcf6840');falloff.addColorStop(.42,'#ffcf6814');falloff.addColorStop(1,'#ffcf6800');
+   ctx.fillStyle=falloff;ctx.fillRect(Math.min(edge,vanish)-15,0,Math.abs(edge-vanish)+15,hitY);
+   ctx.beginPath();ctx.moveTo(vanish,0);ctx.lineTo(edge,hitY);ctx.strokeStyle='#fff0bc';ctx.lineWidth=2.6;ctx.shadowColor='#ffb733';ctx.shadowBlur=16;ctx.stroke();ctx.shadowBlur=0;
+   const shimmer=moving?((t*.12+(side<0?.12:.62))%1):.43,sy2=hitY*shimmer,sx2=sx+(edge-sx)*(.28+.72*shimmer);
+   const glint=ctx.createRadialGradient(sx2,sy2,0,sx2,sy2,22);glint.addColorStop(0,'#fffbe5ee');glint.addColorStop(.22,'#ffd369bb');glint.addColorStop(1,'#ffd36900');ctx.fillStyle=glint;ctx.fillRect(sx2-22,sy2-22,44,44);
+  }
+  // Three broad S-curves per side, each built from smooth cubic segments and
+  // layered gold/violet strands. Their paths stay outside the central note lanes.
   for(let sideIndex=0;sideIndex<2;sideIndex++){
-   const side=sideIndex===0?-1:1,base=side<0?w*.055:w*.945,sign=side;
-   for(let ribbon=0;ribbon<2;ribbon++){
-    const phase=(moving?t*(.24+ribbon*.08):0)+ribbon*2.1+sideIndex*1.35;
-    ctx.beginPath();
-    for(let j=0;j<=8;j++){
-     const q=j/8,y=hitY*(.08+q*.84),wave=Math.sin(q*8+phase)*w*(.018+ribbon*.009),x=base+wave+sign*w*q*.012;
-     if(j===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+   const side=sideIndex===0?-1:1,outer=side<0?w*.055:w*.945;
+   for(let ribbon=0;ribbon<3;ribbon++){
+    const phase=(moving?t*(.42+ribbon*.075):0)+ribbon*1.42+sideIndex*1.05;
+    const amp=w*(.026+ribbon*.005),offset=side*(w*(.028+ribbon*.012));
+    const gold=(ribbon+sideIndex)%2===0;
+    for(let strand=0;strand<3;strand++){
+     const shift=(strand-1)*w*.008,alpha=[.29,.56,.31][strand],weight=[5.2,2.1,1.05][strand];
+     ctx.beginPath();
+     for(let seg=0;seg<4;seg++){
+      const q0=seg/4,q1=(seg+1)/4,y0=hitY*(.07+q0*.86),y1=hitY*(.07+q1*.86);
+      const wave=q=>Math.sin(q*Math.PI*2+phase)*amp;
+      const x0=outer+offset+shift+side*w*(q0*.018)+wave(q0),x1=outer+offset+shift+side*w*(q1*.018)+wave(q1);
+      const c1x=outer+offset+shift+side*w*(q0*.018)+wave(q0+.08),c2x=outer+offset+shift+side*w*(q1*.018)+wave(q1-.08);
+      if(seg===0)ctx.moveTo(x0,y0);
+      ctx.bezierCurveTo(c1x,y0+(y1-y0)*.34,c2x,y0+(y1-y0)*.66,x1,y1);
+     }
+     ctx.strokeStyle=gold?'rgba(255,199,83,'+(alpha*.8)+')':'rgba(221,148,255,'+(alpha*.82)+')';
+     ctx.lineWidth=weight;ctx.shadowColor=gold?'#ffb52f':'#bf5cff';ctx.shadowBlur=strand===1?13:7;ctx.stroke();ctx.shadowBlur=0;
     }
-    const gold=(ribbon+sideIndex)%2===0;ctx.strokeStyle=gold?'#ffbf4c36':'#d67cff46';ctx.lineWidth=ribbon===0?3:1.5;ctx.shadowColor=gold?'#ffb530':'#bb4dff';ctx.shadowBlur=gold?8:7;ctx.stroke();ctx.shadowBlur=0;
+    // Warm/cool particles ride the curve, with small trailing points for depth.
+    for(let p=0;p<7;p++){
+     const q=((p/7+(moving?t*(.11+ribbon*.013):.46)+ribbon*.19+sideIndex*.11)%1),py=hitY*(.07+q*.86);
+     const px=outer+offset+side*w*(q*.018)+Math.sin(q*Math.PI*2+phase)*amp;
+     const radius=.8+((p+ribbon)%3)*.7,particleGold=(p+ribbon+sideIndex)%2===0;
+     const halo=ctx.createRadialGradient(px,py,0,px,py,radius*4.7);
+     halo.addColorStop(0,particleGold?'#fff6cfdd':'#ffe0ffdc');halo.addColorStop(.23,particleGold?'#ffd15e95':'#d77aff98');halo.addColorStop(1,'#c563ff00');
+     ctx.fillStyle=halo;ctx.fillRect(px-radius*5,py-radius*5,radius*10,radius*10);
+     ctx.fillStyle=particleGold?'#fff1ba':'#f3d6ff';ctx.beginPath();ctx.arc(px,py,radius,0,Math.PI*2);ctx.fill();
+     for(let tail=1;tail<=3;tail++){const tq=Math.max(0,q-tail*.009),ty=hitY*(.07+tq*.86),tx=outer+offset+side*w*(tq*.018)+Math.sin(tq*Math.PI*2+phase)*amp;ctx.globalAlpha=.48/tail;ctx.beginPath();ctx.arc(tx,ty,radius*(.72/tail),0,Math.PI*2);ctx.fill()}
+     ctx.globalAlpha=1;
+    }
    }
   }
-  // Small stardust avoids active note faces and the keyboard landing line.
-  const count=clamp(Math.round(w*h*.00019),42,68);
+  // Gold and violet dust uses fixed seeded positions for stable Android rendering.
+  const count=clamp(Math.round(w*h*.00021),54,82);
   for(let i=0;i<count;i++){
-   const p=dust[i],drift=moving?Math.sin(t*p.speed+p.phase)*.008:0;
+   const p=dust[i],drift=moving?Math.sin(t*p.speed+p.phase)*.006:0;
    const x=clamp((p.x+drift)*w,2,w-2),y=(.04+p.y*.9)*hitY;
-   const twinkle=reduced?.23:(.2+.42*(.5+.5*Math.sin(t*(1.4+p.speed*3)+p.phase)));
-   ctx.globalAlpha=twinkle;ctx.fillStyle=p.gold?'#ffd56b':'#e6b8ff';ctx.beginPath();ctx.arc(x,y,p.size,0,Math.PI*2);ctx.fill();
-   if(i%9===0){ctx.globalAlpha=twinkle*.55;ctx.strokeStyle=p.gold?'#ffe69b':'#f1d2ff';ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(x-p.size*2.4,y);ctx.lineTo(x+p.size*2.4,y);ctx.moveTo(x,y-p.size*2.4);ctx.lineTo(x,y+p.size*2.4);ctx.stroke()}
+   const twinkle=reduced?.20:(.24+.48*(.5+.5*Math.sin(t*(1.4+p.speed*3)+p.phase)));
+   ctx.globalAlpha=twinkle;ctx.fillStyle=p.gold?'#ffd56b':'#e6b8ff';ctx.beginPath();ctx.arc(x,y,p.size*1.05,0,Math.PI*2);ctx.fill();
+   if(i%8===0){ctx.globalAlpha=twinkle*.62;ctx.strokeStyle=p.gold?'#ffe69b':'#f1d2ff';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(x-p.size*2.7,y);ctx.lineTo(x+p.size*2.7,y);ctx.moveTo(x,y-p.size*2.7);ctx.lineTo(x,y+p.size*2.7);ctx.stroke()}
   }
   ctx.globalAlpha=1;
-  // Four-point star glints, staggered in time and kept above the keyboard.
-  for(const s of stars){const pulse=reduced?.28:(.12+.88*(.5+.5*Math.sin(t*1.2+s.phase)));const x=s.x*w,y=Math.min(s.y*hitY,hitY-18),r=s.size;
-   ctx.globalAlpha=pulse*.72;ctx.fillStyle=s.gold?'#ffe39a':'#f0c2ff';ctx.beginPath();ctx.moveTo(x,y-r*2.3);ctx.quadraticCurveTo(x-r*.25,y-r*.2,x-r*2.2,y);ctx.quadraticCurveTo(x-r*.25,y+r*.2,x,y+r*2.3);ctx.quadraticCurveTo(x+r*.25,y+r*.2,x+r*2.2,y);ctx.quadraticCurveTo(x+r*.25,y-r*.2,x,y-r*2.3);ctx.fill();
+  for(const s of stars){
+   const pulseStar=reduced?.28:(.12+.88*(.5+.5*Math.sin(t*1.2+s.phase))),x=s.x*w,y=Math.min(s.y*hitY,hitY-18),r=s.size;
+   ctx.globalAlpha=pulseStar*.72;ctx.fillStyle=s.gold?'#ffe39a':'#f0c2ff';ctx.beginPath();ctx.moveTo(x,y-r*2.3);ctx.quadraticCurveTo(x-r*.25,y-r*.2,x-r*2.2,y);ctx.quadraticCurveTo(x-r*.25,y+r*.2,x,y+r*2.3);ctx.quadraticCurveTo(x+r*.25,y+r*.2,x+r*2.2,y);ctx.quadraticCurveTo(x+r*.25,y-r*.2,x,y-r*2.3);ctx.fill();
   }
   ctx.globalAlpha=1;
  }
