@@ -136,7 +136,6 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   assert.deepEqual(cancelErrors,[],'cancel flow has no uncaught browser errors');
   await cancelPage.close();
 
-  const sha=process.env.APP_SOURCE_SHA||'local';
   const importPageCount=async(count,title)=>{
    await page.locator('#openMySongs').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.locator('#makeNewSong').click();await page.locator('#localSongWizard').waitFor({state:'visible'});
    await page.locator('#scoreSongTitle').fill(title);
