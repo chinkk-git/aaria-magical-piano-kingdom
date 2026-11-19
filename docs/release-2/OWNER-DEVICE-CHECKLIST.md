@@ -1,4 +1,36 @@
-# Release 2 V1 owner device-testing checklist
+# Release 2 owner device-testing checklist
+
+**Updated:** 2026-11-19  
+**Current production baseline:** `f9739d0071e6e8586e3d9f1b5a049cea9b50534f`, app build `aaria-piano-v1.20.3`. GitHub Pages deploy workflow run [#44585961860](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44585961860) succeeded.  
+**Physical-device results:** PENDING. Chromium emulation is not a physical-device result.
+
+## Android installed PWA — owner run
+
+Record device model, Android version, Chrome version, app-installed state, date, result and any error. Use a test song/fixture where practical.
+
+- [ ] Open Settings; record installed build and check for update when Worker 1 PR-A is available.
+- [ ] Install/update/reopen without uninstalling or clearing site data; verify the new build after restart.
+- [ ] Verify Library, saved-song count, favorites and recent song remain.
+- [ ] Check Magical Piano Hero in portrait and landscape: song picker, Zoom Keys, Home, Settings, Speed, Loop and measure selection.
+- [ ] Play, pause, resume, complete, use Play Again and verify Listen On/Off preference.
+- [ ] Add New Song: camera and gallery selection, preview, Make Music, progress, minimize/restore, cancel confirmation, retry, save once, reopen and playback.
+- [ ] After the OMR reader is installed, disable network and verify local recognition/playback if the workflow is cleared for testing.
+- [ ] Verify saved songs, favorites, imported score data and verified OMR cache survive app update.
+- [ ] Record touch target, focus/status announcement and text-size behavior.
+
+## Automated browser evidence (emulation only)
+
+The PR #37 Release 2 validation run [#44584621784](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44584621784) reports Chromium interaction/responsive coverage at:
+
+- Android portrait 390×844; landscape 844×390 and 915×412.
+- iPad portrait 834×1194 and landscape 1194×834.
+- Desktop 1440×900.
+
+These are browser-emulated viewports, not physical devices. Worker 1 PRs should attach updated screenshots and label them Chromium emulation.
+
+## Historical V1 review-site instructions
+
+The previous checklist below described PR #20's self-contained review artifact and is retained for history only; its opening status is stale.
 
 Release 2 remains in PR #20 and is not deployed. The PR Actions workflow builds a self-contained review site as an artifact; it does not publish to GitHub Pages.
 
