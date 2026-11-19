@@ -19,7 +19,7 @@ const score={id:'custom-note-explosion-check',title:'Note Explosion Check',total
 let browser;
 async function addScore(page){await page.evaluate(song=>window.PianoKingdomLibrary.addSong(song,{select:true}),score)}
 async function playFromStart(page){await page.evaluate(()=>{mode='stop';pausedMode=null;seekAbsolute(0);startMode('listen')})}
-async function assertImpactAlignment(page,detail){const key=await page.locator(`#keys [data-pitch="${detail.pitch}"]`).boundingBox(),canvas=await page.locator('#rain').boundingBox();assert.ok(key&&canvas,`key ${detail.pitch} and note highway are rendered`);assert.ok(Math.abs(detail.x-(key.x+key.width/2-canvas.x))<1,`pitch ${detail.pitch} impact is centered on its DOM piano key`);assert.ok(Math.abs(detail.y-(key.y-canvas.y))<1,`pitch ${detail.pitch} impact is at the keyboard hit line`)}
+async function assertImpactAlignment(page,detail){const key=await page.locator(`#keys [data-pitch="${detail.pitch}"]`).boundingBox(),canvas=await page.locator('#rain').boundingBox();assert.ok(key&&canvas,`key ${detail.pitch} and note highway are rendered`);assert.ok(Math.abs(detail.x-(key.x+key.width/2-canvas.x))<1,`pitch ${detail.pitch} impact is centered on its DOM piano key`);assert.ok(Math.abs(detail.y-(key.y-canvas.y))<1,`pitch ${detail.pitch} impact y=${detail.y} is at keyboard hit line y=${key.y-canvas.y} (canvas y=${canvas.y}, key y=${key.y})`)}
 (async()=>{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox']});
