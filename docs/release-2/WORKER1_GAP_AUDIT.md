@@ -74,3 +74,20 @@ This replaces the prior pending/failing PR #42 snapshot above where it differs.
 The earlier actual-engine attempt [#44594125078](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44594125078) did not reach recognition. Its test waited for an OMR startup installer gate that had been removed for the on-demand flow; the page reported installer state `idle`, workshop status “Choose a photo to begin.”, and the 600-second wait expired. Therefore no real OMR semantic pass or fail was observed in that attempt. The harness now waits for the usable app and exercises photo → local recognition → automatic save → Library → playback. The current full run must establish the outcome before this gate is revised.
 
 Physical-device acceptance remains **PENDING**. OMR model/training-data rights remain **LEGAL REVIEW REQUIRED**. No implementation PR is merged or deployed; Release 2 is not owner-approved.
+
+
+## Final execution disposition — 2026-11-19 17:08 BRT
+
+This section supersedes earlier pending CI statements above. Current production baseline remains `f9739d0071e6e8586e3d9f1b5a049cea9b50534f` / `aaria-piano-v1.20.3`; implementation work remains draft-only.
+
+| ID | Current disposition | Evidence / remaining action |
+|---|---|---|
+| R2-W1-01 | **PASS — draft CI** | PR #40 head `3c888b7d32f3509658d5ebc26151eb0e73d58e44`; run [#44604767446](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44604767446) passed safe update/restart, post-reload build verification and data/cache retention. Physical test pending. |
+| R2-W1-02/03 | **PASS — targeted browser CI** | PR #41 head `3223f440d5ad836e49f9f756914b67da348abd8f`; [#44598893902](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44598893902) passed progress/minimize and confirmed-cancel checks using a controlled worker. Device coverage pending. |
+| R2-W1-04/05 | **PASS — combined browser CI** | PR #42 head `12813501a84b566779b2375c4a08b4d4caa2327c`; combined run [#44605132631](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44605132631) passed both jobs. Artifact [#14569958368](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44605132631/artifacts/14569958368). |
+| R2-W1-06 | **PASS — pinned-engine semantic CI; device pending** | Real pinned image recognition through production MusicXML tick conversion, Basic, save, reopen and playback passed in runs [#44604767446](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44604767446) and [#44605132631](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44605132631). All 8 fixture events matched; bars `[8,8]`, 72 BPM, playback gaps approximately 0.83 seconds. This does not substitute for physical-device/offline testing. |
+| R2-W1-07 | **BLOCKED — LEGAL REVIEW REQUIRED** | Weight licensing, training-data provenance and downstream distribution obligations require qualified review. |
+| R2-W1-08 | **PENDING owner physical-device evidence** | Checklist covers Android, iPhone, iPad and MacBook. Chromium viewport tests are emulation only. |
+| R2-W1-09 | **Control Tower updated; final closeout open** | Issue #11 has periodic progress reports, including the latest combined CI pass. PR #39 is being updated to this evidence. |
+
+All implementation PRs #40–#42 and docs PR #39 remain drafts. No code has been merged/deployed. Release 2 is not owner-approved. The only remaining gates outside automated Worker 1 implementation acceptance are owner physical-device/offline results and qualified OMR licensing/provenance review.
