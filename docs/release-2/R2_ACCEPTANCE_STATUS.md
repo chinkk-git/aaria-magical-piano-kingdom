@@ -75,3 +75,30 @@ Current draft heads and CI:
 - PR #42: `12813501a84b566779b2375c4a08b4d4caa2327c`; combined run [#44605132631](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44605132631) passed browser regression and the real pinned-engine acceptance. Artifact [#14569958368](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44605132631/artifacts/14569958368).
 
 Actual OMR fixture: 8/8 expected pitches and complete measure/onset/duration events matched through production app conversion, Basic, automatic save, Library reopen and playback scheduler; two 8-tick bars, 72 BPM, approximately 0.83-second quarter-note gaps. All results are CI/Chromium, not physical device acceptance. W1-07 remains **LEGAL REVIEW REQUIRED**; W1-08 remains **PENDING**. All implementation PRs remain drafts; no merge/deploy; Release 2 is not owner-approved.
+
+
+## Worker 1 final integration and production status — 2026-11-19 18:03 BRT
+
+This is the latest status and supersedes earlier draft-only and pre-deployment snapshots above. It records publication of the authorized functional improvements only; it does not mark all Release 2 owner/device or licensing gates complete.
+
+| Item | Final status / evidence |
+|---|---|
+| PR #40 — update check and safe restart | Merged as `f3789b9626bef188c7cf17454800db95e6a04837`. |
+| PR #42 — playback completion / Play Again | Merged as `335fb3d6f0b6d00d749afdcd7da212fe4d39a5c6`. |
+| Final integrated main commit | `335fb3d6f0b6d00d749afdcd7da212fe4d39a5c6`. |
+| GitHub Pages | Deploy run [#44614631492](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44614631492) completed successfully for the final integrated commit. |
+| Production URL | https://chinkk-git.github.io/aaria-magical-piano-kingdom/ |
+| Expected production app build | `aaria-piano-v1.20.4`, confirmed in merged `pwa-update.js` and service-worker cache identifier. |
+| Live UI version verification | **NOT VERIFIED**: production Settings shows “Installed build: not verified yet”; Check for Updates then reports the active-task safety message while visible playback is idle and the song editor is closed. This remains a production verification issue; deployment success is not treated as proof of runtime version identification. |
+| Live app/navigation | Production loaded the Magical Piano Hero home; opening Magical Song Library succeeded. |
+| CI — integrated Release 2 | [#44613963886](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44613963886) passed applicable validation, installer/recovery, visual gallery, Android portrait/landscape emulation and playback-state evidence. |
+| CI — updater/data retention + real-engine OMR | [#44613951535](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44613951535) passed both jobs. It covered data/cache retention and the pinned actual-engine fixture. |
+| CI — note effect / Listen preference | [Note explosion #44613963849](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44613963849) and [Listen preference #44613963721](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44613963721) passed. |
+| Real OMR fixture | Actual pinned-engine path passed Image → MusicXML → production timing conversion → Basic arrangement → save → Library → scheduled playback; all 8 expected pitches/timing events matched. Integrated online/offline recognition passed in [#44612917269](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44612917269). |
+| Saved data / OMR cache | Updater regression passed preservation checks for saved songs, favorites, IndexedDB records and verified OMR cache. No migration or deletion was part of these changes. |
+| Physical-device acceptance | **PENDING**. CI viewport coverage is browser emulation, not physical Android/iOS/iPadOS/MacBook testing. Owner checklist above remains unchecked. |
+| OMR legal/provenance clearance | **LEGAL REVIEW REQUIRED**. This work changed no OMR models, datasets, license declarations or dependency packaging. |
+
+### Remaining issue
+
+The installed-build identity/update-check flow needs diagnosis or a physical PWA session that proves the task guard is accurately detecting a genuinely active task. Until the runtime check can identify the installed build, mark that production acceptance row NOT VERIFIED.
