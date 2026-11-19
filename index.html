@@ -113,7 +113,7 @@ function spawnNoteExplosion(note,now,measuredGeometry){
  const impactX=(keyRect.left+keyRect.right)/2-canvasRect.left,impactY=keyRect.top-canvasRect.top;
  const left=note.part==='piano-lh'||note.hand==='left',colorIndex=handColours?(left?1:0):2;
  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
- noteFlashStart[midi]=now;noteFlashEnd[midi]=now+(reduced?.12:NOTE_FX_DURATION);noteFlashX[midi]=impactX;noteFlashY[midi]=impactY;noteFlashColor[midi]=colorIndex;
+ noteFlashStart[midi]=now;noteFlashEnd[midi]=now+(reduced?120:NOTE_FX_DURATION*1000);noteFlashX[midi]=impactX;noteFlashY[midi]=impactY;noteFlashColor[midi]=colorIndex;
  key.style.setProperty('--impact-color',NOTE_FX_COLORS[colorIndex]);
  if(!reduced){
   const count=5+(midi%4);
