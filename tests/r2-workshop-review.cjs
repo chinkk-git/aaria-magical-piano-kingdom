@@ -173,7 +173,11 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   await context.setOffline(false);
   await page.setViewportSize({width:844,height:390});
   const landscape=await page.locator('#workshopProgress').boundingBox(),landscapeActions=await page.locator('#workshopPrimaryActions').boundingBox();
-  assert.ok(landscape.y+landscape.height<=390&&landscapeActions.y+landscapeActions.height<=390,'landscape progress and actions fit within the viewport');
+  const landscapeDialog=await page.locator('#localSongWizard').evaluate(el=>({rect:el.getBoundingClientRect().toJSON(),clientHeight:el.clientHeight,scrollHeight:el.scrollHeight,overflow:getComputedStyle(el).overflowY}));
+  assert.ok(landscapeDialog.rect.height<=390&&landscapeDialog.scrollHeight>landscapeDialog.clientHeight&&landscapeDialog.overflow==='auto','landscape Workshop remains viewport-bounded and scrollable');
+  await page.locator('#localSongWizard').evaluate(el=>{el.scrollTop=el.scrollHeight});
+  const actionsAfterScroll=await page.locator('#workshopPrimaryActions').boundingBox(),dialogAfterScroll=await page.locator('#localSongWizard').boundingBox();
+  assert.ok(actionsAfterScroll.y>=dialogAfterScroll.y&&actionsAfterScroll.y+actionsAfterScroll.height<=dialogAfterScroll.y+dialogAfterScroll.height,'landscape actions remain reachable by scrolling');
   await page.screenshot({path:`/tmp/magic-music-progress-landscape-${sha}.png`});
   await page.locator('#closeSongWizard').click();await page.locator('#localSongWizard').waitFor({state:'hidden'});
   console.log('Workshop progress checks passed: one-page existing import, three-page import, 20-page offline run, monotonic page completion, measured ETA, photo/action spacing, portrait/landscape screenshots, save/retry and cancellation recovery.');
