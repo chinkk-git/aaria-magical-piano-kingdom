@@ -35,6 +35,36 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   await card.locator('select').selectOption('medium');await card.getByRole('button',{name:'▶ Play'}).click();
   await page.waitForFunction(()=>document.querySelector('#songSelect')?.value==='custom-r2-browser-smoke');
   assert.equal(await dlg.evaluate(el=>el.open),false,'selecting Play returns to the piano');
+  await page.evaluate(async()=>{
+    const song={id:'custom-play-again-state',title:'Play Again State Fixture',events:[{bar:1,at:0,dur:2,midi:60,hand:'right'},{bar:2,at:0,dur:2,midi:62,hand:'right'}],total:2,barLengths:[8,8],bpm:240,imported:true,difficulty:{level:'easy',reasons:[]},arrangements:{}};
+    await window.PianoKingdomLibrary.saveSong(song);window.PianoKingdomLibrary.addSong(song,{select:false});window.PianoKingdomLibrary.selectSong(song.id);
+  });
+  assert.equal(await page.locator('#pause').isDisabled(),true,'READY cannot display a misleading Resume action');
+  await page.locator('#speed').evaluate(el=>{el.value='120';el.dispatchEvent(new Event('input',{bubbles:true}))});
+  await page.locator('#listenToggle').click();assert.equal(await page.locator('#listenToggle').getAttribute('aria-pressed'),'false','Listen Off mutes sound without disabling visual playback');
+  await page.locator('#listenToggle').click();assert.equal(await page.locator('#listenToggle').getAttribute('aria-pressed'),'true','Listen On restores the sound preference');
+  await page.locator('#bar').selectOption('2');assert.match(await page.locator('#position').textContent(),/Measure 2 of 2/,'passage selection updates the displayed measure');
+  await page.locator('#loopRange').selectOption('1');
+  await page.locator('#secondaryModeButton').click();await page.waitForFunction(()=>mode==='listen');
+  await page.locator('#pause').click();await page.waitForFunction(()=>mode==='stop'&&pausedMode==='listen');assert.match(await page.locator('#pause').textContent(),/Resume/,'PLAYING to PAUSED displays Resume');
+  await page.locator('#pause').click();await page.waitForFunction(()=>mode==='listen');assert.match(await page.locator('#pause').textContent(),/Pause/,'PAUSED to PLAYING displays Pause');
+  await page.waitForTimeout(1900);assert.equal(await page.evaluate(()=>mode==='listen'&&bar===2),true,'loop mode repeats the selected measure instead of completing');
+  await page.locator('#loopRange').selectOption('0');await page.waitForFunction(()=>mode==='completed',{timeout:10000});
+  assert.match(await page.locator('#pause').textContent(),/Play Again/,'COMPLETED exposes the Play Again action');
+  assert.match(await page.locator('#status').textContent(),/Song complete.*Play Again/,'completion status announces the available restart action');
+  await page.screenshot({path:`/tmp/piano-playback-state-390x844-${process.env.APP_SOURCE_SHA||'local'}.png`});
+  await page.locator('#pause').click();await page.waitForFunction(()=>mode==='listen'&&bar===1&&beat<1,{timeout:5000});
+  assert.equal(await page.locator('#pause').isDisabled(),false,'restarted playback is active at the first measure');
+  assert.equal(await page.locator('#bar').inputValue(),'1','Play Again updates the selected measure control to measure 1');
+  await page.screenshot({path:`/tmp/piano-playback-restart-390x844-${process.env.APP_SOURCE_SHA||'local'}.png`});
+  await page.setViewportSize({width:844,height:390});await page.locator('#pause').click();await page.waitForFunction(()=>mode==='stop'&&pausedMode==='listen');assert.match(await page.locator('#pause').textContent(),/Resume/,'playback can be paused before switching layouts');
+  await page.evaluate(()=>applyPianoLayout('classic',false));
+  assert.equal(await page.locator('#primaryModeButton').textContent(), '✨ Learn','Classic Piano keeps its Learn action');
+  await page.locator('#secondaryModeButton').click();await page.waitForFunction(()=>mode==='listen');
+  await page.waitForFunction(()=>mode==='completed',{timeout:10000});
+  assert.match(await page.locator('#pause').textContent(),/Play Again/,'Classic playback reaches the same completed state');
+  await page.setViewportSize({width:844,height:390});await page.screenshot({path:`/tmp/piano-playback-state-844x390-${process.env.APP_SOURCE_SHA||'local'}.png`});
+
   const bounds=await page.locator('#openMySongs').boundingBox();assert.ok(bounds.height>=42,'song library control has a touch target');
   await page.locator('#openMySongs').click();await page.locator('#makeNewSong').click();
   const wizard=page.locator('#localSongWizard');await wizard.waitFor({state:'visible'});
