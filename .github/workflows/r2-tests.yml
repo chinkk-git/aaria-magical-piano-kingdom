@@ -25,11 +25,11 @@ jobs:
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import subprocess
           paths=set(subprocess.check_output(["git","diff","--name-only","HEAD^","HEAD"],text=True).splitlines())
-          targeted={".github/workflows/r2-tests.yml",".github/workflows/piano-deploy.yml","index.html","sw.js","song-import.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-workshop-review.cjs","tests/r2-install-gate.cjs","tests/r2-omr-ground-truth.cjs"}
+          targeted={".github/workflows/r2-tests.yml",".github/workflows/piano-deploy.yml","index.html","sw.js","song-import.js","r2-music.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-workshop-review.cjs","tests/r2-install-gate.cjs","tests/r2-omr-ground-truth.cjs"}
           print("full=" + str(bool(paths-targeted)).lower())
           print("workshop=" + str(bool(paths & {"song-import.js","tests/r2-workshop-review.cjs"})).lower())
           print("install=" + str(bool(paths & {"index.html","sw.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-install-gate.cjs",".github/workflows/piano-deploy.yml"})).lower())
-          print("omr=" + str(bool(paths & {"r2-install.js","sw.js","tests/r2-omr-ground-truth.cjs",".github/workflows/piano-deploy.yml"})).lower())
+          print("omr=" + str(bool(paths & {"r2-music.js","r2-install.js","sw.js","tests/r2-omr-ground-truth.cjs",".github/workflows/piano-deploy.yml"})).lower())
           PY
   validate:
     needs: changes

@@ -40,7 +40,8 @@
       for(const source of byBeat.values()){const e=cloneEvent(source);while(e.midi<48)e.midi+=12;while(e.midi>84)e.midi-=12;e.hand='right';e.part='piano-rh';basic.push(e)}
     }
     basic.sort((a,b)=>a.bar-b.bar||a.at-b.at||a.midi-b.midi);
-    if(basic.length>0&&basic.length<original.length&&basic.every(e=>e.midi>=21&&e.midi<=108))versions.basic=makeVersion(score,basic,'Basic');
+    // A score that is already one right-hand note per beat is still a valid Basic arrangement.
+    if(basic.length>0&&basic.every(e=>e.midi>=21&&e.midi<=108))versions.basic=makeVersion(score,basic,'Basic');
     const medium=[];
     for(const g of groups){
       const left=g.events.filter(e=>e.hand==='left').sort((a,b)=>a.midi-b.midi),right=g.events.filter(e=>e.hand!=='left').sort((a,b)=>b.midi-a.midi);
