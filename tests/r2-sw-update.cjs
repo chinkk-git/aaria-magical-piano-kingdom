@@ -206,7 +206,7 @@ const server=http.createServer((req,res)=>{
     await reopened.waitForFunction(()=>document.querySelector('#appBuildInfo')?.textContent.includes('aaria-piano-v1.20.6'),null,{timeout:10000});
     const afterConfirmedRestart=await reopened.evaluate(async()=>({build:document.querySelector('#appBuildInfo')?.textContent,status:document.querySelector('#appUpdateStatus')?.textContent,caches:await caches.keys(),song:JSON.parse(localStorage.getItem('aaria-piano-custom-songs-v1')||'[]').find(s=>s.id==='kept-song'),favorite:JSON.parse(localStorage.getItem('aaria-piano-favorites-v1')||'[]').includes('kept-song'),verified:await(async()=>{const cache=await caches.open('aaria-piano-r2-install-v1');const response=await cache.match('./models/verified-fixture.onnx');return response?.text()})()}));
     assert.match(afterConfirmedRestart.build,/aaria-piano-v1.20.6/,'Settings reports the future worker build after restart');
-    assert.match(afterConfirmedRestart.status,/Update installed and verified: aaria-piano-v1.20.5/,'restart is confirmed only after the active worker reports the expected build');
+    assert.match(afterConfirmedRestart.status,/Update installed and verified: aaria-piano-v1.20.6/,'restart is confirmed only after the active worker reports the future build');
     assert.ok(afterConfirmedRestart.caches.includes('aaria-piano-v1.20.6'));
     assert.ok(!afterConfirmedRestart.caches.includes('aaria-piano-v1.20.5'),'the prior app-shell cache is retired');
     assert.equal(afterConfirmedRestart.song?.title,'Saved fixture','confirmed restart preserves the saved song');
