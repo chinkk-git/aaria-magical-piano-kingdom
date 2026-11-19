@@ -59,7 +59,7 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   await page.locator('.magic-song-bubble').click();await page.locator('#localSongWizard').waitFor({state:'visible'});
   await page.waitForTimeout(5000);
   const saveFailureState=await page.evaluate(()=>({status:document.querySelector('#scoreImportStatus')?.textContent,stage:document.querySelector('#workshopStage')?.textContent,pages:document.querySelector('#workshopProgressPages')?.textContent,eta:document.querySelector('#workshopProgressEta')?.textContent,retry:document.querySelector('#retrySongSave')?.hidden,busy:window.AariaSongImportIsBusy?.()}));console.log('save failure state',JSON.stringify({saveFailureState,errors}));
-  assert.match(saveFailureState.status,/This song could not be saved/i,'simulated Library save failure is reported clearly');
+  assert.match(saveFailureState.status,/needs help saving/i,'simulated Library save failure is reported clearly');
   assert.equal(await page.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).some(song=>song?.title==='Automatic Workshop Song')),false,'storage failure does not claim a saved song');
   assert.equal(await page.locator('#retrySongSave').isVisible(),true,'storage failure offers a retry');
   await page.evaluate(()=>{window.PianoKingdomLibrary.saveSong=window.__originalSaveSong});
