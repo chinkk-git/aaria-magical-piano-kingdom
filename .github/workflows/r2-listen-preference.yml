@@ -2,7 +2,7 @@ name: Release 2 Listen Preference
 
 on:
   pull_request:
-    branches: [hotfix/android-pwa-stale-shell-recovery]
+    branches: [main, hotfix/android-pwa-stale-shell-recovery]
     paths:
       - index.html
       - sw.js
