@@ -117,6 +117,7 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   cancelPage.on('dialog',dismissed);
   await cancelPage.locator('#makeSong').click();
   await cancelPage.waitForFunction(()=>/Reading notes and rhythm 1 of 1/.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:15000});
+  assert.equal(await cancelPage.locator('#workshopProgressEta').textContent(),'Estimating time…','ETA shows an honest placeholder before enough page timings exist');
   await cancelPage.locator('#keepPlaying').click();
   await cancelPage.locator('.magic-song-bubble').waitFor({state:'visible'});
   assert.equal((await cancelPage.locator('.magic-song-bubble').textContent()).trim(),(await cancelPage.locator('#scoreImportStatus').textContent()).trim(),'the minimized bubble mirrors the real recognition stage');
@@ -164,6 +165,11 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   await page.waitForFunction(()=>/Reading notes and rhythm 4 of 20/.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:30000});
   assert.equal(await page.locator('#workshopProgressPages').textContent(),'3 of 20 pages finished','page progress follows three actual completed page results');
   assert.equal(await page.locator('#workshopProgressEta').isHidden(),false,'ETA appears only after at least three observed page durations');
+  assert.equal(await page.evaluate(()=>typeof window.AariaWorkshopProgress?.report),'function','Worker 2 has the shared Workshop event API');
+  assert.equal(await page.evaluate(()=>window.AariaWorkshopProgress.report({stage:'recover_page',page:{current:4,total:20,completed:3},message:'Recovering page 4 of 20…'})),true,'external recovery event is accepted into the shared state');
+  assert.equal(await page.locator('#workshopStage').textContent(),'Recovering a page');
+  assert.equal(await page.locator('#workshopProgressPages').textContent(),'3 of 20 pages finished','recovery keeps the genuine completed-page count');
+  await page.evaluate(()=>window.AariaWorkshopProgress.report({stage:'recognize_music',page:{current:4,total:20,completed:3},message:'Reading notes and rhythm 4 of 20…'}));
   await page.screenshot({path:`/tmp/magic-music-progress-portrait-${sha}.png`});
   const progressBox=await page.locator('#workshopProgress').boundingBox(),previewBox=await page.locator('#scorePhotoPreviews').boundingBox(),actionsBox=await page.locator('#workshopPrimaryActions').boundingBox();
   assert.ok(progressBox.y>=previewBox.y+previewBox.height-1,'progress sits after, and does not cover, the photo previews');
