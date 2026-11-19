@@ -31,7 +31,7 @@ jobs:
           import subprocess
           subprocess.check_call(["git","fetch","--no-tags","--depth=1","origin",os.environ["PULL_REQUEST_BASE_SHA"]])
           paths=set(subprocess.check_output(["git","diff","--name-only",os.environ["PULL_REQUEST_BASE_SHA"],os.environ["PULL_REQUEST_HEAD_SHA"]],text=True).splitlines())
-          targeted={".github/workflows/r2-tests.yml",".github/workflows/piano-deploy.yml","README.md","index.html","sw.js","song-import.js","my-songs.js","piano-hero-v2.css","r2-music.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-workshop-review.cjs","tests/r2-install-gate.cjs","tests/r2-on-demand-installer.cjs","tests/r2-sw-update.cjs","tests/fixtures/sw-v1.18.1.js","tests/r2-omr-ground-truth.cjs","tests/r2-visual-gallery.cjs","tests/piano-hero-crystal-visual.cjs","tests/android-landscape-controls.cjs","tests/neon-label-impact.cjs","tests/r2-integration.test.js","tests/r2-music.test.js"}
+          targeted={".github/workflows/r2-tests.yml",".github/workflows/piano-deploy.yml","README.md","index.html","sw.js","song-import.js","my-songs.js","piano-hero-v2.css","r2-music.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-workshop-review.cjs","tests/r2-install-gate.cjs","tests/r2-on-demand-installer.cjs","tests/r2-sw-update.cjs","tests/fixtures/sw-v1.18.1.js","tests/r2-omr-ground-truth.cjs","tests/r2-visual-gallery.cjs","tests/piano-hero-crystal-visual.cjs","tests/android-landscape-controls.cjs","tests/neon-label-impact.cjs","tests/r2-integration.test.js","tests/r2-music.test.js","pwa-update.js"}
           print("full=" + str(bool(paths-targeted)).lower())
           print("workshop=" + str(bool(paths & {"song-import.js","tests/r2-workshop-review.cjs"})).lower())
           print("install=" + str(bool(paths & {"index.html","sw.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-on-demand-installer.cjs",".github/workflows/piano-deploy.yml"})).lower())
@@ -52,6 +52,8 @@ jobs:
           node --check r2-music.js
           node --check r2-image.js
           node --check r2-install.js
+          node --check pwa-update.js
+          node --check tests/pwa-update.test.js
           node --check tests/r2-on-demand-installer.cjs
           node --check tests/r2-sw-update.cjs
           node --check song-import.js
@@ -63,7 +65,7 @@ jobs:
           node --check tests/r2-workshop-review.cjs
           node --check tests/piano-hero-crystal-visual.cjs
       - name: Test difficulty and arrangement rules
-        run: node --test tests/r2-music.test.js tests/r2-image.test.js tests/r2-integration.test.js
+        run: node --test tests/r2-music.test.js tests/r2-image.test.js tests/r2-integration.test.js tests/pwa-update.test.js
       - name: Install pinned Playwright
         run: npm install --no-save --no-package-lock playwright@1.62.1
       - name: Install Chromium for headless acceptance
@@ -208,7 +210,7 @@ jobs:
       - name: Stage the same local OMR payload used by Pages
         run: |
           mkdir -p _site/assets/release2 _site/assets/piano-hero-v2 _site/vendor/omr-licenses _site/omr _site/models _site/lib/onnxruntime-web@1.30.0
-          cp index.html song-import.js my-songs.js r2-music.js r2-image.js r2-install.js sw.js piano-geometry.js piano-hero-v2.css manifest.webmanifest icon-192.png icon-512.png icon-maskable-512.png apple-touch-icon.png _site/
+          cp index.html song-import.js my-songs.js r2-music.js r2-image.js r2-install.js pwa-update.js sw.js piano-geometry.js piano-hero-v2.css manifest.webmanifest icon-192.png icon-512.png icon-maskable-512.png apple-touch-icon.png _site/
           cp assets/release2/magic-book.svg assets/release2/magic-bubble.svg _site/assets/release2/
           cp assets/piano-hero-v2/home_button.png assets/piano-hero-v2/settings_button.png _site/assets/piano-hero-v2/
           cp omr-source/omr-worker.js _site/
