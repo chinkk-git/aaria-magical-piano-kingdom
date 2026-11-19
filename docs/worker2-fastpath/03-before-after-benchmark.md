@@ -8,13 +8,17 @@ The pre-existing baseline from Actions run `44622822851` is `12,811 ms` to an au
 
 ## Results
 
-The actual before/after values and CI artifact links will be filled from the first completed draft-PR run. No candidate value is inferred from source code. The acceptance goal of ≤5% median clean-path overhead is provisional and cannot be declared met from a single run; report sample count and runner conditions with every value.
+Completed matched run: [Actions run 44631401874](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44631401874). Both browser-recovery and matched-OMR jobs passed. Candidate and PR base ran serially on the same hosted runner with the same fixture, engine, model and Chromium setup. This is one sample per side; it does not establish a median or a statistically reliable speedup. The clean path met the provisional ≤5% overhead goal in this single run.
+
+Artifacts (14-day retention): [responsive screenshots and recovery recording](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44631401874/artifacts/14582695780) · [matched OMR screenshots, recording and raw logs](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44631401874/artifacts/14581302867).
 
 | Measure | PR base | Candidate | Sample/notes |
 |---|---:|---:|---|
-| Pre-scan elapsed | Pending CI | Pending CI | One synthetic page |
-| OMR page elapsed | Pending CI | Pending CI | Same pinned model and fixture |
-| Processing click to saved song | Pending CI | Pending CI | Includes local parse and save |
-| Browser heap before/after | Pending CI | Pending CI | `performance.memory` availability varies |
-| First-attempt success | Pending CI | Pending CI | Synthetic fixture only |
-| Recovery success | Not applicable | Pending CI | Deterministic fake-worker page-2 fault test |
+| Pre-scan elapsed | 38 ms | 83 ms | One synthetic page; absolute delta 45 ms |
+| OMR page elapsed | 20,957 ms | 21,074 ms | Same pinned model and fixture |
+| Processing click to saved song | 24,267 ms | 22,407 ms | Includes local parse and save |
+| Browser heap before/after | 10 MB reported | 10 MB reported | `performance.memory`; not a device memory profile |
+| First-attempt success | 1/1 | 1/1 | Synthetic fixture only; both produced expected events |
+| Recovery success | Not applicable | 1/1 | Injected page-2 fault recovered; pages 1 and 3 each ran once |
+
+Clean-path cost comparison: candidate pre-scan added 45 ms, equal to 0.21% of the matched base's 20,957 ms OMR page time (45 / 20,956.7 × 100). End-to-end was 1,860 ms lower in this run, but treat that difference as observational only because n=1 and hosted-runner timings vary.
