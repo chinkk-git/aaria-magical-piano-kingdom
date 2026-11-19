@@ -12,12 +12,12 @@ const newWorker=fs.readFileSync(path.join(root,'sw.js'),'utf8');
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const installer=fs.readFileSync(path.join(root,'r2-install.js'),'utf8');
 const shellName='aaria-piano-v1.20.4';
-assert.match(newWorker,/const CACHE='aaria-piano-v1\.20\.4'/);
+assert.match(newWorker,/const CACHE='aaria-piano-v1\.20\.5'/);
 for(const url of [
   './r2-music.js?v=aaria-piano-r2.2',
   './r2-image.js?v=aaria-piano-r2.1',
   './piano-hero-v2.css?v=aaria-piano-v1.14.0',
-  './song-import.js?v=aaria-piano-r2.4',
+  './song-import.js?v=aaria-piano-r2.5',
   './my-songs.js?v=aaria-piano-r2.4',
   './r2-install.js?v=aaria-piano-r2.7'
 ]){
@@ -118,7 +118,7 @@ const server=http.createServer((req,res)=>{
     assert.equal(await reopened.locator('#playbackModeControls button.listen-toggle').count(),1,'one Listen preference toggle remains after upgrade');
     await reopened.locator('#setupKeyboard').click();
     await reopened.locator('#appBuildInfo').waitFor({state:'visible'});
-    await reopened.waitForFunction(()=>document.querySelector('#appBuildInfo')?.textContent.includes('aaria-piano-v1.20.4'));
+    await reopened.waitForFunction(()=>document.querySelector('#appBuildInfo')?.textContent.includes('aaria-piano-v1.20.5'));
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes("You're up to date"),{timeout:15000});
     await reopened.screenshot({path:'/tmp/pwa-update-settings.png'});
@@ -195,7 +195,7 @@ const server=http.createServer((req,res)=>{
     assert.match(result.html,/Speed/,'updated playback label is available');assert.match(result.html,/id="listenToggle"/,'Listen preference control is in the updated shell');assert.match(result.html,/note-impact-style/,'note impact key glow styling is in the updated shell');assert.match(result.html,/spawnNoteExplosion/,'note impact implementation is in the updated shell');assert.match(result.html,/NOTE_FX_DURATION\*1000/,'note flash uses millisecond timing in the updated shell');
     console.log('PWA update-and-reopen passed: prior v1.19.0 shell and warning/gate were replaced; current Piano Hero opened without OMR setup; localStorage/IndexedDB songs, favorites and verified OMR cache remained intact.');
 
-    const futureWorker=newWorker.replace("const CACHE='aaria-piano-v1.20.4'","const CACHE='aaria-piano-v1.20.5'");
+    const futureWorker=newWorker.replace("const CACHE='aaria-piano-v1.20.5'","const CACHE='aaria-piano-v1.20.6'");
     assert.notEqual(futureWorker,newWorker,'future worker fixture advances the authoritative build identifier');
     versionCheckWorker=futureWorker;servedWorker=futureWorker;
     await reopened.locator('#checkAppUpdate').click();
