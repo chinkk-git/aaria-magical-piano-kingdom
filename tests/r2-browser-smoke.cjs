@@ -55,6 +55,7 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   await page.screenshot({path:`/tmp/piano-playback-state-390x844-${process.env.APP_SOURCE_SHA||'local'}.png`});
   await page.locator('#pause').click();await page.waitForFunction(()=>mode==='listen'&&bar===1&&beat<1,{timeout:5000});
   assert.equal(await page.locator('#pause').isDisabled(),false,'restarted playback is active at the first measure');
+  assert.equal(await page.locator('#bar').inputValue(),'1','Play Again updates the selected measure control to measure 1');
   await page.screenshot({path:`/tmp/piano-playback-restart-390x844-${process.env.APP_SOURCE_SHA||'local'}.png`});
   await page.locator('#restart').click();assert.equal(await page.locator('#pause').isDisabled(),true,'restart returns the player to READY');
   await page.locator('#setupKeyboard').click();await page.locator('#pianoLayoutSelect').selectOption('classic');await page.locator('#saveKeyboardSetup').click();
