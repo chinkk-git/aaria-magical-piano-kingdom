@@ -2,9 +2,9 @@
 const assert=require('node:assert/strict'),crypto=require('node:crypto'),fs=require('node:fs'),http=require('node:http'),path=require('node:path'),os=require('node:os'),zlib=require('node:zlib'),{spawnSync}=require('node:child_process'),{chromium}=require('playwright');
 const root=path.resolve(__dirname,'..'),installer=fs.readFileSync(path.join(root,'r2-install.js'));
 const appIndex=fs.readFileSync(path.join(root,'index.html'),'utf8'),serviceWorker=fs.readFileSync(path.join(root,'sw.js'),'utf8');
-const installerVersion='aaria-piano-r2.6';
+const installerVersion='aaria-piano-r2.7';
 assert.match(appIndex,new RegExp('r2-install\\.js\\?v='+installerVersion));
-assert.match(serviceWorker,new RegExp("const CACHE='aaria-piano-v1\\.20\\.0'"));
+assert.match(serviceWorker,new RegExp("const CACHE='aaria-piano-v1\\.20\\.2'"));
 assert.match(serviceWorker,new RegExp('r2-install\\.js\\?v='+installerVersion));
 assert.ok(!appIndex.includes('release2InstallGate'),'the first launch OMR gate is removed');
 assert.ok(!/id="pianoApp"[^>]*inert/.test(appIndex),'the piano is interactive immediately');
