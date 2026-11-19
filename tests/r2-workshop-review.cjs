@@ -177,7 +177,9 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   assert.ok(progressBox.y>=previewBox.y+previewBox.height-1,'progress sits after, and does not cover, the photo previews');
   assert.ok(actionsBox.y>=progressBox.y+progressBox.height-1,'progress does not cover Keep Playing or Cancel actions');
   const samples=await page.evaluate(()=>window.__progressSamples);assert.ok(samples.every((value,index)=>index===0||value>=samples[index-1]),'percentage does not move backwards within one attempt');
-  await page.waitForFunction(()=>/Your magical song is ready/i.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:60000});
+  await page.waitForFunction(()=>/Your magical song is ready|I couldn’t make that song yet|This device needs more free space|I need Wi-Fi/i.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:60000});
+  const largeImportStatus=await page.locator('#scoreImportStatus').textContent();console.log('20-page import terminal status',largeImportStatus,'progress',await page.locator('#workshopProgressPages').textContent(),'stage',await page.locator('#workshopStage').textContent(),'pageErrors',JSON.stringify(errors));
+  assert.match(largeImportStatus,/Your magical song is ready/i,'20-page offline import completes and saves');
   await context.setOffline(false);
   await page.setViewportSize({width:844,height:390});
   const landscape=await page.locator('#workshopProgress').boundingBox(),landscapeActions=await page.locator('#workshopPrimaryActions').boundingBox();
