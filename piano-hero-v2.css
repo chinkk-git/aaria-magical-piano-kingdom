@@ -204,6 +204,38 @@ main[data-piano-layout="hero"] .compact-title{padding-left:max(4px,env(safe-area
 main[data-piano-layout="hero"] .compact-title .song-picker{order:1;flex:1 1 160px;min-width:0}
 main[data-piano-layout="hero"] .compact-title #zoomKeys{order:2;flex:0 0 auto}
 main[data-piano-layout="hero"] .compact-title #addSongOpen{order:3;flex:0 0 auto}
+
+/* Issue #11: the legacy short-viewport stylesheet hides .extras with
+   display:none!important. Keep Speed, Loop and measure selection available
+   in Android landscape by restoring the second row at usable touch sizes. */
+@media (orientation: landscape) and (max-height: 600px) {
+  main[data-piano-layout="hero"] #player {
+    grid-template-rows: minmax(34px, auto) minmax(36px, auto);
+    padding: 3px 6px;
+    gap: 2px 5px;
+  }
+  main[data-piano-layout="hero"] #player .extras {
+    display: flex !important;
+    grid-column: 1 / 4;
+    grid-row: 2;
+    align-items: center;
+    min-height: 36px;
+    justify-content: space-between;
+    gap: clamp(8px, 1.5vw, 14px);
+  }
+  main[data-piano-layout="hero"] #player .playback-mode-controls .mode-choice,
+  main[data-piano-layout="hero"] #player #pause {
+    min-height: 34px;
+    padding: 4px 8px;
+  }
+  main[data-piano-layout="hero"] #player .extras select {
+    min-height: 36px;
+  }
+  main[data-piano-layout="hero"] #player .extras input[type="range"] {
+    min-height: 32px;
+    touch-action: pan-x;
+  }
+}
 main[data-piano-layout="hero"] .compact-title #openMySongs{display:inline-flex!important;order:4;flex:0 0 auto;position:relative!important;inset:auto!important;margin:0!important;background-position:center;background-size:contain;background-repeat:no-repeat;color:transparent;z-index:3}
 main[data-piano-layout="hero"] .compact-title #setupKeyboard{order:5;flex:0 0 auto}
 main[data-piano-layout="hero"] .compact-title .kingdom-brand{order:6;flex:0 1 clamp(64px,12vw,136px);min-width:0}
