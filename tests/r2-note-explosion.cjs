@@ -16,12 +16,13 @@ const events=[
  {bar:1,at:1.3,dur:.5,midi:67,hand:'right'}
 ];
 const score={id:'custom-note-explosion-check',title:'Note Explosion Check',total:1,barLengths:[8],bpm:72,events};
+let browser;
 async function addScore(page){await page.evaluate(song=>window.PianoKingdomLibrary.addSong(song,{select:true}),score)}
 async function playFromStart(page){await page.evaluate(()=>{mode='stop';pausedMode=null;seekAbsolute(0);startMode('listen')})}
 async function assertImpactAlignment(page,detail){const key=await page.locator(`#keys [data-pitch="${detail.pitch}"]`).boundingBox(),canvas=await page.locator('#rain').boundingBox();assert.ok(key&&canvas,`key ${detail.pitch} and note highway are rendered`);assert.ok(Math.abs(detail.x-(key.x+key.width/2-canvas.x))<1,`pitch ${detail.pitch} impact is centered on its DOM piano key`);assert.ok(Math.abs(detail.y-(key.y-canvas.y))<1,`pitch ${detail.pitch} impact is at the keyboard hit line`)}
 (async()=>{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
- const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox']});
+ browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox']});
  const context=await browser.newContext({viewport:{width:390,height:844},recordVideo:{dir:artifactDir,size:{width:390,height:844}},serviceWorkers:'block',reducedMotion:'no-preference'});
  await context.addInitScript(()=>{window.__noteArrivals=[];window.addEventListener('piano-note-arrival',e=>window.__noteArrivals.push({...e.detail,time:performance.now()}))});
  const page=await context.newPage(),pageErrors=[];page.on('pageerror',e=>pageErrors.push(e.message));
@@ -43,4 +44,4 @@ async function assertImpactAlignment(page,detail){const key=await page.locator(`
  const video=await page.video().path();fs.copyFileSync(video,path.join(artifactDir,'magical-note-explosion-390x844.webm'));
  const reduced=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block',reducedMotion:'reduce'});await reduced.addInitScript(()=>{window.__noteArrivals=[];window.addEventListener('piano-note-arrival',e=>window.__noteArrivals.push({...e.detail}))});const reducedPage=await reduced.newPage();
  try{await reducedPage.goto(`http://127.0.0.1:${server.address().port}/index.html`,{waitUntil:'domcontentloaded'});await reducedPage.waitForFunction(()=>window.PianoKingdomLibrary?.addSong);await addScore(reducedPage);await reducedPage.locator('#secondaryModeButton').click();await reducedPage.waitForFunction(()=>window.__noteArrivals.length>=2,{timeout:5000});assert.equal(await reducedPage.evaluate(()=>[...noteFxStart].filter(t=>t>=0).length),0,'reduced motion omits moving particles');assert.equal(await reducedPage.locator('#keys [data-pitch="60"]').evaluate(e=>e.classList.contains('impact-lit')),true,'reduced motion retains brief key indication');console.log('Reduced-motion check passed: no moving particles; key indication remains.')}finally{await reduced.close()}
-})().catch(error=>{console.error(error);process.exitCode=1});
+})().catch(async error=>{console.error(error);try{await browser?.close()}catch{}try{server.close()}catch{}process.exitCode=1});
