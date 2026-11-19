@@ -1,108 +1,103 @@
-'use strict';
-const assert=require('node:assert/strict');
-const fs=require('node:fs');
-const http=require('node:http');
-const path=require('node:path');
-const {chromium}=require('playwright');
-const root=path.resolve(__dirname,'..');
-const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
-const server=http.createServer((req,res)=>{const p=decodeURIComponent(new URL(req.url,'http://localhost').pathname),file=path.resolve(root,'.'+p);if(!file.startsWith(root+path.sep)&&file!==root){res.writeHead(403).end();return}fs.readFile(file,(e,data)=>{if(e){res.writeHead(404).end('not found');return}res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'}).end(data)})});
-const xml=`<?xml version="1.0"?><score-partwise version="3.1"><part-list><score-part id="P1"><part-name>Piano</part-name></score-part><score-part id="P2"><part-name>Bass</part-name></score-part></part-list><part id="P1">
-<measure number="1"><attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time><clef><sign>G</sign><line>2</line></clef></attributes>
-<note><pitch><step>G</step><octave>4</octave></pitch><duration>1</duration><type>quarter</type></note><note><pitch><step>A</step><octave>4</octave></pitch><duration>1</duration><type>quarter</type></note><note><pitch><step>B</step><octave>4</octave></pitch><duration>1</duration><type>quarter</type></note><note><pitch><step>C</step><octave>5</octave></pitch><duration>1</duration><type>quarter</type></note></measure>
-<measure number="2"><note><pitch><step>D</step><octave>5</octave></pitch><duration>1</duration><type>quarter</type></note><note><pitch><step>C</step><octave>5</octave></pitch><duration>1</duration><type>quarter</type></note><note><pitch><step>B</step><octave>4</octave></pitch><duration>1</duration><type>quarter</type></note><note><pitch><step>G</step><octave>4</octave></pitch><duration>1</duration><type>quarter</type></note></measure></part><part id="P2">
-<measure number="1"><attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time><clef><sign>F</sign><line>4</line></clef></attributes>
-<note><pitch><step>C</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note><note><chord/><pitch><step>E</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note>
-<note><pitch><step>D</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note><note><chord/><pitch><step>F</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note>
-<note><pitch><step>E</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note><note><chord/><pitch><step>G</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note>
-<note><pitch><step>F</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note><note><chord/><pitch><step>A</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note></measure>
-<measure number="2">
-<note><pitch><step>G</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note><note><chord/><pitch><step>B</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note>
-<note><pitch><step>F</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note><note><chord/><pitch><step>A</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note>
-<note><pitch><step>E</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note><note><chord/><pitch><step>G</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note>
-<note><pitch><step>D</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note><note><chord/><pitch><step>F</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note></measure></part></score-partwise>`;
-const workerStub=`let requests=0,failFirstRecognition=true;const xml=${JSON.stringify(xml)};self.onmessage=({data})=>{if(data.type==='init'){self.postMessage({type:'ready'});return}if(data.type==='layout'){self.postMessage({type:'result',id:data.id,classes:[]});return}if(data.type==='recognise'){requests++;if(failFirstRecognition){failFirstRecognition=false;self.postMessage({type:'error',id:data.id,msg:'Simulated recognition failure'});return}setTimeout(()=>self.postMessage({type:'result',id:data.id,xml}),700)}}`;
-(async()=>{
- await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
- const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox']});
- const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block',reducedMotion:'reduce'});
- const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
- try{
-  await page.route('**/omr-worker.js',route=>route.fulfill({status:200,contentType:'text/javascript',body:workerStub}));
-  await page.route('**/r2-install.js*',route=>route.fulfill({status:200,contentType:'text/javascript',body:"(()=>{window.AariaR2Installer={state:'ready',ensureReady:async()=>true}})()"}));
-  await page.goto(`http://127.0.0.1:${server.address().port}/index.html`,{waitUntil:'domcontentloaded'});
-  await page.waitForFunction(()=>window.PianoKingdomLibrary?.saveSong);
-  assert.equal(await page.locator('#release2InstallGate').count(),0,'first launch has no mandatory OMR gate');
-  await page.locator('#pianoLayoutSelect').selectOption('hero');
-  await page.locator('#openMySongs').click();await page.locator('#makeNewSong').click();
-  const wizard=page.locator('#localSongWizard');await wizard.waitFor({state:'visible'});
-  await page.locator('#scoreSongTitle').fill('Automatic Workshop Song');
-  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700"><rect width="1200" height="700" fill="white"/><g stroke="black" stroke-width="5">'+[170,190,210,230,250].map(y=>`<path d="M100 ${y}H1100"/>`).join('')+'</g><g fill="black">'+[220,420,620,820,220,420,620,820].map((x,i)=>`<ellipse cx="${x}" cy="${190+(i%4)*10+(i>3?0:0)}" rx="13" ry="9"/>`).join('')+'</g></svg>';
-  const png64=await page.evaluate(async source=>{const img=new Image(),url=URL.createObjectURL(new Blob([source],{type:'image/svg+xml'}));img.src=url;await img.decode();const c=document.createElement('canvas');c.width=1200;c.height=700;c.getContext('2d').drawImage(img,0,0);URL.revokeObjectURL(url);return c.toDataURL('image/png').split(',')[1]},svg);
-  assert.match(await page.locator('#localSongWizardTitle').textContent(),/Add New Song/);
-  assert.match(await page.locator('#makeSong').textContent(),/Make Music/);
-  await page.locator('#scorePhotos').setInputFiles({name:'known-score.png',mimeType:'image/png',buffer:Buffer.from(png64,'base64')});
-  await page.locator('#makeSong').click();
-  await page.waitForFunction(()=>document.querySelector('#makeSong')?.textContent.includes('Try again'),{timeout:30000});
-  assert.equal(await page.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).some(song=>song?.title==='Automatic Workshop Song')),false,'recognition failure does not create a library record');
-  await page.evaluate(()=>{window.__originalSaveSong=window.PianoKingdomLibrary.saveSong;window.PianoKingdomLibrary.saveSong=async()=>{throw new Error('Simulated storage failure')}});
-  await page.locator('#makeSong').click();
-  await page.locator('#keepPlaying').waitFor({state:'visible'});
-  await page.locator('#keepPlaying').click();
-  await page.locator('.magic-song-bubble').waitFor({state:'visible'});
-  const bubbleBox=await page.locator('.magic-song-bubble').boundingBox(),keyBox=await page.locator('#keys').boundingBox(),playbackBox=await page.locator('#player').boundingBox();
-  assert.ok(bubbleBox.x+bubbleBox.width<=keyBox.x+keyBox.width&&bubbleBox.y+bubbleBox.height<=keyBox.y,'minimized button stays above the reference keyboard');
-  assert.ok(bubbleBox.y+bubbleBox.height<=playbackBox.y,'minimized button stays clear of playback controls');
-  const sha=process.env.APP_SOURCE_SHA||'local';await page.screenshot({path:`/tmp/issue25-minimized-processing-390x844-${sha}.png`});
-  await page.locator('.magic-song-bubble').click();await page.locator('#localSongWizard').waitFor({state:'visible'});
-  await page.waitForFunction(()=>/This song could not be saved/i.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:30000});
-  assert.equal(await page.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).some(song=>song?.title==='Automatic Workshop Song')),false,'storage failure does not claim a saved song');
-  assert.equal(await page.locator('#retrySongSave').isVisible(),true,'storage failure offers a retry');
-  await page.evaluate(()=>{window.PianoKingdomLibrary.saveSong=window.__originalSaveSong});
-  await page.locator('#retrySongSave').click();
-  await page.waitForFunction(()=>/Your magical song is ready/i.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:30000});
-  assert.equal(await page.locator('#scoreReview').isVisible(),false,'recognition auto-saves without opening the optional editor');
-  const id=await page.evaluate(()=>Object.keys(window.PianoKingdomLibrary.songs).find(k=>window.PianoKingdomLibrary.songs[k]?.title==='Automatic Workshop Song'));
-  assert.ok(id,'recognized score is saved automatically to the shared song catalog');
-  assert.equal(await page.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).filter(song=>song?.title==='Automatic Workshop Song').length),1,'repeated save identity is represented by one library record');
-  const saved=await page.evaluate(expected=>window.PianoKingdomLibrary.songs[expected],id);
-  assert.ok(saved.arrangements.basic?.events?.length,'valid Basic arrangement is available after recognition');
-  await page.locator('#playMySong').click();
-  await page.locator('#localSongWizard').waitFor({state:'hidden'});
-  await page.waitForFunction(expected=>document.querySelector('#songSelect')?.value===expected&&mode==='listen',id);
-  await page.locator('#songPickerButton').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});
-  await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).locator('select').selectOption('basic');
-  await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).getByRole('button',{name:'Choose'}).click();
-  await page.waitForFunction(expected=>document.querySelector('#songSelect')?.value===expected,id);
-  const playback=await page.evaluate(expected=>({id:document.querySelector('#songSelect').value,engineEvents:EVENTS.map(n=>[n.bar,n.at,n.dur,n.midi]),savedEvents:window.PianoKingdomLibrary.songs[expected].arrangements.basic.events.map(n=>[n.bar,n.at,n.dur,n.midi])}),id);
-  assert.equal(playback.id,id);assert.deepEqual(playback.engineEvents,playback.savedEvents,'selected Basic note data reaches the shared playback engine');
-  assert.equal(await page.locator('#songSelect').isVisible(),false,'old native selector stays disabled');
-  await page.locator('#songPickerButton').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});
-  await page.locator('.library-card').filter({hasText:'Cradle Song'}).getByRole('button',{name:'â–¶ Play'}).click();
-  await page.waitForFunction(()=>document.querySelector('#songSelect')?.value==='cradle'&&mode==='listen');
-  assert.equal(await page.locator('#songPickerButton').textContent().then(t=>t.includes('Dalmatian Cradle Song')),true,'built-in song selection updates the visible selector');
-  await page.locator('#songPickerButton').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});
-  await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).locator('select').selectOption('basic');
-  await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).getByRole('button',{name:'â–¶ Play'}).click();
-  await page.waitForFunction(expected=>document.querySelector('#songSelect')?.value===expected&&mode==='listen',id);
-  assert.deepEqual(await page.evaluate(()=>EVENTS.map(n=>[n.bar,n.at,n.dur,n.midi])),playback.savedEvents,'saved song opens in playback with its selected arrangement');
-  await page.locator('#openMySongs').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.locator('#closeMySongs').click();
-  assert.match(await page.locator('#songPickerButton').textContent(),/Automatic Workshop Song/,'song selector reflects selection');
-  await page.locator('#openMySongs').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.locator('#makeNewSong').click();await page.locator('#localSongWizard').waitFor({state:'visible'});
-  await page.locator('#editSavedSong').click();await page.locator('#scoreReview').waitFor({state:'visible'});await page.locator('#cancelReview').click();
-  assert.equal(await page.evaluate(expected=>window.PianoKingdomLibrary.songs[expected]?.title,id),'Automatic Workshop Song','optional edit can be canceled while keeping the saved song');
-  await page.locator('#closeSongWizard').click();await page.locator('#localSongWizard').waitFor({state:'hidden'});
-  const zoom=await page.locator('#keys .white').count();await page.locator('#zoomKeys').click();assert.equal(await page.locator('#keys .white').count(),8,'Zoom Keys changes the visible white key count');await page.locator('#zoomKeys').click();await page.locator('#zoomKeys').click();assert.equal(await page.locator('#keys .white').count(),zoom,'Zoom Keys cycles through its key ranges');
-  assert.match(await page.locator('#speed').evaluate(e=>e.parentElement.textContent),/Speed/,'the playback slider uses the Speed label');
-  await page.locator('#songPickerButton').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.screenshot({path:`/tmp/issue25-song-selector-390x844-${sha}.png`});
-  for(const viewport of [{width:390,height:844},{width:844,height:390},{width:834,height:1194},{width:1194,height:834},{width:1440,height:900}]){
-   await page.setViewportSize(viewport);
-   const layout=await page.evaluate(()=>{const rect=selector=>document.querySelector(selector).getBoundingClientRect(),home=rect('#openMySongs'),picker=rect('#songPickerButton'),controls=['#favoriteCurrent','#zoomKeys','#setupKeyboard'].map(rect);return{separate:home.right<=picker.left||picker.right<=home.left||home.bottom<=picker.top||picker.bottom<=home.top,controlsClear:controls.every(c=>picker.right<=c.left||c.right<=picker.left||picker.bottom<=c.top||c.bottom<=picker.top),dialogVisible:document.querySelector('#mySongsDialog').getBoundingClientRect().width>0}});
-   assert.equal(layout.separate,true,`Home and selector do not overlap at ${viewport.width}x${viewport.height}`);assert.equal(layout.homeNextToSettings,true,`Home is next to Settings at ${viewport.width}x${viewport.height}`);
-   assert.equal(layout.controlsClear,true,`selector does not overlap header controls at ${viewport.width}x${viewport.height}`);
-   assert.equal(layout.dialogVisible,true,`custom selector dialog remains visible at ${viewport.width}x${viewport.height}`);await page.screenshot({path:`/tmp/issue25-song-selector-${viewport.width}x${viewport.height}-${sha}.png`});
-  }
+YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíç}½N‹Z–‹­¦ëeŠw¬ÔÕÍ”ÍÑÉ¥Ğœì)½¹ÍĞ…ÍÍ•ÉĞõÉ•ÅÕ¥É” ¹½‘”é…ÍÍ•ÉĞ½ÍÑÉ¥Ğœ¤ì)½¹ÍĞ™ÌõÉ•ÅÕ¥É” ¹½‘”é™Ìœ¤ì)½¹ÍĞ¡ÑÑÀõÉ•ÅÕ¥É” ¹½‘”é¡ÑÑÀœ¤ì)½¹ÍĞÁ…Ñ õÉ•ÅÕ¥É” ¹½‘”éÁ…Ñ œ¤ì)½¹ÍĞí¡É½µ¥ÕµôõÉ•ÅÕ¥É” Á±…åİÉ¥¡Ğœ¤ì)½¹ÍĞÉ½½ĞõÁ…Ñ ¹É•Í½±Ù”¡}}‘¥É¹…µ”°œ¸¸œ¤ì)½¹ÍĞµ¥µ”õìœ¹¡Ñµ°œèÑ•áĞ½¡Ñµ°ì¡…ÉÍ•ĞõÕÑ˜´àœ°œ¹©ÌœèÑ•áĞ½©…Ù…ÍÉ¥ÁĞì¡…ÉÍ•ĞõÕÑ˜´àœ°œ¹ÍÙœœè¥µ…”½ÍÙœ­áµ°œ°œ¹Á¹œœè¥µ…”½Á¹œœ°œ¹İ•‰µ…¹¥™•ÍĞœè…ÁÁ±¥…Ñ¥½¸½µ…¹¥™•ÍĞ­©Í½¸ôì)½¹ÍĞÍ•ÉÙ•Èõ¡ÑÑÀ¹É•…Ñ•M•ÉÙ•È ¡É•Ä±É•Ì¤ôùí½¹ÍĞÀõ‘•½‘•UI%½µÁ½¹•¹Ğ¡¹•ÜUI0¡É•Ä¹ÕÉ°°¡ÑÑÀè¼½±½…±¡½ÍĞœ¤¹Á…Ñ¡¹…µ”¤±™¥±”õÁ…Ñ ¹É•Í½±Ù”¡É½½Ğ°œ¸œ­À¤í¥˜ …™¥±”¹ÍÑ…ÉÑÍ]¥Ñ ¡É½½Ğ­Á…Ñ ¹Í•À¤˜™™¥±”„ôõÉ½½Ğ¥íÉ•Ì¹İÉ¥Ñ•!•… ĞÀÌ¤¹•¹ ¤íÉ•ÑÕÉ¹õ™Ì¹É•…‘¥±”¡™¥±”°¡”±‘…Ñ„¤ôùí¥˜¡”¥íÉ•Ì¹İÉ¥Ñ•!•… ĞÀĞ¤¹•¹ ¹½Ğ™½Õ¹œ¤íÉ•ÑÕÉ¹õÉ•Ì¹İÉ¥Ñ•!•… ÈÀÀ±ì½¹Ñ•¹ĞµQåÁ”œéµ¥µ•mÁ…Ñ ¹•áÑ¹…µ”¡™¥±”¥uñğ…ÁÁ±¥…Ñ¥½¸½½Ñ•ĞµÍÑÉ•…´œ°…¡”µ½¹ÑÉ½°œè¹¼µÍÑ½É”ô¤¹•¹¡‘…Ñ„¥ô¥ô¤ì)½¹ÍĞáµ°õ€ğıáµ°Ù•ÉÍ¥½¸ôˆÄ¸ÀˆüøñÍ½É”µÁ…ÉÑİ¥Í”Ù•ÉÍ¥½¸ôˆÌ¸ÄˆøñÁ…ÉĞµ±¥ÍĞøñÍ½É”µÁ…ÉĞ¥ô‰@ÄˆøñÁ…ÉĞµ¹…µ”ùA¥…¹¼ğ½Á…ÉĞµ¹…µ”øğ½Í½É”µÁ…ÉĞøñÍ½É”µÁ…ÉĞ¥ô‰@ÈˆøñÁ…ÉĞµ¹…µ”ù	…ÍÌğ½Á…ÉĞµ¹…µ”øğ½Í½É”µÁ…ÉĞøğ½Á…ÉĞµ±¥ÍĞøñÁ…ÉĞ¥ô‰@Äˆø(ñµ•…ÍÕÉ”¹Õµ‰•ÈôˆÄˆøñ…ÑÑÉ¥‰ÕÑ•Ìøñ‘¥Ù¥Í¥½¹ÌøÄğ½‘¥Ù¥Í¥½¹ÌøñÑ¥µ”øñ‰•…ÑÌøĞğ½‰•…ÑÌøñ‰•…ĞµÑåÁ”øĞğ½‰•…ĞµÑåÁ”øğ½Ñ¥µ”øñ±•˜øñÍ¥¸ùğ½Í¥¸øñ±¥¹”øÈğ½±¥¹”øğ½±•˜øğ½…ÑÑÉ¥‰ÕÑ•Ìø(ñ¹½Ñ”øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øĞğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”øñ¹½Ñ”øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øĞğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”øñ¹½Ñ”øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øĞğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”øñ¹½Ñ”øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øÔğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”øğ½µ•…ÍÕÉ”ø(ñµ•…ÍÕÉ”¹Õµ‰•ÈôˆÈˆøñ¹½Ñ”øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øÔğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”øñ¹½Ñ”øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øÔğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”øñ¹½Ñ”øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øĞğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”øñ¹½Ñ”øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øĞğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”øğ½µ•…ÍÕÉ”øğ½Á…ÉĞøñÁ…ÉĞ¥ô‰@Èˆø(ñµ•…ÍÕÉ”¹Õµ‰•ÈôˆÄˆøñ…ÑÑÉ¥‰ÕÑ•Ìøñ‘¥Ù¥Í¥½¹ÌøÄğ½‘¥Ù¥Í¥½¹ÌøñÑ¥µ”øñ‰•…ÑÌøĞğ½‰•…ÑÌøñ‰•…ĞµÑåÁ”øĞğ½‰•…ĞµÑåÁ”øğ½Ñ¥µ”øñ±•˜øñÍ¥¸ùğ½Í¥¸øñ±¥¹”øĞğ½±¥¹”øğ½±•˜øğ½…ÑÑÉ¥‰ÕÑ•Ìø(ñ¹½Ñ”øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øÌğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”øñ¹½Ñ”øñ¡½É¼øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øÌğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”ø(ñ¹½Ñ”øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øÌğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”øñ¹½Ñ”øñ¡½É¼øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øÌğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”ø(ñ¹½Ñ”øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øÌğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”øñ¹½Ñ”øñ¡½É¼øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øÌğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”ø(ñ¹½Ñ”øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øÌğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”øñ¹½Ñ”øñ¡½É¼øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øÌğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”øğ½µ•…ÍÕÉ”ø(ñµ•…ÍÕÉ”¹Õµ‰•ÈôˆÈˆø(ñ¹½Ñ”øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øÌğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”øñ¹½Ñ”øñ¡½É¼øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øÌğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”ø(ñ¹½Ñ”øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øÌğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”øñ¹½Ñ”øñ¡½É¼øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øÌğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”ø(ñ¹½Ñ”øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øÌğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”øñ¹½Ñ”øñ¡½É¼øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øÌğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”ø(ñ¹½Ñ”øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øÌğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”øñ¹½Ñ”øñ¡½É¼øñÁ¥Ñ øñÍÑ•Àùğ½ÍÑ•Àøñ½Ñ…Ù”øÌğ½½Ñ…Ù”øğ½Á¥Ñ øñ‘ÕÉ…Ñ¥½¸øÄğ½‘ÕÉ…Ñ¥½¸øñÑåÁ”ùÅÕ…ÉÑ•Èğ½ÑåÁ”øğ½¹½Ñ”øğ½µ•…ÍÕÉ”øğ½Á…ÉĞøğ½Í½É”µÁ…ÉÑİ¥Í”ù€ì)½¹ÍĞİ½É­•ÉMÑÕˆõ±•ĞÉ•ÅÕ•ÍÑÌôÀ±™…¥±¥ÉÍÑI•½¹¥Ñ¥½¸õÑÉÕ”í½¹ÍĞáµ°ô‘í)M=8¹ÍÑÉ¥¹¥™ä¡áµ°¥ôíÍ•±˜¹½¹µ•ÍÍ…”ô¡í‘…Ñ…ô¤ôùí¥˜¡‘…Ñ„¹ÑåÁ”ôôô¥¹¥Ğœ¥íÍ•±˜¹Á½ÍÑ5•ÍÍ…”¡íÑåÁ”èÉ•…‘äô¤íÉ•ÑÕÉ¹õ¥˜¡‘…Ñ„¹ÑåÁ”ôôô±…å½ÕĞœ¥íÍ•±˜¹Á½ÍÑ5•ÍÍ…”¡íÑåÁ”èÉ•ÍÕ±Ğœ±¥é‘…Ñ„¹¥±±…ÍÍ•Ìémuô¤íÉ•ÑÕÉ¹õ¥˜¡‘…Ñ„¹ÑåÁ”ôôôÉ•½¹¥Í”œ¥íÉ•ÅÕ•ÍÑÌ¬¬í¥˜¡™…¥±¥ÉÍÑI•½¹¥Ñ¥½¸¥í™…¥±¥ÉÍÑI•½¹¥Ñ¥½¸õ™…±Í”íÍ•±˜¹Á½ÍÑ5•ÍÍ…”¡íÑåÁ”è•ÉÉ½Èœ±¥é‘…Ñ„¹¥±µÍœèM¥µÕ±…Ñ•É•½¹¥Ñ¥½¸™…¥±ÕÉ”ô¤íÉ•ÑÕÉ¹õÍ•ÑQ¥µ•½ÕĞ  ¤ôùÍ•±˜¹Á½ÍÑ5•ÍÍ…”¡íÑåÁ”èÉ•ÍÕ±Ğœ±¥é‘…Ñ„¹¥±áµ±ô¤°ÜÀÀ¥õõ€ì(¡…Íå¹Œ ¤ôùì(…İ…¥Ğ¹•ÜAÉ½µ¥Í”¡É•Í½±Ù”ôùÍ•ÉÙ•È¹±¥ÍÑ•¸ À°œÄÈÜ¸À¸À¸Äœ±É•Í½±Ù”¤¤ì(½¹ÍĞ‰É½İÍ•Èõ…İ…¥Ğ¡É½µ¥Õ´¹±…Õ¹ ¡í¡•…‘±•ÍÌéÑÉÕ”±•á•ÕÑ…‰±•A…Ñ éÁÉ½•ÍÌ¹•¹Ø¹!I=5%U5}AQ!ññÕ¹‘•™¥¹•±…ÉÌélœ´µ¹¼µÍ…¹‘‰½àuô¤ì(½¹ÍĞ½¹Ñ•áĞõ…İ…¥Ğ‰É½İÍ•È¹¹•İ½¹Ñ•áĞ¡íÙ¥•İÁ½ÉĞéíİ¥‘Ñ èÌäÀ±¡•¥¡ĞèàĞÑô±Í•ÉÙ¥•]½É­•ÉÌè‰±½¬œ±É•‘Õ•‘5½Ñ¥½¸èÉ•‘Õ”ô¤ì(½¹ÍĞÁ…”õ…İ…¥Ğ½¹Ñ•áĞ¹¹•İA…” ¤±•ÉÉ½ÉÌõmtíÁ…”¹½¸ Á…••ÉÉ½Èœ±”ôù•ÉÉ½ÉÌ¹ÁÕÍ ¡”¹µ•ÍÍ…”¤¤ì(ÑÉåì(€…İ…¥ĞÁ…”¹É½ÕÑ” œ¨¨½½µÈµİ½É­•È¹©Ìœ±É½ÕÑ”ôùÉ½ÕÑ”¹™Õ±™¥±°¡íÍÑ…ÑÕÌèÈÀÀ±½¹Ñ•¹ÑQåÁ”èÑ•áĞ½©…Ù…ÍÉ¥ÁĞœ±‰½‘äéİ½É­•ÉMÑÕ‰ô¤¤ì(€…İ…¥ĞÁ…”¹É½ÕÑ” œ¨¨½ÈÈµ¥¹ÍÑ…±°¹©Ì¨œ±É½ÕÑ”ôùÉ½ÕÑ”¹™Õ±™¥±°¡íÍÑ…ÑÕÌèÈÀÀ±½¹Ñ•¹ÑQåÁ”èÑ•áĞ½©…Ù…ÍÉ¥ÁĞœ±‰½‘äèˆ  ¤ôùíİ¥¹‘½Ü¹…É¥…HÉ%¹ÍÑ…±±•ÈõíÍÑ…Ñ”èÉ•…‘äœ±•¹ÍÕÉ•I•…‘äé…Íå¹Œ ¤ôùÑÉÕ•õô¤ ¤‰ô¤¤ì(€…İ…¥ĞÁ…”¹½Ñ¼¡¡ÑÑÀè¼¼ÄÈÜ¸À¸À¸Äè‘íÍ•ÉÙ•È¹…‘‘É•ÍÌ ¤¹Á½ÉÑô½¥¹‘•à¹¡Ñµ±€±íİ…¥ÑU¹Ñ¥°è‘½µ½¹Ñ•¹Ñ±½…‘•ô¤ì(€…İ…¥ĞÁ…”¹İ…¥Ñ½ÉÕ¹Ñ¥½¸  ¤ôùİ¥¹‘½Ü¹A¥…¹½-¥¹‘½µ1¥‰É…Éäü¹Í…Ù•M½¹œ¤ì(€…ÍÍ•ÉĞ¹•ÅÕ…°¡…İ…¥ĞÁ…”¹±½…Ñ½È œÉ•±•…Í”É%¹ÍÑ…±±…Ñ”œ¤¹½Õ¹Ğ ¤°À°™¥ÉÍĞ±…Õ¹ ¡…Ì¹¼µ…¹‘…Ñ½Éä=5H…Ñ”œ¤ì(€…İ…¥ĞÁ…”¹±½…Ñ½È œÍ•ÑÕÁ-•å‰½…Éœ¤¹±¥¬ ¤í…İ…¥ĞÁ…”¹±½…Ñ½È œÁ¥…¹½1…å½ÕÑM•±•Ğœ¤¹Í•±•Ñ=ÁÑ¥½¸ ¡•É¼œ¤í…İ…¥ĞÁ…”¹±½…Ñ½È œÍ…Ù•-•å‰½…É‘M•ÑÕÀœ¤¹±¥¬ ¤ì(€…İ…¥ĞÁ…”¹±½…Ñ½È œ½Á•¹5åM½¹Ìœ¤¹±¥¬ ¤í…İ…¥ĞÁ…”¹±½…Ñ½È œµ…­•9•İM½¹œœ¤¹±¥¬ ¤ì(€½¹ÍĞİ¥é…ÉõÁ…”¹±½…Ñ½È œ±½…±M½¹]¥é…Éœ¤í…İ…¥Ğİ¥é…É¹İ…¥Ñ½È¡íÍÑ…Ñ”èÙ¥Í¥‰±”ô¤ì(€…İ…¥ĞÁ…”¹±½…Ñ½È œÍ½É•M½¹Q¥Ñ±”œ¤¹™¥±° ÕÑ½µ…Ñ¥Œ]½É­Í¡½ÀM½¹œœ¤ì(€½¹ÍĞÍÙœôœñÍÙœáµ±¹Ìô‰¡ÑÑÀè¼½İİÜ¹ÜÌ¹½Éœ¼ÈÀÀÀ½ÍÙœˆİ¥‘Ñ ôˆÄÈÀÀˆ¡•¥¡ĞôˆÜÀÀˆøñÉ•Ğİ¥‘Ñ ôˆÄÈÀÀˆ¡•¥¡ĞôˆÜÀÀˆ™¥±°ô‰İ¡¥Ñ”ˆ¼øñœÍÑÉ½­”ô‰‰±…¬ˆÍÑÉ½­”µİ¥‘Ñ ôˆÔˆøœ­lÄÜÀ°ÄäÀ°ÈÄÀ°ÈÌÀ°ÈÔÁt¹µ…À¡äôù€ñÁ…Ñ ô‰4ÄÀÀ€‘íåõ ÄÄÀÀˆ¼ù€¤¹©½¥¸ œœ¤¬œğ½œøñœ™¥±°ô‰‰±…¬ˆøœ­lÈÈÀ°ĞÈÀ°ØÈÀ°àÈÀ°ÈÈÀ°ĞÈÀ°ØÈÀ°àÈÁt¹µ…À ¡à±¤¤ôù€ñ•±±¥ÁÍ”àôˆ‘íáôˆäôˆ‘ìÄäÀ¬¡¤”Ğ¤¨ÄÀ¬¡¤øÌüÀèÀ¥ôˆÉàôˆÄÌˆÉäôˆäˆ¼ù€¤¹©½¥¸ œœ¤¬œğ½œøğ½ÍÙœøœì(€½¹ÍĞÁ¹œØĞõ…İ…¥ĞÁ…”¹•Ù…±Õ…Ñ”¡…Íå¹ŒÍ½ÕÉ”ôùí½¹ÍĞ¥µœõ¹•Ü%µ…” ¤±ÕÉ°õUI0¹É•…Ñ•=‰©•ÑUI0¡¹•Ü	±½ˆ¡mÍ½ÕÉ•t±íÑåÁ”è¥µ…”½ÍÙœ­áµ°ô¤¤í¥µœ¹ÍÉŒõÕÉ°í…İ…¥Ğ¥µœ¹‘•½‘” ¤í½¹ÍĞŒõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ …¹Ù…Ìœ¤íŒ¹İ¥‘Ñ ôÄÈÀÀíŒ¹¡•¥¡ĞôÜÀÀíŒ¹•Ñ½¹Ñ•áĞ œÉœ¤¹‘É…İ%µ…”¡¥µœ°À°À¤íUI0¹É•Ù½­•=‰©•ÑUI0¡ÕÉ°¤íÉ•ÑÕÉ¸Œ¹Ñ½…Ñ…UI0 ¥µ…”½Á¹œœ¤¹ÍÁ±¥Ğ œ°œ¥lÅuô±ÍÙœ¤ì(€…ÍÍ•ÉĞ¹µ…Ñ ¡…İ…¥ĞÁ…”¹±½…Ñ½È œ±½…±M½¹]¥é…É‘Q¥Ñ±”œ¤¹Ñ•áÑ½¹Ñ•¹Ğ ¤°½‘9•ÜM½¹œ¼¤ì(€…ÍÍ•ÉĞ¹µ…Ñ ¡…İ…¥ĞÁ…”¹±½…Ñ½È œµ…­•M½¹œœ¤¹Ñ•áÑ½¹Ñ•¹Ğ ¤°½5…­”5ÕÍ¥Œ¼¤ì(€…İ…¥ĞÁ…”¹±½…Ñ½È œÍ½É•A¡½Ñ½Ìœ¤¹Í•Ñ%¹ÁÕÑ¥±•Ì¡í¹…µ”è­¹½İ¸µÍ½É”¹Á¹œœ±µ¥µ•QåÁ”è¥µ…”½Á¹œœ±‰Õ™™•Èé	Õ™™•È¹™É½´¡Á¹œØĞ°‰…Í”ØĞœ¥ô¤ì(€…İ…¥ĞÁ…”¹±½…Ñ½È œµ…­•M½¹œœ¤¹±¥¬ ¤ì(€…İ…¥ĞÁ…”¹İ…¥Ñ½ÉÕ¹Ñ¥½¸  ¤ôù‘½Õµ•¹Ğ¹ÅÕ•ÉåM•±•Ñ½È œµ…­•M½¹œœ¤ü¹Ñ•áÑ½¹Ñ•¹Ğ¹¥¹±Õ‘•Ì QÉä……¥¸œ¤±íÑ¥µ•½ÕĞèÌÀÀÀÁô¤ì(€…ÍÍ•ÉĞ¹•ÅÕ…°¡…İ…¥ĞÁ…”¹•Ù…±Õ…Ñ”  ¤ôù=‰©•Ğ¹Ù…±Õ•Ì¡İ¥¹‘½Ü¹A¥…¹½-¥¹‘½µ1¥‰É…Éä¹Í½¹Ì¤¹Í½µ”¡Í½¹œôùÍ½¹œü¹Ñ¥Ñ±”ôôôÕÑ½µ…Ñ¥Œ]½É­Í¡½ÀM½¹œœ¤¤±™…±Í”°É•½¹¥Ñ¥½¸™…¥±ÕÉ”‘½•Ì¹½ĞÉ•…Ñ”„±¥‰É…ÉäÉ•½Éœ¤ì(€…İ…¥ĞÁ…”¹•Ù…±Õ…Ñ”  ¤ôùíİ¥¹‘½Ü¹}}½É¥¥¹…±M…Ù•M½¹œõİ¥¹‘½Ü¹A¥…¹½-¥¹‘½µ1¥‰É…Éä¹Í…Ù•M½¹œï}½¶‰Ëkºwµç\™	ÊKØZ]›ÜŠÜİ]N‰İš\ÚX›IßJNÂˆ]ØZ]YÙKØZ]›Ü‘[˜İ[ÛŠ
 
-  console.log('Issue #25 workshop browser checks passed: no startup OMR gate, one-screen Add New Song â†’ Make Music, recognition failure and retry, minimized processing restore, storage failure recovery, auto-save, optional correction, arrangement playback, custom selector and responsive layouts. Screenshots are labeled in /tmp with viewport and source SHA.');
- }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
-})().catch(e=>{console.error(e);process.exitCode=1});
+OO‹Õ\ÈÛÛ™ÈÛİ[›İ™HØ]™YÚK\İ
+Øİ[Y[œ]Y\TÙ[XİÜŠ	ÈÜØÛÜ™R[\Üİ]\ÉÊOË^ÛÛ[	ÉÊKİ[Y[İ]ŒÌJNÂˆ\ÜÙ\™\]X[
+]ØZ]YÙK™]˜[X]J
+
+OO“Øš™Xİ˜[Y\ÊÚ[™İË”X[›ÒÚ[™ÙÛSXœ˜\KœÛÛ™ÜÊKœÛÛYJÛÛ™ÏOœÛÛ™ÏË]OOOIĞ]]ÛX]XÈÛÜšÜÚÜÛÛ™ÉÊJK˜[ÙK	ÜİÜ˜YÙH˜Z[\™HÙ\È›İÛZ[HHØ]™YÛÛ™ÉÊNÂˆ\ÜÙ\™\]X[
+]ØZ]YÙK›ØØ]ÜŠ	ÈÜ™]TÛÛ™ÔØ]™IÊKš\Õš\ÚX›J
+KYK	ÜİÜ˜YÙH˜Z[\™HÙ™™\œÈH™]IÊNÂˆ]ØZ]YÙK™]˜[X]J
+
+OOİÚ[™İË”X[›ÒÚ[™ÙÛSXœ˜\KœØ]™TÛÛ™Ï]Ú[™İË—×ÛÜšYÚ[˜[Ø]™TÛÛ™ßJNÂˆ]ØZ]YÙK›ØØ]ÜŠ	ÈÜ™]TÛÛ™ÔØ]™IÊK˜ÛXÚÊ
+NÂˆ]ØZ]YÙKØZ]›Ü‘[˜İ[ÛŠ
+
+OO‹Ö[İ\ˆXYÚXØ[ÛÛ™È\È™XYKÚK\İ
+Øİ[Y[œ]Y\TÙ[XİÜŠ	ÈÜØÛÜ™R[\Üİ]\ÉÊOË^ÛÛ[	ÉÊKİ[Y[İ]ŒÌJNÂˆ\ÜÙ\™\]X[
+]ØZ]YÙK›ØØ]ÜŠ	ÈÜØÛÜ™T™]šY]ÉÊKš\Õš\ÚX›J
+K˜[ÙK	Ü™XÛÙÛš][Ûˆ]]Ë\Ø]™\ÈÚ]İ]Ü[š[™ÈHÜ[Û˜[Y]Ü‰ÊNÂˆÛÛœİYX]ØZ]YÙK™]˜[X]J
+
+OO“Øš™XİšÙ^\ÊÚ[™İË”X[›ÒÚ[™ÙÛSXœ˜\KœÛÛ™ÜÊK™š[™
+ÏOÚ[™İË”X[›ÒÚ[™ÙÛSXœ˜\KœÛÛ™ÜÖÚ×OË]OOOIĞ]]ÛX]XÈÛÜšÜÚÜÛÛ™ÉÊJNÂˆ\ÜÙ\›ÚÊY	Ü™XÛÙÛš^™YØÛÜ™H\ÈØ]™Y]]ÛX]XØ[HÈHÚ\™YÛÛ™ÈØ][ÙÉÊNÂˆ\ÜÙ\™\]X[
+]ØZ]YÙK™]˜[X]J
+
+OO“Øš™Xİ˜[Y\ÊÚ[™İË”X[›ÒÚ[™ÙÛSXœ˜\KœÛÛ™ÜÊK™š[\ŠÛÛ™ÏOœÛÛ™ÏË]OOOIĞ]]ÛX]XÈÛÜšÜÚÜÛÛ™ÉÊK›[™İ
+KK	Ü™\X]YØ]™HY[]H\È™\™\Ù[YHÛ™HXœ˜\H™XÛÜ™	ÊNÂˆÛÛœİØ]™YX]ØZ]YÙK™]˜[X]J^XİYOÚ[™İË”X[›ÒÚ[™ÙÛSXœ˜\KœÛÛ™ÜÖÙ^XİYKY
+NÂˆ\ÜÙ\›ÚÊØ]™Y˜\œ˜[™Ù[Y[Ë˜˜\ÚXÏË™]™[ÏË›[™İ	İ˜[Y˜\ÚXÈ\œ˜[™Ù[Y[\È]˜Z[X›HY\ˆ™XÛÙÛš][Û‰ÊNÂˆ]ØZ]YÙK›ØØ]ÜŠ	ÈÜ^S^TÛÛ™ÉÊK˜ÛXÚÊ
+NÂˆ]ØZ]YÙK›ØØ]ÜŠ	ÈÛØØ[ÛÛ™ÕÚ^˜\™	ÊKØZ]›ÜŠÜİ]N‰ÚY[‰ßJNÂˆ]ØZ]YÙKØZ]›Ü‘[˜İ[ÛŠ^XİYO™Øİ[Y[œ]Y\TÙ[XİÜŠ	ÈÜÛÛ™ÔÙ[Xİ	ÊOË˜[YOOOY^XİY	‰›[ÙOOOIÛ\İ[‰ËY
+NÂˆ]ØZ]YÙK›ØØ]ÜŠ	ÈÜÛÛ™ÔXÚÙ\]Û‰ÊK˜ÛXÚÊ
+NØ]ØZ]YÙK›ØØ]ÜŠ	ÈÛ^TÛÛ™ÜÑX[ÙÉÊKØZ]›ÜŠÜİ]N‰İš\ÚX›IßJNÂˆ]ØZ]YÙK›ØØ]ÜŠ	Ë›Xœ˜\KXØ\™	ÊK™š[\ŠÚ\Õ^‰Ğ]]ÛX]XÈÛÜšÜÚÜÛÛ™ÉßJK›ØØ]ÜŠ	ÜÙ[Xİ	ÊKœÙ[XİÜ[ÛŠ	Ø˜\ÚXÉÊNÂˆ]ØZ]YÙK›ØØ]ÜŠ	Ë›Xœ˜\KXØ\™	ÊK™š[\ŠÚ\Õ^‰Ğ]]ÛX]XÈÛÜšÜÚÜÛÛ™ÉßJK™Ù]T›ÛJ	Ø]Û‰ËÛ˜[YN‰ĞÚÛÜÙIßJK˜ÛXÚÊ
+NÂˆ]ØZ]YÙKØZ]›Ü‘[˜İ[ÛŠ^XİYO™Øİ[Y[œ]Y\TÙ[XİÜŠ	ÈÜÛÛ™ÔÙ[Xİ	ÊOË˜[YOOOY^XİYY
+NÂˆÛÛœİ^X˜XÚÏX]ØZ]YÙK™]˜[X]J^XİYOŠÚY™Øİ[Y[œ]Y\TÙ[XİÜŠ	ÈÜÛÛ™ÔÙ[Xİ	ÊK˜[YK[™Ú[™Q]™[Î‘U‘S•Ë›X\
+O–Û‹˜˜\‹‹˜]‹™\‹‹›ZYWJKØ]™Y]™[ÎÚ[™İË”X[›ÒÚ[™ÙÛSXœ˜\KœÛÛ™ÜÖÙ^XİYK˜\œ˜[™Ù[Y[Ë˜˜\ÚXË™]™[Ë›X\
+O–Û‹˜˜\‹‹˜]‹™\‹‹›ZYWJ_JKY
+NÂˆ\ÜÙ\™\]X[
+^X˜XÚËšYY
+NØ\ÜÙ\™Y\\]X[
+^X˜XÚË™[™Ú[™Q]™[Ë^X˜XÚËœØ]™Y]™[Ë	ÜÙ[XİY˜\ÚXÈ›İH]H™XXÚ\ÈHÚ\™Y^X˜XÚÈ[™Ú[™IÊNÂˆ\ÜÙ\™\]X[
+]ØZ]YÙK›ØØ]ÜŠ	ÈÜÛÛ™ÔÙ[Xİ	ÊKš\Õš\ÚX›J
+K˜[ÙK	ÛÛ˜]]™HÙ[XİÜˆİ^\È\ØX›Y	ÊNÂˆ]ØZ]YÙK›ØØ]ÜŠ	ÈÜÛÛ™ÔXÚÙ\]Û‰ÊK˜ÛXÚÊ
+NØ]ØZ]YÙK›ØØ]ÜŠ	ÈÛ^TÛÛ™ÜÑX[ÙÉÊKØZ]›ÜŠÜİ]N‰İš\ÚX›IßJNÂˆ]ØZ]YÙK›ØØ]ÜŠ	Ë›Xœ˜\KXØ\™	ÊK™š[\ŠÚ\Õ^‰ĞÜ˜YHÛÛ™ÉßJK™Ù]T›ÛJ	Ø]Û‰ËÛ˜[YN‰ø¥­ˆ^IßJK˜ÛXÚÊ
+NÂˆ]ØZ]YÙKØZ]›Ü‘[˜İ[ÛŠ
+
+OO™Øİ[Y[œ]Y\TÙ[XİÜŠ	ÈÜÛÛ™ÔÙ[Xİ	ÊOË˜[YOOOIØÜ˜YIÉ‰›[ÙOOOIÛ\İ[‰ÊNÂˆ\ÜÙ\™\]X[
+]ØZ]YÙK›ØØ]ÜŠ	ÈÜÛÛ™ÔXÚÙ\]Û‰ÊK^ÛÛ[
+
+K[ŠOš[˜ÛY\Ê	Ñ[X]X[ˆÜ˜YHÛÛ™ÉÊJKYK	ØZ[Z[ˆÛÛ™ÈÙ[Xİ[Ûˆ\]\ÈHš\ÚX›HÙ[XİÜ‰ÊNÂˆ]ØZ]YÙK›ØØ]ÜŠ	ÈÜÛÛ™ÔXÚÙ\]Û‰ÊK˜ÛXÚÊ
+NØ]ØZ]YÙK›ØØ]ÜŠ	ÈÛ^TÛÛ™ÜÑX[ÙÉÊKØZ]›ÜŠÜİ]N‰İš\ÚX›IßJNÂˆ]ØZ]YÙK›ØØ]ÜŠ	Ë›Xœ˜\KXØ\™	ÊK™š[\ŠÚ\Õ^‰Ğ]]ÛX]XÈÛÜšÜÚÜÛÛ™ÉßJK›ØØ]ÜŠ	ÜÙ[Xİ	ÊKœÙ[XİÜ[ÛŠ	Ø˜\ÚXÉÊNÂˆ]ØZ]YÙK›ØØ]ÜŠ	Ë›Xœ˜\KXØ\™	ÊK™š[\ŠÚ\Õ^‰Ğ]]ÛX]XÈÛÜšÜÚÜÛÛ™ÉßJK™Ù]T›ÛJ	Ø]Û‰ËÛ˜[YN‰ø¥­ˆ^IßJK˜ÛXÚÊ
+NÂˆ]ØZ]YÙKØZ]›Ü‘[˜İ[ÛŠ^XİYO™Øİ[Y[œ]Y\TÙ[XİÜŠ	ÈÜÛÛ™ÔÙ[Xİ	ÊOË˜[YOOOY^XİY	‰›[ÙOOOIÛ\İ[‰ËY
+NÂˆ\ÜÙ\™Y\\]X[
+]ØZ]YÙK™]˜[X]J
+
+OO‘U‘S•Ë›X\
+O–Û‹˜˜\‹‹˜]‹™\‹‹›ZYWJJK^X˜XÚËœØ]™Y]™[Ë	ÜØ]™YÛÛ™ÈÜ[œÈ[ˆ^X˜XÚÈÚ]]ÈÙ[XİY\œ˜[™Ù[Y[	ÊNÂˆ]ØZ]YÙK›ØØ]ÜŠ	ÈÛÜ[“^TÛÛ™ÜÉÊK˜ÛXÚÊ
+NØ]ØZ]YÙK›ØØ]ÜŠ	ÈÛ^TÛÛ™ÜÑX[ÙÉÊKØZ]›ÜŠÜİ]N‰İš\ÚX›IßJNØ]ØZ]YÙK›ØØ]ÜŠ	ÈØÛÜÙS^TÛÛ™ÜÉÊK˜ÛXÚÊ
+NÂˆ\ÜÙ\›X]Ú
+]ØZ]YÙK›ØØ]ÜŠ	ÈÜÛÛ™ÔXÚÙ\]Û‰ÊK^ÛÛ[
+
+KĞ]]ÛX]XÈÛÜšÜÚÜÛÛ™ËË	ÜÛÛ™ÈÙ[XİÜˆ™Y›XİÈÙ[Xİ[Û‰ÊNÂˆ]ØZ]YÙK›ØØ]ÜŠ	ÈÛÜ[“^TÛÛ™ÜÉÊK˜ÛXÚÊ
+NØ]ØZ]YÙK›ØØ]ÜŠ	ÈÛ^TÛÛ™ÜÑX[ÙÉÊKØZ]›ÜŠÜİ]N‰İš\ÚX›IßJNØ]ØZ]YÙK›ØØ]ÜŠ	ÈÛXZÙS™]ÔÛÛ™ÉÊK˜ÛXÚÊ
+NØ]ØZ]YÙK›ØØ]ÜŠ	ÈÛØØ[ÛÛ™ÕÚ^˜\™	ÊKØZ]›ÜŠÜİ]N‰İš\ÚX›IßJNÂˆ]ØZ]YÙK›ØØ]ÜŠ	ÈÙY]Ø]™YÛÛ™ÉÊK˜ÛXÚÊ
+NØ]ØZ]YÙK›ØØ]ÜŠ	ÈÜØÛÜ™T™]šY]ÉÊKØZ]›ÜŠÜİ]N‰İš\ÚX›IßJNØ]ØZ]YÙK›ØØ]ÜŠ	ÈØØ[˜Ù[™]šY]ÉÊK˜ÛXÚÊ
+NÂˆ\ÜÙ\™\]X[
+]ØZ]YÙK™]˜[X]J^XİYOÚ[™İË”X[›ÒÚ[™ÙÛSXœ˜\KœÛÛ™ÜÖÙ^XİYOË]KY
+K	Ğ]]ÛX]XÈÛÜšÜÚÜÛÛ™ÉË	ÛÜ[Û˜[Y]Ø[ˆ™HØ[˜Ù[YÚ[HÙY\[™ÈHØ]™YÛÛ™ÉÊNÂˆ]ØZ]YÙK›ØØ]ÜŠ	ÈØÛÜÙTÛÛ™ÕÚ^˜\™	ÊK˜ÛXÚÊ
+NØ]ØZ]YÙK›ØØ]ÜŠ	ÈÛØØ[ÛÛ™ÕÚ^˜\™	ÊKØZ]›ÜŠÜİ]N‰ÚY[‰ßJNÂˆÛÛœİ›ÛÛOX]ØZ]YÙK›ØØ]ÜŠ	ÈÚÙ^\ÈÚ]IÊK˜Ûİ[
+
+NØ]ØZ]YÙK›ØØ]ÜŠ	ÈŞ›ÛÛRÙ^\ÉÊK˜ÛXÚÊ
+NØ\ÜÙ\™\]X[
+]ØZ]YÙK›ØØ]ÜŠ	ÈÚÙ^\ÈÚ]IÊK˜Ûİ[
+
+K	Ö›ÛÛHÙ^\ÈÚ[™Ù\ÈHš\ÚX›HÚ]HÙ^HÛİ[	ÊNØ]ØZ]YÙK›ØØ]ÜŠ	ÈŞ›ÛÛRÙ^\ÉÊK˜ÛXÚÊ
+NØ]ØZ]YÙK›ØØ]ÜŠ	ÈŞ›ÛÛRÙ^\ÉÊK˜ÛXÚÊ
+NØ\ÜÙ\™\]X[
+]ØZ]YÙK›ØØ]ÜŠ	ÈÚÙ^\ÈÚ]IÊK˜Ûİ[
+
+K›ÛÛK	Ö›ÛÛHÙ^\ÈŞXÛ\È›İYÚ]ÈÙ^H˜[™Ù\ÉÊNÂˆ\ÜÙ\›X]Ú
+]ØZ]YÙK›ØØ]ÜŠ	ÈÜÜYY	ÊK™]˜[X]JOO™Kœ\™[[[Y[^ÛÛ[
+KÔÜYYË	İH^X˜XÚÈÛY\ˆ\Ù\ÈHÜYYX™[	ÊNÂˆ]ØZ]YÙK›ØØ]ÜŠ	ÈÜÛÛ™ÔXÚÙ\]Û‰ÊK˜ÛXÚÊ
+NØ]ØZ]YÙK›ØØ]ÜŠ	ÈÛ^TÛÛ™ÜÑX[ÙÉÊKØZ]›ÜŠÜİ]N‰İš\ÚX›IßJNØ]ØZ]YÙKœØÜ™Y[œÚİ
+Ü]˜İ\Ú\ÜİYLK\ÛÛ™Ë\Ù[XİÜ‹LÎLIÜÚ_Kœ™ØJNÂˆ›ÜŠÛÛœİšY]ÜÜÙˆŞİÚYŒÎLZYÚKİÚYZYÚŒÎLKİÚYÍZYÚŒLNMKİÚYŒLNMZYÚÍKİÚYŒMZYÚLWJ^Âˆ]ØZ]YÙKœÙ]šY]ÜÜÚ^™JšY]ÜÜ
+NÂˆÛÛœİ^[İ]X]ØZ]YÙK™]˜[X]J
+
+OOØÛÛœİ™Xİ\Ù[XİÜO™Øİ[Y[œ]Y\TÙ[XİÜŠÙ[XİÜŠK™Ù]›İ[™[™ĞÛY[™Xİ
+
+KÛYO\™Xİ
+	ÈÛÜ[“^TÛÛ™ÜÉÊKXÚÙ\\™Xİ
+	ÈÜÛÛ™ÔXÚÙ\]Û‰ÊKÛÛ›ÛÏVÉÈÙ˜]›Üš]Pİ\œ™[	Ë	ÈŞ›ÛÛRÙ^\ÉË	ÈÜÙ]\Ù^X›Ø\™	×K›X\
+™Xİ
+NÜ™]\›ÜÙ\\˜]NšÛYKœšYÚ\XÚÙ\‹›YXÚÙ\‹œšYÚZÛYK›YÛYK˜›İÛO\XÚÙ\‹ÜXÚÙ\‹˜›İÛOZÛYKÜÛÛ›ÛĞÛX\˜ÛÛ›ÛË™]™\JÏOœXÚÙ\‹œšYÚXË›YËœšYÚ\XÚÙ\‹›YXÚÙ\‹˜›İÛOXËÜË˜›İÛO\XÚÙ\‹Ü
+KX[ÙÕš\ÚX›N™Øİ[Y[œ]Y\TÙ[XİÜŠ	ÈÛ^TÛÛ™ÜÑX[ÙÉÊK™Ù]›İ[™[™ĞÛY[™Xİ
+
+KÚYŒ_JNÂˆ\ÜÙ\™\]X[
+^[İ]œÙ\\˜]KYKÛYH[™Ù[XİÜˆÈ›İİ™\›\]	İšY]ÜÜÚY^	İšY]ÜÜšZYÚX
+NØ\ÜÙ\™\]X[
+^[İ]šÛYS™^ÔÙ][™ÜËYKÛYH\È™^ÈÙ][™ÜÈ]	İšY]ÜÜÚY^	İšY]ÜÜšZYÚX
+NÂˆ\ÜÙ\™\]X[
+^[İ]˜ÛÛ›ÛĞÛX\‹YKÙ[XİÜˆÙ\È›İİ™\›\XY\ˆÛÛ›ÛÈ]	İšY]ÜÜÚY^	İšY]ÜÜšZYÚX
+NÂˆ\ÜÙ\™\]X[
+^[İ]™X[ÙÕš\ÚX›KYKİ\İÛHÙ[XİÜˆX[ÙÈ™[XZ[œÈš\ÚX›H]	İšY]ÜÜÚY^	İšY]ÜÜšZYÚX
+NØ]ØZ]YÙKœØÜ™Y[œÚİ
+Ü]˜İ\Ú\ÜİYLK\ÛÛ™Ë\Ù[XİÜ‹IİšY]ÜÜÚY^	İšY]ÜÜšZYÚKIÜÚ_Kœ™ØJNÂˆB‚ˆÛÛœÛÛK›ÙÊ	Ò\ÜİYHÌHÛÜšÜÚÜœ›İÜÙ\ˆÚXÚÜÈ\ÜÙYˆ›Èİ\\ÓTˆØ]KÛ™K\ØÜ™Y[ˆY™]ÈÛÛ™È8¡¤ˆXZÙH]\ÚXË™XÛÙÛš][Ûˆ˜Z[\™H[™™]KZ[š[Z^™Y›ØÙ\ÜÚ[™È™\İÜ™KİÜ˜YÙH˜Z[\™H™XÛİ™\K]]Ë\Ø]™KÜ[Û˜[ÛÜœ™Xİ[Û‹\œ˜[™Ù[Y[^X˜XÚËİ\İÛHÙ[XİÜˆ[™™\ÜÛœÚ]™H^[İ]ËˆØÜ™Y[œÚİÈ\™HX™[Y[ˆİ\Ú]šY]ÜÜ[™Ûİ\˜ÙHÒK‰ÊNÂˆYš[˜[^Ø]ØZ]œ›İÜÙ\‹˜ÛÜÙJ
+NØ]ØZ]™]È›ÛZ\ÙJ™\ÛÛ™OOœÙ\™\‹˜ÛÜÙJ™\ÛÛ™JJ_BŸJJ
+K˜Ø]Ú
+OOØÛÛœÛÛK™\œ›ÜŠJNÜ›ØÙ\ÜË™^]ÛÙOL_JNÂ
