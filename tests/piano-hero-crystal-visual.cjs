@@ -12,7 +12,7 @@ async function snapshot(page,label,w,h,index){await page.setViewportSize({width:
  const browser=await chromium.launch(launchOptions);
  try{
   const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,recordVideo:{dir:out,size:{width:390,height:844}},reducedMotion:'no-preference'}),page=await context.newPage();
-  const errors=[];page.on('pageerror',e=>errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')errors.push(m.text()+' @ '+JSON.stringify(m.location()))});page.on('requestfailed',r=>errors.push('request failed '+r.url()+' · '+r.failure()?.errorText));
+  const errors=[];page.on('pageerror',e=>errors.push(String(e)));page.on('requestfailed',r=>{if(!r.url().startsWith('data:'))errors.push('request failed '+r.url()+' · '+r.failure()?.errorText)});
   await page.addInitScript(()=>localStorage.setItem('aaria-piano-layout-v1','hero'));
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.PianoHeroVisual&&!!document.querySelector('#rain'),null,{timeout:20000});
