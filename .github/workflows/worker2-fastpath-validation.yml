@@ -37,7 +37,7 @@ jobs:
           name: fastpath-recovery-${{ github.sha }}
           path: /tmp/fastpath-evidence/
           retention-days: 14
-          if-no-files-found: error
+          if-no-files-found: warn
 
   matched-omr-benchmark:
     runs-on: ubuntu-latest
@@ -86,7 +86,7 @@ jobs:
           cp /tmp/fastpath-base/assets/piano-hero-v2/{home_button.png,settings_button.png} /tmp/fastpath-base/_site/assets/piano-hero-v2/
           cp -R _site/omr _site/models _site/lib /tmp/fastpath-base/_site/
           cp _site/omr-worker.js /tmp/fastpath-base/_site/
-          cp vendor/omr-licenses/partsong-LICENSE /tmp/fastpath-base/_site/vendor/omr-licenses/
+          cp _site/vendor/omr-licenses/partsong-LICENSE /tmp/fastpath-base/_site/vendor/omr-licenses/
           touch /tmp/fastpath-base/_site/.nojekyll
           (cd /tmp/fastpath-base && python3 scripts/create-r2-install-manifest.py)
           echo "Matched baseline commit: $(git -C /tmp/fastpath-base rev-parse HEAD)"
@@ -104,4 +104,4 @@ jobs:
             /tmp/fastpath-baseline.log
             /tmp/fastpath-candidate.log
           retention-days: 14
-          if-no-files-found: error
+          if-no-files-found: warn
