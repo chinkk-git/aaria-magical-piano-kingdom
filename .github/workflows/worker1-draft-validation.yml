@@ -31,6 +31,8 @@ jobs:
           npx playwright install chromium
       - name: Test update lifecycle and retained user data
         run: node tests/r2-sw-update.cjs
+      - name: Test on-demand OMR installer recovery and data preservation
+        run: node tests/r2-on-demand-installer.cjs
       - name: Test Workshop and playback in Chromium
         env:
           APP_SOURCE_SHA: ${{ github.sha }}
@@ -48,3 +50,44 @@ jobs:
             /tmp/piano-playback-restart-*.png
           retention-days: 14
           if-no-files-found: warn
+
+  omr-real-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install pinned Playwright and Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Check out pinned Partsong engine source
+        uses: actions/checkout@v4
+        with:
+          repository: pzfreo/partsong
+          ref: 9834842408b3012730b76249e0c3738820a08912
+          path: omr-source
+          persist-credentials: false
+      - name: Fetch pinned local runtime and model pack
+        run: |
+          cd omr-source
+          bash scripts/fetch-libs.sh
+          bash scripts/fetch-models.sh
+      - name: Stage the same local OMR payload used by Pages
+        run: |
+          mkdir -p _site/assets/release2 _site/assets/piano-hero-v2 _site/vendor/omr-licenses _site/omr _site/models _site/lib/onnxruntime-web@1.30.0
+          cp index.html song-import.js my-songs.js r2-music.js r2-image.js r2-install.js pwa-update.js sw.js piano-geometry.js piano-hero-v2.css manifest.webmanifest icon-192.png icon-512.png icon-maskable-512.png apple-touch-icon.png _site/
+          cp assets/release2/magic-book.svg assets/release2/magic-bubble.svg _site/assets/release2/
+          cp assets/piano-hero-v2/home_button.png assets/piano-hero-v2/settings_button.png _site/assets/piano-hero-v2/
+          cp omr-source/omr-worker.js _site/
+          cp -R omr-source/omr/. _site/omr/
+          cp -R omr-source/models/. _site/models/
+          cp -R omr-source/lib/onnxruntime-web@1.30.0/. _site/lib/onnxruntime-web@1.30.0/
+          cp OMR-THIRD-PARTY-NOTICES.md _site/
+          cp omr-source/LICENSE _site/vendor/omr-licenses/partsong-LICENSE
+          touch _site/.nojekyll
+          python3 scripts/create-r2-install-manifest.py
+      - name: Run actual image to playback semantic acceptance
+        run: node tests/r2-omr-ground-truth.cjs _site
