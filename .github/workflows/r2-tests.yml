@@ -26,11 +26,11 @@ jobs:
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import subprocess
           paths=set(subprocess.check_output(["git","diff","--name-only","HEAD^","HEAD"],text=True).splitlines())
-          targeted={".github/workflows/r2-tests.yml",".github/workflows/piano-deploy.yml","index.html","sw.js","song-import.js","r2-music.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-workshop-review.cjs","tests/r2-install-gate.cjs","tests/r2-omr-ground-truth.cjs","tests/r2-visual-gallery.cjs"}
+          targeted={".github/workflows/r2-tests.yml",".github/workflows/piano-deploy.yml","README.md","index.html","sw.js","song-import.js","my-songs.js","piano-hero-v2.css","r2-music.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-workshop-review.cjs","tests/r2-install-gate.cjs","tests/r2-omr-ground-truth.cjs","tests/r2-visual-gallery.cjs","tests/r2-integration.test.js","tests/r2-music.test.js"}
           print("full=" + str(bool(paths-targeted)).lower())
           print("workshop=" + str(bool(paths & {"song-import.js","tests/r2-workshop-review.cjs"})).lower())
           print("install=" + str(bool(paths & {"index.html","sw.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-install-gate.cjs",".github/workflows/piano-deploy.yml"})).lower())
-          print("omr=" + str(bool(paths & {"r2-music.js","r2-install.js","tests/r2-omr-ground-truth.cjs",".github/workflows/piano-deploy.yml"})).lower())
+          print("omr=" + str(bool(paths & {"r2-install.js","tests/r2-omr-ground-truth.cjs",".github/workflows/piano-deploy.yml"})).lower())
           print("visual=" + str("tests/r2-visual-gallery.cjs" in paths).lower())
           PY
   validate:
@@ -81,6 +81,13 @@ jobs:
         run: npx playwright install chromium
       - name: Run only the workshop correction and playback integration
         run: node tests/r2-workshop-review.cjs
+      - name: Upload Android-sized selector screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-song-selector-open-${{ github.event.pull_request.head.sha }}
+          path: /tmp/android-song-selector-open.png
+          retention-days: 14
+          if-no-files-found: error
 
   installation-gate-targeted:
     needs: changes

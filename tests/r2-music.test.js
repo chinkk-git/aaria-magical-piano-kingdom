@@ -35,7 +35,7 @@ assert.deepEqual(generated.unavailable, ['advanced']);
 assert.equal(JSON.stringify(source.events), before, 'generation must preserve the original');
 const advancedScore={barLengths:[8,8],events:[]};for(let bar=1;bar<=2;bar++)for(let at=0;at<8;at++)for(const midi of [48,55,60,72,88,40])advancedScore.events.push({bar,at,dur:1,midi,hand:midi<60?'left':'right'});assert.equal(music.generateArrangements(advancedScore).versions.advanced, undefined);
 const advanced=music.generateArrangements(advancedScore,{scoreVerified:true});assert.equal(music.metrics(advancedScore).level,'Advanced');assert.equal(advanced.versions.advanced.events.length,advancedScore.events.length);
-assert.equal(advanced.versions.advanced.source,'user-reviewed-original');
+assert.equal(advanced.versions.advanced.source,'recognized-original');
 assert.deepEqual(advanced.versions.advanced.events,advancedScore.events.map(e=>({...e,hand:e.hand||'right',part:e.part||'piano-rh'})));
 for(const group of new Set(generated.versions.medium.events.map(e=>`${e.bar}:${e.at}`)))assert.ok(generated.versions.medium.events.filter(e=>`${e.bar}:${e.at}`===group).length<=2,'Medium keeps at most a melody and bass note at each onset');
 for (const version of Object.values(generated.versions)) {
