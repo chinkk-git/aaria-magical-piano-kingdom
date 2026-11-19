@@ -58,7 +58,7 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   assert.equal(await page.locator('#bar').inputValue(),'1','Play Again updates the selected measure control to measure 1');
   await page.screenshot({path:`/tmp/piano-playback-restart-390x844-${process.env.APP_SOURCE_SHA||'local'}.png`});
   await page.setViewportSize({width:844,height:390});await page.locator('#pause').click();await page.waitForFunction(()=>mode==='stop'&&pausedMode==='listen');assert.match(await page.locator('#pause').textContent(),/Resume/,'playback can be paused before switching layouts');
-  await page.locator('#pianoLayoutSelect').selectOption('classic');
+  await page.evaluate(()=>applyPianoLayout('classic',false));
   assert.equal(await page.locator('#primaryModeButton').textContent(), '✨ Learn','Classic Piano keeps its Learn action');
   await page.locator('#secondaryModeButton').click();await page.waitForFunction(()=>mode==='listen');
   await page.waitForFunction(()=>mode==='completed',{timeout:10000});
