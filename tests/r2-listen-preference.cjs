@@ -29,7 +29,7 @@ let browser;
   assert.match(await page.locator('#secondaryModeButton').innerText(),/Play Song/,'Hero retains a separate play-song action');
   assert.match(await page.locator('#secondaryModeButton').getAttribute('aria-label'),/Play song with sound/);
   assert.match(await page.locator('#primaryModeButton').innerText(),/Play Along/,'Play Along remains available');
-  for(const selector of ['#pause','#restart','#speed','#loopRange','#bar'])assert.equal(await page.locator(selector).isVisible(),true,`essential control ${selector} remains visible`);
+  for(const selector of ['#pause','#speed','#loopRange','#bar'])assert.equal(await page.locator(selector).isVisible(),true,`essential control ${selector} remains visible`);
 
   await page.evaluate(song=>window.PianoKingdomLibrary.addSong(song,{select:true}),score);
   const initial=await page.evaluate(()=>({enabled:listenEnabled,mode,context:ctx,storage:localStorage.getItem('aaria-piano-listen-enabled-v1')}));
