@@ -22,6 +22,7 @@ const xml=`<?xml version="1.0"?><score-partwise version="3.1"><part-list><score-
 <note><pitch><step>E</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note><note><chord/><pitch><step>G</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note>
 <note><pitch><step>D</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note><note><chord/><pitch><step>F</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note></measure></part></score-partwise>`;
 const workerStub=`let requests=0,failFirstRecognition=true;const xml=${JSON.stringify(xml)};self.onmessage=({data})=>{if(data.type==='init'){self.postMessage({type:'ready'});return}if(data.type==='layout'){self.postMessage({type:'result',id:data.id,classes:[]});return}if(data.type==='recognise'){requests++;if(failFirstRecognition){failFirstRecognition=false;self.postMessage({type:'error',id:data.id,msg:'Simulated recognition failure'});return}setTimeout(()=>self.postMessage({type:'result',id:data.id,xml}),700)}}`;
+const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>{if(data.type==='init'){self.postMessage({type:'ready'});return}if(data.type==='layout'){self.postMessage({type:'result',id:data.id,classes:[]});return}if(data.type==='recognise'){setTimeout(()=>self.postMessage({type:'result',id:data.id,xml}),12000)}}`;
 (async()=>{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox']});
@@ -102,6 +103,37 @@ const workerStub=`let requests=0,failFirstRecognition=true;const xml=${JSON.stri
    assert.equal(layout.controlsClear,true,`selector does not overlap header controls at ${viewport.width}x${viewport.height}`);
    assert.equal(layout.dialogVisible,true,`custom selector dialog remains visible at ${viewport.width}x${viewport.height}`);await page.screenshot({path:`/tmp/issue25-song-selector-${viewport.width}x${viewport.height}-${sha}.png`});
   }
+
+  const cancelPage=await context.newPage(),cancelErrors=[];
+  cancelPage.on('pageerror',e=>cancelErrors.push(e.message));
+  await cancelPage.route('**/omr-worker.js',route=>route.fulfill({status:200,contentType:'text/javascript',body:workerSlowStub}));
+  await cancelPage.route('**/r2-install.js*',route=>route.fulfill({status:200,contentType:'text/javascript',body:"(()=>{window.AariaR2Installer={state:'ready',ensureReady:async()=>true}})()"}));
+  await cancelPage.goto(`http://127.0.0.1:${server.address().port}/index.html`,{waitUntil:'domcontentloaded'});
+  await cancelPage.waitForFunction(()=>window.PianoKingdomLibrary?.saveSong);
+  await cancelPage.locator('#openMySongs').click();await cancelPage.locator('#makeNewSong').click();
+  await cancelPage.locator('#scorePhotos').setInputFiles({name:'cancel-score.png',mimeType:'image/png',buffer:Buffer.from(png64,'base64')});
+  const dismissed=async dialog=>{assert.match(dialog.message(),/Your pictures and completed pages will stay saved/);await dialog.dismiss()};
+  cancelPage.on('dialog',dismissed);
+  await cancelPage.locator('#makeSong').click();
+  await cancelPage.waitForFunction(()=>/Reading notes and rhythm 1 of 1/.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:15000});
+  await cancelPage.locator('#keepPlaying').click();
+  await cancelPage.locator('.magic-song-bubble').waitFor({state:'visible'});
+  assert.equal((await cancelPage.locator('.magic-song-bubble').textContent()).trim(),(await cancelPage.locator('#scoreImportStatus').textContent()).trim(),'the minimized bubble mirrors the real recognition stage');
+  await cancelPage.locator('.magic-song-bubble').click();
+  await cancelPage.locator('#cancelSongJob').click();
+  assert.equal(await cancelPage.locator('#makeSong').isDisabled(),true,'dismissing cancellation leaves recognition running');
+  assert.match(await cancelPage.locator('#scoreImportStatus').textContent(),/Reading notes and rhythm 1 of 1/,'dismissal preserves the current progress stage');
+  cancelPage.off('dialog',dismissed);
+  const accepted=async dialog=>{await dialog.accept()};
+  cancelPage.on('dialog',accepted);
+  await cancelPage.locator('#cancelSongJob').click();
+  await cancelPage.waitForFunction(()=>/Reading paused/.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:15000});
+  assert.match(await cancelPage.locator('#makeSong').textContent(),/Continue reading/,'confirmed cancel allows immediate safe re-entry');
+  assert.equal(await cancelPage.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).some(song=>song?.title==='My song')),false,'confirmed cancel does not save a partial song');
+  await cancelPage.waitForTimeout(1200);
+  assert.equal(await cancelPage.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).filter(song=>song?.title==='My song').length),0,'terminated worker cannot complete late or create a duplicate partial song');
+  assert.deepEqual(cancelErrors,[],'cancel flow has no uncaught browser errors');
+  await cancelPage.close();
 
   console.log('Issue #25 workshop browser checks passed: no startup OMR gate, one-screen Add New Song → Make Music, recognition failure and retry, minimized processing restore, storage failure recovery, auto-save, optional correction, arrangement playback, custom selector and responsive layouts. Screenshots are labeled in /tmp with viewport and source SHA.');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
