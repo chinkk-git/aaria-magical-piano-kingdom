@@ -31,12 +31,12 @@ jobs:
           import subprocess
           subprocess.check_call(["git","fetch","--no-tags","--depth=1","origin",os.environ["PULL_REQUEST_BASE_SHA"]])
           paths=set(subprocess.check_output(["git","diff","--name-only",os.environ["PULL_REQUEST_BASE_SHA"],os.environ["PULL_REQUEST_HEAD_SHA"]],text=True).splitlines())
-          targeted={".github/workflows/r2-tests.yml",".github/workflows/piano-deploy.yml","README.md","index.html","sw.js","pwa-update.js","song-import.js","my-songs.js","piano-hero-v2.css","r2-music.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-workshop-review.cjs","tests/r2-install-gate.cjs","tests/r2-on-demand-installer.cjs","tests/r2-sw-update.cjs","tests/fixtures/sw-v1.18.1.js","tests/r2-omr-ground-truth.cjs","tests/r2-visual-gallery.cjs","tests/piano-hero-crystal-visual.cjs","tests/android-landscape-controls.cjs","tests/r2-integration.test.js","tests/r2-music.test.js"}
+          targeted={".github/workflows/r2-tests.yml",".github/workflows/piano-deploy.yml","README.md","index.html","sw.js","song-import.js","my-songs.js","piano-hero-v2.css","r2-music.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-workshop-review.cjs","tests/r2-install-gate.cjs","tests/r2-on-demand-installer.cjs","tests/r2-sw-update.cjs","tests/fixtures/sw-v1.18.1.js","tests/r2-omr-ground-truth.cjs","tests/r2-visual-gallery.cjs","tests/piano-hero-crystal-visual.cjs","tests/android-landscape-controls.cjs","tests/neon-label-impact.cjs","tests/r2-integration.test.js","tests/r2-music.test.js","pwa-update.js"}
           print("full=" + str(bool(paths-targeted)).lower())
           print("workshop=" + str(bool(paths & {"song-import.js","tests/r2-workshop-review.cjs"})).lower())
           print("install=" + str(bool(paths & {"index.html","sw.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-on-demand-installer.cjs",".github/workflows/piano-deploy.yml"})).lower())
           print("omr=" + str(bool(paths & {"omr-worker.js","tests/r2-omr-ground-truth.cjs",".github/workflows/piano-deploy.yml"})).lower())
-          print("visual=" + str(bool(paths & {"index.html","piano-hero-v2.css","tests/piano-hero-crystal-visual.cjs","tests/android-landscape-controls.cjs"})).lower())
+          print("visual=" + str(bool(paths & {"index.html","piano-hero-v2.css","tests/piano-hero-crystal-visual.cjs","tests/android-landscape-controls.cjs","tests/neon-label-impact.cjs"})).lower())
           PY
   validate:
     needs: changes
@@ -98,12 +98,16 @@ jobs:
       - name: Install Chromium
         run: npx playwright install chromium
       - name: Run focused Add New Song, minimized processing and playback checks
+        env:
+          APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
         run: node tests/r2-workshop-review.cjs
       - name: Upload Android-sized selector screenshot
         uses: actions/upload-artifact@v4
         with:
           name: android-song-selector-open-${{ github.event.pull_request.head.sha }}
-          path: /tmp/android-song-selector-open.png
+          path: |
+            /tmp/android-song-selector-open.png
+            /tmp/issue25-minimized-processing-390x844-${{ github.event.pull_request.head.sha }}.png
           retention-days: 14
           if-no-files-found: error
 
@@ -145,6 +149,7 @@ jobs:
         run: |
           node --check tests/piano-hero-crystal-visual.cjs
           node --check tests/android-landscape-controls.cjs
+          node --check tests/neon-label-impact.cjs
           node tests/piano-geometry.test.js
       - name: Install Playwright Chromium for screenshot capture
         run: |
@@ -158,6 +163,10 @@ jobs:
         env:
           APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
         run: node tests/android-landscape-controls.cjs
+      - name: Verify neon note labels and Magical Note Explosion
+        env:
+          APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node tests/neon-label-impact.cjs
       - name: Upload crystal visual evidence
         uses: actions/upload-artifact@v4
         with:
@@ -170,6 +179,13 @@ jobs:
         with:
           name: android-landscape-controls-evidence-${{ github.event.pull_request.head.sha }}
           path: android-landscape-controls-evidence.zip
+          retention-days: 14
+          if-no-files-found: error
+      - name: Upload neon labels and note impact evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: neon-label-impact-evidence-${{ github.event.pull_request.head.sha }}
+          path: neon-label-impact-evidence.zip
           retention-days: 14
           if-no-files-found: error
 

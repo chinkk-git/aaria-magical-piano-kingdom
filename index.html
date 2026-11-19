@@ -118,23 +118,39 @@ function spawnNoteExplosion(note,now,measuredGeometry){
  if(!key)return;
  // Use the matched key's live bounds so the burst sits on that key even if key tops vary by a few pixels.
  const canvasRect=$('rain').getBoundingClientRect(),keyRect=key.getBoundingClientRect();
- const impactX=(keyRect.left+keyRect.right)/2-canvasRect.left,impactY=keyRect.top-canvasRect.top;
+ const impactX=(keyRect.left+keyRect.right)/2-canvasRect.left,keyImpactY=keyRect.top-canvasRect.top,impactY=Math.max(12,Math.min(canvasRect.height-12,keyImpactY-10));
  const left=note.part==='piano-lh'||note.hand==='left',colorIndex=handColours?(left?1:0):2;
  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
  noteFlashStart[midi]=now;noteFlashEnd[midi]=now+(reduced?120:NOTE_FX_DURATION*1000);noteFlashX[midi]=impactX;noteFlashY[midi]=impactY;noteFlashColor[midi]=colorIndex;
  key.style.setProperty('--impact-color',NOTE_FX_COLORS[colorIndex]);
+ let generatedParticles=0;
  if(!reduced){
-  const count=5+(midi%4);
+  const count=8+(midi%5);generatedParticles=count;
   for(let j=0;j<count;j++){
-   const slot=noteFxCursor++%NOTE_FX_CAP,angle=(j/count)*NOTE_FX_TAU+(midi%7)*.13,speed=34+((midi*3+j*11)%25);
+   const slot=noteFxCursor++%NOTE_FX_CAP,angle=(j/count)*NOTE_FX_TAU+(midi%7)*.13,speed=48+((midi*3+j*11)%29);
    noteFxStart[slot]=now;noteFxLife[slot]=.30+((midi+j)%10)*.01;noteFxX[slot]=impactX;noteFxY[slot]=impactY;
    noteFxVX[slot]=Math.cos(angle)*speed;noteFxVY[slot]=-Math.abs(Math.sin(angle)*speed)-9;noteFxColor[slot]=colorIndex;
   }
  }
- window.dispatchEvent(new CustomEvent('piano-note-arrival',{detail:{pitch:midi,bar,at:note.at,x:impactX,y:impactY,keyCenter:(keyRect.left+keyRect.right)/2-canvasRect.left,keyTop:keyRect.top-canvasRect.top,screenKeyCenter:(keyRect.left+keyRect.right)/2,screenKeyTop:keyRect.top,canvasLeft:canvasRect.left,canvasTop:canvasRect.top,rangeTransition:keyboard.classList.contains('range-shift'),color:NOTE_FX_COLORS[colorIndex],visualOnly:true}}));
+ window.dispatchEvent(new CustomEvent('piano-note-arrival',{detail:{pitch:midi,bar,at:note.at,x:impactX,y:keyImpactY,keyCenter:(keyRect.left+keyRect.right)/2-canvasRect.left,keyTop:keyImpactY,effectY:impactY,screenKeyCenter:(keyRect.left+keyRect.right)/2,screenKeyTop:keyRect.top,canvasLeft:canvasRect.left,canvasTop:canvasRect.top,rangeTransition:keyboard.classList.contains('range-shift'),color:NOTE_FX_COLORS[colorIndex],particlesGenerated:generatedParticles,flashDurationMs:reduced?120:NOTE_FX_DURATION*1000,visualOnly:true}}));
 }
 function spawnZeroNoteArrivals(now){if(pianoLayout!=='hero')return;const geometry=refreshHeroGeometry();for(const note of notesFor(bar))if(note.at===0)spawnNoteExplosion(note,now,geometry)}
-function drawNoteExplosionEffects(g,now){g.save();for(let midi=21;midi<=108;midi++){if(noteFlashEnd[midi]<=now)continue;const t=Math.max(0,Math.min(1,(now-noteFlashStart[midi])/(noteFlashEnd[midi]-noteFlashStart[midi]))),color=NOTE_FX_COLOR(noteFlashColor[midi]);g.globalAlpha=(1-t)*.32;g.fillStyle=color;g.shadowColor=color;g.shadowBlur=13*(1-t);g.beginPath();g.arc(noteFlashX[midi],noteFlashY[midi],5+13*t,0,NOTE_FX_TAU);g.fill()}for(let i=0;i<NOTE_FX_CAP;i++){if(noteFxStart[i]<0)continue;const age=(now-noteFxStart[i])/1000/noteFxLife[i];if(age>=1){noteFxStart[i]=-1;continue}const life=noteFxLife[i],seconds=(now-noteFxStart[i])/1000,alpha=(1-age)*.86,color=NOTE_FX_COLOR(noteFxColor[i]);g.globalAlpha=alpha;g.fillStyle=color;g.shadowColor=color;g.shadowBlur=4*(1-age);g.beginPath();g.arc(noteFxX[i]+noteFxVX[i]*seconds,noteFxY[i]+noteFxVY[i]*seconds,Math.max(.35,(1.15+(i%3)*.34)*(1-age)),0,NOTE_FX_TAU);g.fill()}g.restore()}
+function drawNoteExplosionEffects(g,now){
+ g.save();
+ for(let midi=21;midi<=108;midi++){
+  if(noteFlashEnd[midi]<=now)continue;
+  const t=Math.max(0,Math.min(1,(now-noteFlashStart[midi])/(noteFlashEnd[midi]-noteFlashStart[midi]))),ease=1-Math.pow(1-t,2),color=NOTE_FX_COLOR(noteFlashColor[midi]),x=noteFlashX[midi],y=noteFlashY[midi];
+  // The flare is kept inside the note canvas; its old center was the clipped canvas/key boundary.
+  g.globalAlpha=(1-ease)*.9;g.strokeStyle='#fff4bf';g.lineWidth=2.5*(1-ease)+.7;g.shadowColor='#fff3b0';g.shadowBlur=18*(1-ease);g.beginPath();g.arc(x,y,7+22*ease,0,NOTE_FX_TAU);g.stroke();
+  g.globalAlpha=(1-ease)*.96;g.fillStyle='#fffdf1';g.shadowColor=color;g.shadowBlur=18*(1-ease);g.beginPath();g.arc(x,y,4+5*(1-ease),0,NOTE_FX_TAU);g.fill();
+  g.globalAlpha=(1-ease)*.82;g.strokeStyle=color;g.lineWidth=1.7;g.shadowColor=color;g.shadowBlur=10*(1-ease);g.beginPath();for(let ray=0;ray<8;ray++){const a=ray*Math.PI/4+((midi%5)*.12),r1=10+ease*3,r2=19+ease*12;g.moveTo(x+Math.cos(a)*r1,y+Math.sin(a)*r1);g.lineTo(x+Math.cos(a)*r2,y+Math.sin(a)*r2)}g.stroke();
+ }
+ for(let i=0;i<NOTE_FX_CAP;i++){
+  if(noteFxStart[i]<0)continue;const age=(now-noteFxStart[i])/1000/noteFxLife[i];if(age>=1){noteFxStart[i]=-1;continue}
+  const seconds=(now-noteFxStart[i])/1000,alpha=(1-age)*.96,color=NOTE_FX_COLOR(noteFxColor[i]);g.globalAlpha=alpha;g.fillStyle=i%3===0?'#fff7d6':color;g.shadowColor=color;g.shadowBlur=9*(1-age);g.beginPath();g.arc(noteFxX[i]+noteFxVX[i]*seconds,noteFxY[i]+noteFxVY[i]*seconds,Math.max(.75,(2.1+(i%4)*.55)*(1-age)),0,NOTE_FX_TAU);g.fill();
+ }
+ g.restore();
+}
 function NOTE_FX_COLOR(index){return NOTE_FX_COLORS[index]||NOTE_FX_COLORS[2]}
 const PIXELS_PER_EIGHTH=27;
 // Canvas-only visual layer: it shares the measured PianoGeometry projection
@@ -251,7 +267,13 @@ const PianoHeroVisual=(()=>{
   ctx.strokeStyle=palette.rim;ctx.lineWidth=clamp(bottom.width*.025,1,2.2);ctx.stroke();
   // Polished bevel and narrow specular streak, clipped to the tile surface.
   ctx.save();ctx.clip();ctx.globalAlpha=.78;ctx.strokeStyle='#ffffff';ctx.lineWidth=Math.max(1,bottom.width*.035);ctx.beginPath();ctx.moveTo(top.left+round,topY+2);ctx.lineTo(top.right-round,topY+2);ctx.stroke();ctx.globalAlpha=.28;ctx.strokeStyle=cyan?'#ffffff':'#ffeaff';ctx.lineWidth=Math.max(1,bottom.width*.16);ctx.beginPath();ctx.moveTo(top.left+round*1.7,topY+round);ctx.lineTo(bottom.left+round*1.7,bottomY-round);ctx.stroke();ctx.restore();ctx.globalAlpha=1;
-  if(label&&bottom.width>22){ctx.fillStyle=gold?'#54300d':'#21102e';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='900 '+Math.max(9,Math.min(15,bottom.width*.28))+'px system-ui';ctx.fillText(label,bottom.center,(topY+bottomY)/2+1)}
+  if(label&&bottom.width>18&&bottomY-topY>14){
+   const near=clamp(bottomY/(geometry?.landingY||bottomY),0,1),badgeW=bottom.width*.96,centerY=(topY+bottomY)/2+1;
+   let fontSize=Math.min(22,Math.max(10,bottom.width*.56))*(.76+.24*near);ctx.font='900 '+fontSize+'px system-ui';
+   const textWidth=ctx.measureText(label).width;fontSize*=Math.min(1,(badgeW-5)/Math.max(1,textWidth));if(fontSize<8.5)fontSize=8.5;
+   ctx.font='900 '+fontSize+'px system-ui';const badgeH=Math.min(bottomY-topY-2,Math.max(14,fontSize*1.52)),left=bottom.center-badgeW/2,top=centerY-badgeH/2,radius=Math.min(8,badgeH/2);
+   ctx.save();ctx.globalAlpha=.74+.2*near;ctx.shadowColor=palette.shadow;ctx.shadowBlur=5+8*near;ctx.fillStyle='rgba(15,6,35,.74)';ctx.beginPath();ctx.moveTo(left+radius,top);ctx.lineTo(left+badgeW-radius,top);ctx.quadraticCurveTo(left+badgeW,top,left+badgeW,top+radius);ctx.lineTo(left+badgeW,top+badgeH-radius);ctx.quadraticCurveTo(left+badgeW,top+badgeH,left+badgeW-radius,top+badgeH);ctx.lineTo(left+radius,top+badgeH);ctx.quadraticCurveTo(left,top+badgeH,left,top+badgeH-radius);ctx.lineTo(left,top+radius);ctx.quadraticCurveTo(left,top,left+radius,top);ctx.closePath();ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle=palette.rim;ctx.lineWidth=Math.max(1,Math.min(1.8,bottom.width*.035));ctx.stroke();ctx.font='900 '+fontSize+'px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';ctx.lineWidth=Math.max(2,fontSize*.18);ctx.strokeStyle='#120820';ctx.strokeText(label,bottom.center,centerY);ctx.fillStyle='#fff';ctx.shadowColor=palette.light;ctx.shadowBlur=3+5*near;ctx.fillText(label,bottom.center,centerY);ctx.restore();
+  }
  }
  return Object.freeze({atmosphere,crystal});
 })();
