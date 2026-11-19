@@ -166,8 +166,8 @@ const server=http.createServer((req,res)=>{
         req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('songs','readonly'),get=tx.objectStore('songs').get('kept-song');get.onsuccess=()=>{const song=get.result;db.close();resolve(song)};get.onerror=()=>reject(get.error)};
       });
       const verified=await (await caches.open('aaria-piano-r2-install-v1')).match('./models/verified-fixture.onnx');
-      const shell=await caches.open('aaria-piano-v1.20.4');
-      const script=await shell.match('./song-import.js?v=aaria-piano-r2.4');
+      const shell=await caches.open('aaria-piano-v1.20.5');
+      const script=await shell.match('./song-import.js?v=aaria-piano-r2.5');
       const updater=await shell.match('./pwa-update.js?v=aaria-pwa-update-1.0');
       const libraryScript=await shell.match('./my-songs.js?v=aaria-piano-r2.4');
       const styles=await shell.match('./piano-hero-v2.css?v=aaria-piano-v1.14.0');
