@@ -77,6 +77,7 @@ const server=http.createServer((req,res)=>{
     assert.ok(before.controller,'previous worker controls the fixture before upgrade');
     assert.ok(before.caches.includes('aaria-piano-v1.18.1'),'previous production shell cache is installed');
 
+    await page.evaluate(()=>{window.__oldServiceWorker=navigator.serviceWorker.controller});
     servedWorker=newWorker;
     await page.evaluate(async()=>{
       const registration=await navigator.serviceWorker.getRegistration('./');
@@ -86,7 +87,7 @@ const server=http.createServer((req,res)=>{
       const keys=await caches.keys();
       return keys.includes(name)&&!keys.includes('aaria-piano-v1.18.1');
     },shellName,{timeout:30000});
-    await page.waitForFunction(()=>navigator.serviceWorker.controller?.state==='activated',{timeout:10000});
+    await page.waitForFunction(()=>navigator.serviceWorker.controller&&navigator.serviceWorker.controller!==window.__oldServiceWorker,{timeout:10000});
 
     const result=await page.evaluate(async()=>{
       const keys=await caches.keys();
@@ -109,7 +110,7 @@ const server=http.createServer((req,res)=>{
         script:await script?.text(),libraryScript:await libraryScript?.text(),styles:await styles?.text(),html:await html?.text()
       };
     });
-    assert.ok(!result.keys.includes('aaria-piano-v1.18.1'),'old app-shell cache is retired');
+    assert.ok(!result.keys.includes('aaria-piano-v1.18.1'),`old app-shell cache is retired; caches remaining: ${result.keys.join(', ')}`);
     assert.ok(result.keys.includes('aaria-piano-r2-install-v1'),'verified OMR cache is retained');
     assert.equal(result.song?.title,'Saved fixture');assert.equal(result.idbSong?.title,'Saved fixture');
     assert.equal(result.favorite,true);assert.equal(result.verifiedModel,'verified-model-marker');
