@@ -6,13 +6,13 @@ const path=require('node:path');
 const {chromium}=require('playwright');
 
 const root=path.resolve(__dirname,'..');
-const oldWorker=fs.readFileSync(path.join(__dirname,'fixtures/sw-v1.19.0.js'),'utf8');
-const oldShell=fs.readFileSync(path.join(__dirname,'fixtures/installed-shell-v1.19.0.html'),'utf8');
+const oldWorker=fs.readFileSync(path.join(__dirname,'fixtures/sw-v1.20.2.js'),'utf8');
+const oldShell=fs.readFileSync(path.join(__dirname,'fixtures/installed-shell-v1.20.2.html'),'utf8');
 const newWorker=fs.readFileSync(path.join(root,'sw.js'),'utf8');
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const installer=fs.readFileSync(path.join(root,'r2-install.js'),'utf8');
-const shellName='aaria-piano-v1.20.2';
-assert.match(newWorker,/const CACHE='aaria-piano-v1\.20\.2'/);
+const shellName='aaria-piano-v1.20.3';
+assert.match(newWorker,/const CACHE='aaria-piano-v1\.20\.3'/);
 for(const url of [
   './r2-music.js?v=aaria-piano-r2.2',
   './r2-image.js?v=aaria-piano-r2.1',
@@ -24,7 +24,7 @@ for(const url of [
   assert.ok(index.includes(url),`HTML references ${url}`);
   assert.ok(newWorker.includes(url),`worker precaches ${url}`);
 }
-assert.match(index,/id="appBuildInfo"[^>]*>App build: aaria-piano-v1\.20\.2/);
+assert.match(index,/id="appBuildInfo"[^>]*>App build: aaria-piano-v1\.20\.3/);
 assert.match(installer,/__aariaPwaUpdateReloadBound/);
 assert.match(installer,/location\.reload\(\)/);
 assert.match(installer,/await registration\.update\(\)/,'the current shell explicitly checks for an update on each launch');
@@ -61,9 +61,8 @@ const server=http.createServer((req,res)=>{
     const context=await browser.newContext();
     const page=await context.newPage();
     await page.goto(origin+'/');
-    assert.match(await page.locator('body').innerText(),/Warning: truncated output \(original token count: 150150\)/,'the previous installed shell reproduces the owner-reported warning');
-    assert.equal(await page.locator('#release2InstallGate').isVisible(),true,'the previous installed shell reproduces its blocking OMR gate');
-    assert.match(await page.locator('#release2InstallDetail').innerText(),/Checking this device/);
+    assert.deepEqual((await page.locator('#playbackModeControls button').allTextContents()).map(x=>x.trim()),['🔊 Listen','🔊 Listen On'],'the previous v1.20.2 shell reproduces the duplicate Listen controls');
+    assert.equal(await page.locator('button.listen-toggle').count(),1,'the old UI already contains one preference toggle');
     await page.evaluate(async()=>{
       await navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'});
       await navigator.serviceWorker.ready;
@@ -80,7 +79,7 @@ const server=http.createServer((req,res)=>{
     });
     const before=await page.evaluate(async()=>({controller:navigator.serviceWorker.controller?.scriptURL,caches:await caches.keys()}));
     assert.ok(before.controller,'previous worker controls the fixture before upgrade');
-    assert.ok(before.caches.includes('aaria-piano-v1.19.0'),'previous production shell cache is installed');
+    assert.ok(before.caches.includes('aaria-piano-v1.20.2'),'previous production shell cache is installed');
 
     await page.evaluate(()=>{window.__oldServiceWorker=navigator.serviceWorker.controller});
     serveNewShell=true;
@@ -91,7 +90,7 @@ const server=http.createServer((req,res)=>{
     });
     await page.waitForFunction(async name=>{
       const keys=await caches.keys();
-      return keys.includes(name)&&!keys.includes('aaria-piano-v1.19.0');
+      return keys.includes(name)&&!keys.includes('aaria-piano-v1.20.2');
     },shellName,{timeout:30000});
     await page.waitForFunction(()=>navigator.serviceWorker.controller&&navigator.serviceWorker.controller!==window.__oldServiceWorker,{timeout:10000});
     await page.close();
@@ -101,6 +100,8 @@ const server=http.createServer((req,res)=>{
     assert.equal(await reopened.locator('#release2InstallGate').count(),0,'reopening after upgrade shows no OMR installation gate');
     assert.equal(await reopened.locator('body').evaluate(el=>el.innerText.includes('Warning: truncated output')||el.innerText.includes('Total output lines: 196')),false,'reopening after upgrade shows no leaked source warning');
     assert.equal(await reopened.locator('#pianoApp').getAttribute('inert'),null,'the piano is interactive after reopening');
+    assert.equal((await reopened.locator('#secondaryModeButton').innerText()).trim(),'♫ Play Song','the updated song-play action replaces the old Listen label');
+    assert.equal(await reopened.locator('#playbackModeControls button.listen-toggle').count(),1,'one Listen preference toggle remains after upgrade');
 
     const result=await reopened.evaluate(async()=>{
       const keys=await caches.keys();
@@ -109,7 +110,7 @@ const server=http.createServer((req,res)=>{
         req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('songs','readonly'),get=tx.objectStore('songs').get('kept-song');get.onsuccess=()=>{const song=get.result;db.close();resolve(song)};get.onerror=()=>reject(get.error)};
       });
       const verified=await (await caches.open('aaria-piano-r2-install-v1')).match('./models/verified-fixture.onnx');
-      const shell=await caches.open('aaria-piano-v1.20.2');
+      const shell=await caches.open('aaria-piano-v1.20.3');
       const script=await shell.match('./song-import.js?v=aaria-piano-r2.4');
       const libraryScript=await shell.match('./my-songs.js?v=aaria-piano-r2.4');
       const styles=await shell.match('./piano-hero-v2.css?v=aaria-piano-v1.14.0');
@@ -123,7 +124,7 @@ const server=http.createServer((req,res)=>{
         script:await script?.text(),libraryScript:await libraryScript?.text(),styles:await styles?.text(),html:await html?.text()
       };
     });
-    assert.ok(!result.keys.includes('aaria-piano-v1.19.0'),`old app-shell cache is retired; caches remaining: ${result.keys.join(', ')}`);
+    assert.ok(!result.keys.includes('aaria-piano-v1.20.2'),`old app-shell cache is retired; caches remaining: ${result.keys.join(', ')}`);
     assert.ok(result.keys.includes('aaria-piano-r2-install-v1'),'verified OMR cache is retained');
     assert.equal(result.song?.title,'Saved fixture');assert.equal(result.idbSong?.title,'Saved fixture');
     assert.equal(result.favorite,true);assert.equal(result.verifiedModel,'verified-model-marker');
@@ -132,7 +133,7 @@ const server=http.createServer((req,res)=>{
     assert.match(result.styles,/app-build-info/,'updated stylesheet is cached');
     assert.match(result.html,/id="songPickerButton"/,'updated song selector HTML is cached');assert.ok(!result.html.includes('release2InstallGate'),'updated shell no longer has the startup gate');
     assert.match(result.html,/id="zoomKeys"/,'Zoom Keys control remains available');
-    assert.match(result.html,/id="appBuildInfo"[^>]*>App build: aaria-piano-v1\.20\.2/,'Settings build identifier is available');
+    assert.match(result.html,/id="appBuildInfo"[^>]*>App build: aaria-piano-v1\.20\.3/,'Settings build identifier is available');
     assert.match(result.html,/Speed/,'updated playback label is available');assert.match(result.html,/id="listenToggle"/,'Listen preference control is in the updated shell');assert.match(result.html,/note-impact-style/,'note impact key glow styling is in the updated shell');assert.match(result.html,/spawnNoteExplosion/,'note impact implementation is in the updated shell');assert.match(result.html,/NOTE_FX_DURATION\*1000/,'note flash uses millisecond timing in the updated shell');
     console.log('PWA update-and-reopen passed: prior v1.19.0 shell and warning/gate were replaced; current Piano Hero opened without OMR setup; localStorage/IndexedDB songs, favorites and verified OMR cache remained intact.');
     await context.close();

@@ -13,7 +13,7 @@ for(const resource of ['./r2-music.js?v=aaria-piano-r2.2','./r2-image.js?v=aaria
   assert.ok(index.includes(resource),`index loads ${resource}`);
   assert.ok(sw.includes(resource),`service worker precaches ${resource}`);
 }
-assert.match(sw,/const CACHE='aaria-piano-v1\.20\.2'/);
+assert.match(sw,/const CACHE='aaria-piano-v1\.20\.3'/);
 assert.match(importer,/new Worker\('\.\/omr-worker\.js'/,'OMR worker is same-origin');
 assert.match(importer,/createImageBitmap\(file,\{imageOrientation:'from-image'\}\)/,'internal image preprocessing honors photo orientation metadata');
 assert.ok(!importer.includes('data-photo-action'),'manual photo editing controls are removed');
