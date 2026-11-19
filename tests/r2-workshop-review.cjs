@@ -172,5 +172,5 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   await page.screenshot({path:`/tmp/magic-music-progress-landscape-${sha}.png`});
   await page.locator('#closeSongWizard').click();await page.locator('#localSongWizard').waitFor({state:'hidden'});
   console.log('Workshop progress checks passed: one-page existing import, three-page import, 20-page offline run, monotonic page completion, measured ETA, photo/action spacing, portrait/landscape screenshots, save/retry and cancellation recovery.');
- }finally{if(!page.isClosed())await page.close();if(progressVideo)await progressVideo.saveAs(`/tmp/magic-music-progress-video-${process.env.APP_SOURCE_SHA||'local'}.webm');await browser.close();await new Promise(resolve=>server.close(resolve))}
+ }finally{if(!page.isClosed())await page.close();if(progressVideo)await progressVideo.saveAs(`/tmp/magic-music-progress-video-${process.env.APP_SOURCE_SHA||'local'}.webm`);await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(e=>{console.error(e);process.exitCode=1});
