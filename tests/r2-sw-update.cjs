@@ -12,7 +12,7 @@ const newWorker=fs.readFileSync(path.join(root,'sw.js'),'utf8');
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const installer=fs.readFileSync(path.join(root,'r2-install.js'),'utf8');
 const shellName='aaria-piano-v1.20.3';
-assert.match(newWorker,/const CACHE='aaria-piano-v1\.20\.2'/);
+assert.match(newWorker,/const CACHE='aaria-piano-v1\.20\.3'/);
 for(const url of [
   './r2-music.js?v=aaria-piano-r2.2',
   './r2-image.js?v=aaria-piano-r2.1',
@@ -24,7 +24,7 @@ for(const url of [
   assert.ok(index.includes(url),`HTML references ${url}`);
   assert.ok(newWorker.includes(url),`worker precaches ${url}`);
 }
-assert.match(index,/id="appBuildInfo"[^>]*>App build: aaria-piano-v1\.20\.2/);
+assert.match(index,/id="appBuildInfo"[^>]*>App build: aaria-piano-v1\.20\.3/);
 assert.match(installer,/__aariaPwaUpdateReloadBound/);
 assert.match(installer,/location\.reload\(\)/);
 assert.match(installer,/await registration\.update\(\)/,'the current shell explicitly checks for an update on each launch');
@@ -132,7 +132,7 @@ const server=http.createServer((req,res)=>{
     assert.match(result.styles,/app-build-info/,'updated stylesheet is cached');
     assert.match(result.html,/id="songPickerButton"/,'updated song selector HTML is cached');assert.ok(!result.html.includes('release2InstallGate'),'updated shell no longer has the startup gate');
     assert.match(result.html,/id="zoomKeys"/,'Zoom Keys control remains available');
-    assert.match(result.html,/id="appBuildInfo"[^>]*>App build: aaria-piano-v1\.20\.2/,'Settings build identifier is available');
+    assert.match(result.html,/id="appBuildInfo"[^>]*>App build: aaria-piano-v1\.20\.3/,'Settings build identifier is available');
     assert.match(result.html,/Speed/,'updated playback label is available');assert.match(result.html,/id="listenToggle"/,'Listen preference control is in the updated shell');assert.match(result.html,/note-impact-style/,'note impact key glow styling is in the updated shell');assert.match(result.html,/spawnNoteExplosion/,'note impact implementation is in the updated shell');assert.match(result.html,/NOTE_FX_DURATION\*1000/,'note flash uses millisecond timing in the updated shell');
     console.log('PWA update-and-reopen passed: prior v1.19.0 shell and warning/gate were replaced; current Piano Hero opened without OMR setup; localStorage/IndexedDB songs, favorites and verified OMR cache remained intact.');
     await context.close();
