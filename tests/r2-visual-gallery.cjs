@@ -24,7 +24,7 @@ const server=http.createServer((req,res)=>{
  if(p==='/release2-install-manifest.json'){res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify(manifest));return}
  if(p==='/visual-fixture.bin'){res.writeHead(200,{'Content-Type':'application/octet-stream','Content-Length':payload.length});let at=0;const send=()=>{if(at>=payload.length){res.end();return}const end=Math.min(at+32768,payload.length);res.write(payload.subarray(at,end));at=end;setTimeout(send,125)};send();return}
  if(p==='/omr-worker.js'){res.writeHead(200,{'Content-Type':'text/javascript'}).end(worker);return}
- const file=path.resolve(root,'.'+p);if(!file.startsWith(root+path.sep)&&file!==root){res.writeHead(403).end();return}
+ const file=path.resolve(root,'.'+(p==='/'?'/index.html':p));if(!file.startsWith(root+path.sep)&&file!==root){res.writeHead(403).end();return}
  fs.readFile(file,(e,b)=>{if(e){res.writeHead(404).end('not found');return}res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream'}).end(b)});
 });
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
