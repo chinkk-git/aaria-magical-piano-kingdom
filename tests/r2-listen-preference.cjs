@@ -20,9 +20,9 @@ let browser;
   await page.goto(url,{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.PianoKingdomLibrary?.addSong);
   const assertSingleListenToggle=async()=>{
    assert.equal(await page.locator('button.listen-toggle').count(),1,'exactly one Listen toggle is rendered');
-   assert.equal(await page.locator('#playbackModeControls button').filter({hasText:/\\bListen\\b/i}).count(),1,'only the toggle control is labelled Listen');
-   assert.doesNotMatch(await page.locator('#secondaryModeButton').innerText(),/\\bListen\\b/i,'the song-play action is not a duplicate Listen control');
-   assert.doesNotMatch(await page.locator('#secondaryModeButton').getAttribute('aria-label'),/\\bListen\\b/i,'the song-play action has no duplicate Listen accessibility label');
+   assert.equal(await page.locator('#playbackModeControls button').filter({hasText:/\bListen\b/i}).count(),1,'only the toggle control is labelled Listen');
+   assert.doesNotMatch(await page.locator('#secondaryModeButton').innerText(),/\bListen\b/i,'the song-play action is not a duplicate Listen control');
+   assert.doesNotMatch(await page.locator('#secondaryModeButton').getAttribute('aria-label'),/\bListen\b/i,'the song-play action has no duplicate Listen accessibility label');
    assert.equal(await page.locator('#listenToggle').isVisible(),true,'Listen toggle is visible');
   };
   await assertSingleListenToggle();
