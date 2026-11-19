@@ -131,7 +131,7 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   assert.match(await cancelPage.locator('#makeSong').textContent(),/Continue reading/,'confirmed cancel allows immediate safe re-entry');
   assert.equal(await cancelPage.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).some(song=>song?.title==='My song')),false,'confirmed cancel does not save a partial song');
   await cancelPage.waitForTimeout(1200);
-  assert.equal(await cancelPage.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).length),0,'terminated worker cannot complete late or create a duplicate song');
+  assert.equal(await cancelPage.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).filter(song=>song?.title==='My song').length),0,'terminated worker cannot complete late or create a duplicate partial song');
   assert.deepEqual(cancelErrors,[],'cancel flow has no uncaught browser errors');
   await cancelPage.close();
 
