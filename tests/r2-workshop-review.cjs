@@ -26,8 +26,9 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
 (async()=>{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox']});
- const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block',reducedMotion:'reduce'});
- const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ fs.mkdirSync('/tmp/magic-progress-video',{recursive:true});
+ const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block',reducedMotion:'reduce',recordVideo:{dir:'/tmp/magic-progress-video',size:{width:390,height:844}}});
+ const page=await context.newPage(),progressVideo=page.video(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
   await page.route('**/omr-worker.js',route=>route.fulfill({status:200,contentType:'text/javascript',body:workerStub}));
   await page.route('**/r2-install.js*',route=>route.fulfill({status:200,contentType:'text/javascript',body:"(()=>{window.AariaR2Installer={state:'ready',ensureReady:async()=>true}})()"}));
@@ -135,6 +136,42 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   assert.deepEqual(cancelErrors,[],'cancel flow has no uncaught browser errors');
   await cancelPage.close();
 
-  console.log('Issue #25 workshop browser checks passed: no startup OMR gate, one-screen Add New Song → Make Music, recognition failure and retry, minimized processing restore, storage failure recovery, auto-save, optional correction, arrangement playback, custom selector and responsive layouts. Screenshots are labeled in /tmp with viewport and source SHA.');
- }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
+  const sha=process.env.APP_SOURCE_SHA||'local';
+  const importPageCount=async(count,title)=>{
+   await page.locator('#openMySongs').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.locator('#makeNewSong').click();await page.locator('#localSongWizard').waitFor({state:'visible'});
+   await page.locator('#scoreSongTitle').fill(title);
+   const files=Array.from({length:count},(_,i)=>({name:`page-${i+1}.png`,mimeType:'image/png',buffer:Buffer.from(png64,'base64')}));
+   await page.locator('#scorePhotos').setInputFiles(files);
+   await page.locator('#makeSong').click();
+   await page.waitForFunction(()=>/Your magical song is ready/i.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:60000});
+   assert.equal(await page.locator('#workshopProgressBar').getAttribute('aria-valuenow'),'100',`${count}-page job reports all completed pages`);
+   assert.match(await page.locator('#workshopProgressPages').textContent(),new RegExp(`${count} of ${count} pages finished`));
+  };
+  await importPageCount(3,'Three Page Progress Song');
+  await page.locator('#localSongWizard').waitFor({state:'visible'});
+  assert.equal(await page.locator('#workshopProgressEta').isHidden(),true,'ETA is omitted when the completed import has no remaining page work');
+  await page.locator('#closeSongWizard').click();await page.locator('#localSongWizard').waitFor({state:'hidden'});
+  await context.setOffline(true);
+  await page.locator('#openMySongs').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.locator('#makeNewSong').click();await page.locator('#localSongWizard').waitFor({state:'visible'});
+  await page.locator('#scoreSongTitle').fill('Twenty Page Progress Song');
+  await page.locator('#scorePhotos').setInputFiles(Array.from({length:20},(_,i)=>({name:`large-${i+1}.png`,mimeType:'image/png',buffer:Buffer.from(png64,'base64')})));
+  await page.evaluate(()=>{window.__progressSamples=[];const el=document.querySelector('#workshopProgressBar');new MutationObserver(()=>window.__progressSamples.push(Number(el.getAttribute('aria-valuenow')))).observe(el,{attributes:true,attributeFilter:['aria-valuenow']})});
+  await page.locator('#makeSong').click();
+  await page.waitForFunction(()=>/Reading notes and rhythm 4 of 20/.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:30000});
+  assert.equal(await page.locator('#workshopProgressPages').textContent(),'3 of 20 pages finished','page progress follows three actual completed page results');
+  assert.equal(await page.locator('#workshopProgressEta').isHidden(),false,'ETA appears only after at least three observed page durations');
+  await page.screenshot({path:`/tmp/magic-music-progress-portrait-${sha}.png`});
+  const progressBox=await page.locator('#workshopProgress').boundingBox(),previewBox=await page.locator('#scorePhotoPreviews').boundingBox(),actionsBox=await page.locator('#workshopPrimaryActions').boundingBox();
+  assert.ok(progressBox.y>=previewBox.y+previewBox.height-1,'progress sits after, and does not cover, the photo previews');
+  assert.ok(actionsBox.y>=progressBox.y+progressBox.height-1,'progress does not cover Keep Playing or Cancel actions');
+  const samples=await page.evaluate(()=>window.__progressSamples);assert.ok(samples.every((value,index)=>index===0||value>=samples[index-1]),'percentage does not move backwards within one attempt');
+  await page.waitForFunction(()=>/Your magical song is ready/i.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:60000});
+  await context.setOffline(false);
+  await page.setViewportSize({width:844,height:390});
+  const landscape=await page.locator('#workshopProgress').boundingBox(),landscapeActions=await page.locator('#workshopPrimaryActions').boundingBox();
+  assert.ok(landscape.y+landscape.height<=390&&landscapeActions.y+landscapeActions.height<=390,'landscape progress and actions fit within the viewport');
+  await page.screenshot({path:`/tmp/magic-music-progress-landscape-${sha}.png`});
+  await page.locator('#closeSongWizard').click();await page.locator('#localSongWizard').waitFor({state:'hidden'});
+  console.log('Workshop progress checks passed: one-page existing import, three-page import, 20-page offline run, monotonic page completion, measured ETA, photo/action spacing, portrait/landscape screenshots, save/retry and cancellation recovery.');
+ }finally{if(!page.isClosed())await page.close();if(progressVideo)await progressVideo.saveAs(`/tmp/magic-music-progress-video-${process.env.APP_SOURCE_SHA||'local'}.webm');await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(e=>{console.error(e);process.exitCode=1});
