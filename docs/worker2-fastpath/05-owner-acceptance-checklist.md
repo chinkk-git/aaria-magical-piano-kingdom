@@ -16,5 +16,5 @@
 | Owner four-page score | Not available | Supply privately for device-specific follow-up; never commit/upload it |
 | Android evidence | Pass in mobile emulation | 390×844 Chromium mobile/touch view and responsive screenshots; physical Android remains unverified |
 | Matched before/after benchmark | Pass for one sample per side | Same fixture/model/runner; values and limitations in `03-before-after-benchmark.md` |
-| Draft PR and CI links | Pass | [Draft PR #45](https://github.com/chinkk-git/aaria-magical-piano-kingdom/pull/45); [CI run 44631401874](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44631401874) |
+| Draft PR and CI links | Pass | [Draft PR #45](https://github.com/chinkk-git/aaria-magical-piano-kingdom/pull/45); [CI run 44632234547](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44632234547) |
 | Merge or deploy | Not authorized for this task | Remains draft pending owner review |

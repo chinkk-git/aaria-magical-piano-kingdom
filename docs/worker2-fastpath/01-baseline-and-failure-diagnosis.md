@@ -1,6 +1,6 @@
 # Fast Photo Path — baseline and failure diagnosis
 
-**Status:** implementation and matched CI measurements pending on the draft PR branch.
+**Status:** implementation and matched CI verification complete on draft PR #45; original owner failure diagnosis remains unconfirmed.
 **Fixture privacy:** no owner sheet images were found in the supplied package or the available workspace. Only the repository's synthetic score fixture is used in public CI.
 
 ## What can be confirmed
