@@ -87,12 +87,16 @@ jobs:
       - name: Install Chromium
         run: npx playwright install chromium
       - name: Run focused Add New Song, minimized processing and playback checks
+        env:
+          APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
         run: node tests/r2-workshop-review.cjs
       - name: Upload Android-sized selector screenshot
         uses: actions/upload-artifact@v4
         with:
           name: android-song-selector-open-${{ github.event.pull_request.head.sha }}
-          path: /tmp/android-song-selector-open.png
+          path: |
+            /tmp/android-song-selector-open.png
+            /tmp/issue25-minimized-processing-390x844-${{ github.event.pull_request.head.sha }}.png
           retention-days: 14
           if-no-files-found: error
 
