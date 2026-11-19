@@ -13,9 +13,10 @@ for(const resource of ['./r2-music.js?v=aaria-piano-r2.1','./r2-image.js?v=aaria
   assert.ok(index.includes(resource),`index loads ${resource}`);
   assert.ok(sw.includes(resource),`service worker precaches ${resource}`);
 }
-assert.match(sw,/const CACHE='aaria-piano-v1\.17\.0'/);
+assert.match(sw,/const CACHE='aaria-piano-v1\.18\.1'/);
 assert.match(importer,/new Worker\('\.\/omr-worker\.js'/,'OMR worker is same-origin');
-assert.match(importer,/createImageBitmap\(cropFile/,'crop preview reads local image bytes');
+assert.match(importer,/createImageBitmap\(file,\{imageOrientation:'from-image'\}\)/,'internal image preprocessing honors photo orientation metadata');
+assert.ok(!importer.includes('data-photo-action'),'manual photo editing controls are removed');
 assert.match(importer,/AariaR2Image\.inspectPixels/,'local image quality check is wired');
 assert.match(importer,/completedPages/,'completed pages are checkpointed');
 assert.match(importer,/persistJob\(\)/,'workshop state is persisted');
@@ -24,9 +25,9 @@ assert.match(importer,/cancelRequested/,'cancel path is distinguished from retry
 assert.match(importer,/resumeRecoveredJob/,'recovery control is present');
 assert.ok(importer.includes('addScoreNote'),'missing notes can be inserted during correction');
 for(const action of ['down','up','earlier','later','shorter','longer','hand','remove'])assert.ok(importer.includes(`'${action}'`),`review correction supports ${action}`);
-assert.ok(importer.includes('id="scoreChecked"'),'manual sheet review must gate play levels and saving');
-assert.ok(importer.includes('reviewedMeasures'),'each measure must be opened before score approval');
-assert.ok(importer.includes('if(!draftSong.scoreVerified||draftSong.reviewedMeasures?.length!==draftSong.total)'),'saving requires score review');
+assert.ok(!importer.includes('id="scoreChecked"'),'mandatory sheet review is removed');
+assert.ok(!importer.includes('reviewedMeasures'),'measure review is not required for saving');
+assert.ok(importer.includes('await lib.saveSong(draftSong)'),'valid recognized scores save through the existing local library');
 assert.match(importer,/confidenceStatus:'not-provided-by-engine'/,'unavailable OMR confidence is stated honestly');
 assert.match(library,/aaria-piano-custom-songs-v1/,'legacy song storage key is retained');
 assert.match(library,/DB_VERSION=2/,'upgrade is versioned');
@@ -35,8 +36,8 @@ assert.match(library,/library\.saveSourceImages=persistSources/,'source images c
 assert.match(library,/store\.put\(song\)/,'song edits replace their saved record');
 assert.match(library,/tx\.objectStore\('sources'\)\.delete\(id\)/,'removing a song removes its local source pages');
 assert.match(music,/while\(e\.midi<48\)e\.midi\+=12/,'Basic arranges a one-hand playable pitch range');
-assert.match(music,/if\(!options\.scoreVerified\)/,'arrangements are gated on reviewed score input');
+assert.match(music,/if\(!options\.scoreVerified&&!options\.automatic\)/,'arrangements remain gated unless the trusted import pipeline validates the score');
 assert.match(music,/estimate\.level==='Advanced'/,'Advanced is offered only for advanced original scores');
-assert.ok(music.includes('user-reviewed-original'),'Advanced preserves the recognized original');
+assert.ok(music.includes('recognized-original'),'Advanced preserves the recognized original');
 assert.ok(!importer.includes('62%'),'the illustrative 62% asset is not used as progress');
 console.log('R2 integration invariants passed');

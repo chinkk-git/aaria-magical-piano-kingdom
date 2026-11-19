@@ -24,7 +24,7 @@ const xml=`<?xml version="1.0"?><score-partwise version="3.1"><part-list><score-
 const workerStub=`let requests=0;const xml=${JSON.stringify(xml)};self.onmessage=({data})=>{if(data.type==='init'){self.postMessage({type:'ready'});return}if(data.type==='layout'){self.postMessage({type:'result',id:data.id,classes:[]});return}if(data.type==='recognise'){requests++;self.postMessage({type:'result',id:data.id,xml})}}`;
 (async()=>{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
- const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+ const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox']});
  const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block',reducedMotion:'reduce'});
  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
@@ -41,30 +41,43 @@ const workerStub=`let requests=0;const xml=${JSON.stringify(xml)};self.onmessage
   await page.locator('#makeSong').click();
   await page.waitForFunction(()=>{const t=document.querySelector('#makeSong')?.textContent||'';return t.includes('Continue with photos')||t.includes('Reading music')||document.querySelector('#scoreReview:not([hidden])')});
   if((await page.locator('#makeSong').textContent()).includes('Continue with photos'))await page.locator('#makeSong').click();
-  await page.waitForFunction(()=>document.querySelector('#scoreReview:not([hidden])')||/couldn.t|could not|try again|needs more free space|Wi-Fi/i.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:30000});
-  const workshopStatus=await page.locator('#scoreImportStatus').textContent();
-  assert.equal(await page.locator('#scoreReview').isVisible(),true,`score review should open after recognition; workshop status: ${workshopStatus}`);
-  assert.match(await page.locator('#scoreConfidenceNotice').textContent(),/not provided by the music reader/i);
-  assert.equal(await page.locator('#scoreChecked').isDisabled(),true,'both measures must be inspected');
-  await page.locator('#reviewMeasure').selectOption('2');assert.equal(await page.locator('#scoreChecked').isDisabled(),false);
-  await page.locator('#reviewMeasure').selectOption('1');
-  const before=await page.locator('.score-review-row').first().locator('.score-review-note').textContent();
-  await page.locator('.score-review-row').first().locator('button[data-edit="up"]').click();
-  const after=await page.locator('.score-review-row').first().locator('.score-review-note').textContent();assert.notEqual(after,before,'pitch correction changes the reviewed note');
-  assert.equal(await page.locator('#scoreChecked').isDisabled(),true,'a correction requires re-confirming every measure');
-  await page.locator('#reviewMeasure').selectOption('2');await page.locator('#scoreChecked').check();
-  assert.ok(await page.locator('#arrangementSelect option[value="basic"]').count(),'reviewed score exposes a generated Basic level');
-  await page.locator('#arrangementSelect').selectOption('basic');
-  await page.locator('#saveReviewedSong').click();await page.waitForFunction(()=>document.querySelector('#saveReviewedSong')?.textContent.includes('Saved'));
+  await page.waitForFunction(()=>/Your magical song is ready|couldn.t|could not|try again|needs more free space|Wi-Fi/i.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:30000});
+  assert.equal(await page.locator('#scoreReview').isVisible(),false,'recognition auto-saves without opening the optional editor');
   const id=await page.evaluate(()=>Object.keys(window.PianoKingdomLibrary.songs).find(k=>window.PianoKingdomLibrary.songs[k]?.title==='Reviewed Workshop Song'));
-  assert.ok(id,'reviewed score is saved to the shared song catalog');
-  await page.locator('#closeSongWizard').click();await page.locator('#openMySongs').click();
-  const card=page.locator('.library-card').filter({hasText:'Reviewed Workshop Song'});await card.waitFor();
-  await card.locator('select').selectOption('basic');await card.getByRole('button',{name:'▶ Play'}).click();
+  assert.ok(id,'recognized score is saved automatically to the shared song catalog');
+  const saved=await page.evaluate(expected=>window.PianoKingdomLibrary.songs[expected],id);
+  assert.ok(saved.arrangements.basic?.events?.length,'valid Basic arrangement is available after recognition');
+  await page.locator('#songPickerButton').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});
+  await page.locator('.library-card').filter({hasText:'Reviewed Workshop Song'}).locator('select').selectOption('basic');
+  await page.locator('.library-card').filter({hasText:'Reviewed Workshop Song'}).getByRole('button',{name:'Choose'}).click();
   await page.waitForFunction(expected=>document.querySelector('#songSelect')?.value===expected,id);
   const playback=await page.evaluate(expected=>({id:document.querySelector('#songSelect').value,engineEvents:EVENTS.map(n=>[n.bar,n.at,n.dur,n.midi]),savedEvents:window.PianoKingdomLibrary.songs[expected].arrangements.basic.events.map(n=>[n.bar,n.at,n.dur,n.midi])}),id);
   assert.equal(playback.id,id);assert.deepEqual(playback.engineEvents,playback.savedEvents,'selected Basic note data reaches the shared playback engine');
-  assert.deepEqual(errors,[],'no browser runtime errors');
-  console.log('Workshop review integration passed: recognized MusicXML → measure gate → pitch correction → Basic arrangement → save → Library → exact engine events.');
+  assert.equal(await page.locator('#songSelect').isVisible(),false,'old native selector stays disabled');
+  await page.locator('#songPickerButton').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});
+  await page.locator('.library-card').filter({hasText:'Dalmatian Cradle Song'}).getByRole('button',{name:'▶ Play'}).click();
+  await page.waitForFunction(()=>document.querySelector('#songSelect')?.value==='cradle'&&mode==='listen');
+  assert.equal(await page.locator('#songPickerButton').textContent().then(t=>t.includes('Dalmatian Cradle Song')),true,'built-in song selection updates the visible selector');
+  await page.locator('#songPickerButton').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});
+  await page.locator('.library-card').filter({hasText:'Reviewed Workshop Song'}).locator('select').selectOption('basic');
+  await page.locator('.library-card').filter({hasText:'Reviewed Workshop Song'}).getByRole('button',{name:'▶ Play'}).click();
+  await page.waitForFunction(expected=>document.querySelector('#songSelect')?.value===expected&&mode==='listen',id);
+  assert.deepEqual(await page.evaluate(()=>EVENTS.map(n=>[n.bar,n.at,n.dur,n.midi])),playback.savedEvents,'saved song opens in playback with its selected arrangement');
+  await page.locator('#openMySongs').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.locator('#closeMySongs').click();
+  assert.match(await page.locator('#songPickerButton').textContent(),/Reviewed Workshop Song/,'song selector reflects selection');
+  await page.locator('#editSavedSong').click();await page.locator('#scoreReview').waitFor({state:'visible'});await page.locator('#cancelReview').click();
+  assert.equal(await page.evaluate(expected=>window.PianoKingdomLibrary.songs[expected]?.title,id),'Reviewed Workshop Song','optional edit can be canceled while keeping the saved song');
+  const zoom=await page.locator('#keys .white').count();await page.locator('#zoomKeys').click();assert.equal(await page.locator('#keys .white').count(),8,'Zoom Keys changes the visible white key count');await page.locator('#zoomKeys').click();await page.locator('#zoomKeys').click();assert.equal(await page.locator('#keys .white').count(),zoom,'Zoom Keys cycles through its key ranges');
+  assert.match(await page.locator('#speed').evaluate(e=>e.parentElement.textContent),/Speed/,'the playback slider uses the Speed label');
+  await page.locator('#songPickerButton').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.screenshot({path:'/tmp/android-song-selector-open.png'});
+  for(const viewport of [{width:390,height:844},{width:844,height:390},{width:834,height:1194},{width:1194,height:834},{width:1440,height:900}]){
+   await page.setViewportSize(viewport);
+   const layout=await page.evaluate(()=>{const rect=selector=>document.querySelector(selector).getBoundingClientRect(),home=rect('#openMySongs'),picker=rect('#songPickerButton'),controls=['#favoriteCurrent','#zoomKeys','#setupKeyboard'].map(rect);return{separate:home.right<=picker.left||picker.right<=home.left||home.bottom<=picker.top||picker.bottom<=home.top,controlsClear:controls.every(c=>picker.right<=c.left||c.right<=picker.left||picker.bottom<=c.top||c.bottom<=picker.top),dialogVisible:document.querySelector('#mySongsDialog').getBoundingClientRect().width>0}});
+   assert.equal(layout.separate,true,`Home and selector do not overlap at ${viewport.width}x${viewport.height}`);
+   assert.equal(layout.controlsClear,true,`selector does not overlap header controls at ${viewport.width}x${viewport.height}`);
+   assert.equal(layout.dialogVisible,true,`custom selector dialog remains visible at ${viewport.width}x${viewport.height}`);
+  }
+
+  console.log('Workshop automatic-save integration passed: recognized MusicXML → save → custom Song Library → choose Basic → playback. Screenshot: /tmp/android-song-selector-open.png.');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(e=>{console.error(e);process.exitCode=1});

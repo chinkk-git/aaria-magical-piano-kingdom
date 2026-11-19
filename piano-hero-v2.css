@@ -190,3 +190,9 @@ main[data-piano-layout="hero"] #keys.range-shift{opacity:.22;transform:scaleY(.9
    overrode the Hero sizing and left the canvas at its intrinsic 2:1 height.
    Explicitly size it to the playfield above the exact keyboard boundary. */
 main[data-piano-layout="hero"] #rain{bottom:auto!important;height:calc(100% - var(--keybed-height))!important}
+
+/* Keep Home in the title row so it cannot cover the song picker or dropdown options. */
+main[data-piano-layout="hero"] .compact-title #openMySongs{position:relative!important;inset:auto!important;z-index:2!important;flex:none!important;margin:0!important}
+main[data-piano-layout="hero"] .compact-title .song-picker{position:relative;z-index:3;flex:none;min-width:0}
+@media(max-width:540px){main[data-piano-layout="hero"] .compact-title{justify-content:flex-start;padding-left:max(4px,env(safe-area-inset-left));padding-right:max(4px,env(safe-area-inset-right));gap:4px}main[data-piano-layout="hero"] .compact-title #openMySongs{width:36px;min-width:36px;height:36px;min-height:36px}main[data-piano-layout="hero"] .compact-title .song-picker select{max-width:min(38vw,145px)}main[data-piano-layout="hero"] .compact-title .song-picker button{max-width:min(38vw,145px);font-size:11px;min-height:36px;padding:4px 6px}main[data-piano-layout="hero"] .compact-title .kingdom-brand{display:none}}
+@media(orientation:landscape) and (max-height:540px){main[data-piano-layout="hero"] .compact-title{flex-wrap:nowrap}main[data-piano-layout="hero"] .compact-title #openMySongs{width:34px;min-width:34px;height:32px;min-height:32px}}
