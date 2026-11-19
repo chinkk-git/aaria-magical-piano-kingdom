@@ -71,7 +71,16 @@ jobs:
       - name: Install Chromium for headless acceptance
         run: npx playwright install chromium
       - name: Test integrated browser behavior
+        env:
+          APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
         run: node tests/r2-browser-smoke.cjs
+      - name: Upload playback state screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: playback-state-evidence-${{ github.event.pull_request.head.sha }}
+          path: /tmp/piano-playback-state-*.png
+          retention-days: 14
+          if-no-files-found: error
       - name: Test score correction and arrangement playback
         run: node tests/r2-workshop-review.cjs
 
