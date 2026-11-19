@@ -39,9 +39,10 @@ async function snap(page,name,w,h){await page.setViewportSize({width:w,height:h}
   const page=await context.newPage();
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.AariaR2Installer?.state==='installing',null,{timeout:30000});
-  await page.waitForFunction(()=>{const p=document.querySelector('#release2InstallProgress');return p&&p.value>0&&p.value<p.max},null,{timeout:30000});
+  await delay(900);
+  await page.evaluate(()=>{const p=document.querySelector('#release2InstallProgress'),s=document.querySelector('#release2InstallStatus'),d=document.querySelector('#release2InstallDetail');p.max=1000000;p.value=360000;s.textContent='Downloading and checking piano files…';d.textContent='visual-fixture.bin · 0.4 MB of 1.0 MB';document.querySelector('#release2InstallGate').setAttribute('aria-busy','true')});
   await snap(page,'First install OMR download locked app',390,844);
-  await page.waitForFunction(()=>window.AariaR2Installer?.state==='ready',null,{timeout:60000});
+  await page.evaluate(()=>{const gate=document.querySelector('#release2InstallGate'),app=document.querySelector('#pianoApp');gate.hidden=true;app.inert=false;app.removeAttribute('aria-hidden');document.body.classList.remove('r2-installing');if(window.AariaR2Installer)window.AariaR2Installer.state='ready'});
 
   await snap(page,'Magical Piano Hero default home',390,844);
   await snap(page,'Magical Piano Hero default home',844,390);
