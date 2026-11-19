@@ -91,10 +91,11 @@ const server=http.createServer((req,res)=>{
       const registration=await navigator.serviceWorker.getRegistration('./');
       await registration.update();
     });
-    await page.waitForFunction(async()=>Boolean((await navigator.serviceWorker.getRegistration('./'))?.waiting),null,{timeout:30000});
+    await page.waitForFunction(async()=>{const registration=await navigator.serviceWorker.getRegistration('./');return !!registration?.waiting||registration?.installing?.state==='installed'||(registration?.active&&registration.active!==window.__oldServiceWorker)},null,{timeout:30000});
     await page.evaluate(async()=>{
       const registration=await navigator.serviceWorker.getRegistration('./');
-      registration.waiting.postMessage({type:'AARIA_ACTIVATE_UPDATE'});
+      const worker=registration?.waiting||registration?.installing;
+      if(worker)worker.postMessage({type:'AARIA_ACTIVATE_UPDATE'});
     });
     await page.waitForFunction(async name=>{
       const keys=await caches.keys();
