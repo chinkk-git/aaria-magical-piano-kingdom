@@ -8,7 +8,7 @@
 
 Record device model, Android version, Chrome version, app-installed state, date, result and any error. Use a test song/fixture where practical.
 
-- [ ] Open Settings; record installed build and check for update using draft PR #40 (not merged; verification pending).
+- [ ] Open Settings; record installed build and check for update using draft PR #40. **CI PASS** for update reporting and safe restart; owner must still verify on a physical Android device.
 - [ ] Install/update/reopen without uninstalling or clearing site data; verify the new build after restart.
 - [ ] Verify Library, saved-song count, favorites and recent song remain.
 - [ ] Check Magical Piano Hero in portrait and landscape: song picker, Zoom Keys, Home, Settings, Speed, Loop and measure selection.
@@ -132,3 +132,16 @@ This replaces the prior pending/failing PR #42 snapshot above where it differs.
 The earlier actual-engine attempt [#44594125078](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44594125078) did not reach recognition. Its test waited for an OMR startup installer gate that had been removed for the on-demand flow; the page reported installer state `idle`, workshop status “Choose a photo to begin.”, and the 600-second wait expired. Therefore no real OMR semantic pass or fail was observed in that attempt. The harness now waits for the usable app and exercises photo → local recognition → automatic save → Library → playback. The current full run must establish the outcome before this gate is revised.
 
 Physical-device acceptance remains **PENDING**. OMR model/training-data rights remain **LEGAL REVIEW REQUIRED**. No implementation PR is merged or deployed; Release 2 is not owner-approved.
+
+
+## Worker 1 final progress snapshot — 2026-11-19 17:08 BRT
+
+The current baseline remains production main `f9739d0071e6e8586e3d9f1b5a049cea9b50534f` / `aaria-piano-v1.20.3`. The three implementation PRs below remain drafts. These automated results do not check any physical-device box above.
+
+| Work | Draft PR / head | Verified result |
+|---|---|---|
+| Settings update and safe restart | [#40](https://github.com/chinkk-git/aaria-magical-piano-kingdom/pull/40), `3c888b7d32f3509658d5ebc26151eb0e73d58e44` | Full run [#44604767446](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44604767446) passed, including a confirmed waiting-worker activation, reload, v1.20.5 verification and retention of songs, favorites and verified OMR cache. Pinned actual OMR semantic acceptance passed on this head. |
+| Workshop truthful progress and safe cancellation | [#41](https://github.com/chinkk-git/aaria-magical-piano-kingdom/pull/41), `3223f440d5ad836e49f9f756914b67da348abd8f` | Targeted run [#44598893902](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44598893902) passed progress/minimize/cancel browser cases. Recognition uses a controlled test worker here. |
+| Playback completion and Play Again | [#42](https://github.com/chinkk-git/aaria-magical-piano-kingdom/pull/42), `12813501a84b566779b2375c4a08b4d4caa2327c` | Combined run [#44605132631](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44605132631) passed browser regression and pinned actual-engine OMR semantic acceptance. Chromium artifact [#14569958368](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44605132631/artifacts/14569958368). |
+
+The actual-engine fixture matched all 8 expected pitches and measure/onset/duration events through recognition, production MusicXML conversion, Basic arrangement, save, Library reopen and the playback scheduler. It produced two 8-tick bars at 72 BPM with about 0.83-second quarter-note gaps. This is Chromium CI evidence, not a device run. Physical Android/iPhone/iPad/MacBook acceptance remains **PENDING**. OMR redistribution/provenance remains **LEGAL REVIEW REQUIRED**. No code PR is merged/deployed and Release 2 is not owner-approved.
