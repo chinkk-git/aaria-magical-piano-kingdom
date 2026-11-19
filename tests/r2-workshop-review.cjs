@@ -134,8 +134,13 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   await cancelPage.waitForTimeout(1200);
   assert.equal(await cancelPage.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).filter(song=>song?.title==='My song').length),0,'terminated worker cannot complete late or create a duplicate partial song');
   assert.deepEqual(cancelErrors,[],'cancel flow has no uncaught browser errors');
+  await cancelPage.waitForTimeout(1200);
+  await cancelPage.reload();await cancelPage.locator('#recoveredJob').waitFor({state:'visible'});
+  assert.match(await cancelPage.locator('#recoveredJobInfo').textContent(),/0 of 1 page finished/,'the paused page count recovers from the existing IndexedDB job record');
+  assert.equal(await cancelPage.locator('#workshopProgressPages').textContent(),'0 of 1 pages finished','the progress meter restores the saved completed-page count');
   await cancelPage.close();
 
+  await page.setViewportSize({width:390,height:844});await page.locator('#closeMySongs').click();
   const importPageCount=async(count,title)=>{
    await page.locator('#openMySongs').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.locator('#makeNewSong').click();await page.locator('#localSongWizard').waitFor({state:'visible'});
    await page.locator('#scoreSongTitle').fill(title);
