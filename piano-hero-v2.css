@@ -226,4 +226,4 @@ main[data-piano-layout="hero"] .compact-title{grid-template-columns:minmax(0,1fr
 main[data-piano-layout="hero"] .compact-title #zoomKeys{grid-column:2;grid-row:1}
 main[data-piano-layout="hero"] .compact-title #openMySongs{grid-column:3;grid-row:1}
 main[data-piano-layout="hero"] .compact-title #setupKeyboard{grid-column:4;grid-row:1}
-@media(max-width:540px){main[data-piano-layout="hero"] .compact-title{grid-template-columns:minmax(0,1fr) 58px 34px 34px!important}main[data-piano-layout="hero"] .compact-title #zoomKeys{grid-column:2;grid-row:1}main[data-piano-layout="hero"] .compact-title #openMySongs{grid-column:3;grid-row:1}main[data-piano-layout="hero"] .compact-title #setupKeyboard{grid-column:4;grid-row:1}}
+@media(max-width:540px){main[data-piano-layout="hero"] .compact-title{grid-template-columns:minmax(0,1fr) 58px 34px 34px!important;column-gap:8px!important}main[data-piano-layout="hero"] .compact-title #zoomKeys{grid-column:2;grid-row:1}main[data-piano-layout="hero"] .compact-title #openMySongs{grid-column:3;grid-row:1}main[data-piano-layout="hero"] .compact-title #setupKeyboard{grid-column:4;grid-row:1}}
