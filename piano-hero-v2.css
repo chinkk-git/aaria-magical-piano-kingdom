@@ -198,3 +198,34 @@ main[data-piano-layout="hero"] .compact-title .song-picker{position:relative;z-i
 @media(orientation:landscape) and (max-height:540px){main[data-piano-layout="hero"] .compact-title{flex-wrap:nowrap}main[data-piano-layout="hero"] .compact-title #openMySongs{width:34px;min-width:34px;height:32px;min-height:32px}}
 
 .app-build-info{margin:6px 0 0;color:#d2c2ea;font-size:12px;line-height:1.4}
+
+/* Issue #25: compact toolbar order and resumable workshop button. */
+main[data-piano-layout="hero"] .compact-title{padding-left:max(4px,env(safe-area-inset-left));padding-right:max(4px,env(safe-area-inset-right));gap:clamp(3px,.7vw,8px)}
+main[data-piano-layout="hero"] .compact-title .song-picker{order:1;flex:1 1 160px;min-width:0}
+main[data-piano-layout="hero"] .compact-title #zoomKeys{order:2;flex:0 0 auto}
+main[data-piano-layout="hero"] .compact-title #addSongOpen{order:3;flex:0 0 auto}
+main[data-piano-layout="hero"] .compact-title #openMySongs{display:inline-flex!important;order:4;flex:0 0 auto;position:relative!important;inset:auto!important;margin:0!important;background-position:center;background-size:contain;background-repeat:no-repeat;color:transparent;z-index:3}
+main[data-piano-layout="hero"] .compact-title #setupKeyboard{order:5;flex:0 0 auto}
+main[data-piano-layout="hero"] .compact-title .kingdom-brand{order:6;flex:0 1 clamp(64px,12vw,136px);min-width:0}
+main[data-piano-layout="hero"] #heroPlayfield .magic-song-bubble{position:absolute;z-index:8;right:max(5px,env(safe-area-inset-right));top:clamp(42px,18%,calc(100% - var(--keybed-height) - 52px));bottom:auto;left:auto;transform:none;width:46px;height:46px;min-width:46px;min-height:46px;max-width:46px;padding:0;display:grid;place-items:center;border:1px solid #ffdc8f;border-radius:50%;background-image:url('./assets/release2/magic-bubble.svg'),linear-gradient(130deg,#623d9a,#31215f);background-size:27px 27px,cover;background-position:center;background-repeat:no-repeat;box-shadow:0 4px 16px #0009;color:transparent;font-size:0;touch-action:manipulation}
+main[data-piano-layout="hero"] #heroPlayfield .magic-song-bubble[hidden]{display:none}
+main[data-piano-layout="hero"] #heroPlayfield .magic-song-bubble:focus-visible{outline:3px solid #fff1bd;outline-offset:3px}
+@media(max-width:700px){main[data-piano-layout="hero"] .compact-title #zoomKeys{min-width:58px;padding:2px 4px;font-size:9px}main[data-piano-layout="hero"] .compact-title #addSongOpen,main[data-piano-layout="hero"] .compact-title #openMySongs,main[data-piano-layout="hero"] .compact-title #setupKeyboard{width:34px;min-width:34px;height:34px;min-height:34px}}
+@media(max-width:380px){main[data-piano-layout="hero"] .compact-title .kingdom-brand{display:none}main[data-piano-layout="hero"] .compact-title .song-picker{flex-basis:0}}
+@media(orientation:landscape) and (max-height:540px){main[data-piano-layout="hero"] #heroPlayfield .magic-song-bubble{top:34px;width:42px;height:42px;min-width:42px;min-height:42px;max-width:42px}}
+
+.magic-song-bubble{position:fixed;z-index:25;right:max(6px,env(safe-area-inset-right));top:max(54px,calc(env(safe-area-inset-top) + 52px));left:auto;bottom:auto;width:46px;height:46px;min-width:46px;min-height:46px;max-width:46px;padding:0;border:1px solid #ffdc8f;border-radius:50%;background-size:27px 27px,cover;background-position:center;background-repeat:no-repeat;color:transparent;font-size:0;box-shadow:0 4px 16px #0009}
+/* Anchor the resumable workshop control directly above the keyboard so its
+   bottom edge always follows the live keybed height in portrait and landscape. */
+main[data-piano-layout="hero"] #heroPlayfield .magic-song-bubble{top:auto;bottom:calc(var(--keybed-height) + 8px)}
+/* Keep the optional install affordance clear of every interactive toolbar hit target. */
+main[data-piano-layout="hero"] .compact-title{grid-template-columns:minmax(0,1fr) auto auto auto auto!important;padding-right:max(84px,calc(env(safe-area-inset-right) + 84px))!important}
+@media(max-width:540px){main[data-piano-layout="hero"] .compact-title{grid-template-columns:minmax(0,1fr) 58px 34px 34px 34px!important;gap:3px!important;padding-right:max(84px,calc(env(safe-area-inset-right) + 84px))!important}main[data-piano-layout="hero"] .compact-title .song-picker{width:100%;min-width:0}main[data-piano-layout="hero"] .compact-title .song-picker button{width:100%;max-width:none}}
+/* Keep Home immediately left of Settings in the Hero toolbar at every width. */
+main[data-piano-layout="hero"] .compact-title{grid-template-columns:minmax(0,1fr) auto auto auto!important}
+main[data-piano-layout="hero"] .compact-title #zoomKeys{grid-column:2;grid-row:1}
+main[data-piano-layout="hero"] .compact-title #openMySongs{grid-column:3;grid-row:1}
+main[data-piano-layout="hero"] .compact-title #setupKeyboard{grid-column:4;grid-row:1}
+@media(max-width:540px){main[data-piano-layout="hero"] .compact-title{grid-template-columns:minmax(0,1fr) 58px 46px 44px!important;column-gap:8px!important}main[data-piano-layout="hero"] .compact-title #zoomKeys{grid-column:2;grid-row:1}main[data-piano-layout="hero"] .compact-title #openMySongs{grid-column:3;grid-row:1}main[data-piano-layout="hero"] .compact-title #setupKeyboard{grid-column:4;grid-row:1}}
+
+@media(max-width:540px){main[data-piano-layout="hero"] .compact-title #openMySongs{box-sizing:border-box;width:46px!important;min-width:46px!important;max-width:46px!important;height:44px!important;min-height:44px!important;max-height:44px!important;padding:0!important}main[data-piano-layout="hero"] .compact-title #setupKeyboard{box-sizing:border-box;width:44px!important;min-width:44px!important;max-width:44px!important;height:44px!important;min-height:44px!important;max-height:44px!important;padding:0!important}}

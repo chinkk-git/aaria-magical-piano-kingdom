@@ -38,16 +38,17 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   const bounds=await page.locator('#openMySongs').boundingBox();assert.ok(bounds.height>=42,'song library control has a touch target');
   await page.locator('#openMySongs').click();await page.locator('#makeNewSong').click();
   const wizard=page.locator('#localSongWizard');await wizard.waitFor({state:'visible'});
-  assert.equal(await page.locator('.workshop-stage-list li[aria-current=step]').textContent(),'Capture');
+  assert.match(await page.locator('#localSongWizardTitle').textContent(),/Add New Song/);
+  assert.match(await page.locator('#makeSong').textContent(),/Make Music/);
+  assert.equal(await page.locator('#readyActions').isVisible(),false,'a new import does not ask for review or approval');
+  assert.equal(await page.locator('.workshop-stage-list').count(),0,'the import uses a single screen without staged review navigation');
   const svg='<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600"><rect width="1200" height="1600" fill="white"/><g stroke="black" stroke-width="5">'+[200,220,240,260,280].map(y=>`<path d="M90 ${y}H1110"/>`).join('')+'</g><g fill="black">'+[180,340,500,660,820,980].map((x,i)=>`<ellipse cx="${x}" cy="${215+(i%5)*10}" rx="15" ry="10"/>`).join('')+'</g></svg>';
   const png64=await page.evaluate(async svg=>{const img=new Image(),url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));img.src=url;await img.decode();const canvas=document.createElement('canvas');canvas.width=1200;canvas.height=1600;canvas.getContext('2d').drawImage(img,0,0);URL.revokeObjectURL(url);return canvas.toDataURL('image/png').split(',')[1]},svg);
   await page.locator('#scorePhotos').setInputFiles({name:'sample-score.png',mimeType:'image/png',buffer:Buffer.from(png64,'base64')});
-  await page.locator('[data-photo-action="crop"]').click();await page.locator('#cropCanvas').waitFor({state:'visible'});
-  const box=await page.locator('#cropCanvas').boundingBox();await page.mouse.move(box.x+box.width*.1,box.y+box.height*.1);await page.mouse.down();await page.mouse.move(box.x+box.width*.9,box.y+box.height*.9,{steps:5});await page.mouse.up();await page.locator('#cropApply').click();
-  assert.match(await page.locator('[data-photo-action="crop"]').textContent(),/Crop/);
+  await page.locator('#scorePhotoPreviews img').waitFor({state:'visible'});
+  assert.equal(await page.locator('[data-photo-action],.crop-editor,.score-photo-controls button').count(),0,'manual crop, rotate and photo-adjustment controls are absent');
   await page.locator('#makeSong').click();
-  await page.waitForFunction(()=>{const t=document.querySelector('#makeSong')?.textContent||'';return t.includes('Reading music')||t.includes('Continue with photos')});
-  if((await page.locator('#makeSong').textContent()).includes('Continue with photos')){await page.locator('#makeSong').click();await page.waitForFunction(()=>document.querySelector('#makeSong')?.textContent.includes('Reading music'))}
+  await page.waitForFunction(()=>document.querySelector('#scoreImportStatus')?.getAttribute('aria-busy')==='true');
   await page.locator('#keepPlaying').click();assert.equal(await wizard.evaluate(el=>el.open),false,'Magic Bubble minimizes the workshop');
   const bubble=page.locator('.magic-song-bubble');await bubble.waitFor({state:'visible'});await bubble.click();assert.equal(await wizard.evaluate(el=>el.open),true,'Magic Bubble restores the workshop');
   await page.locator('#cancelSongJob').click();await page.waitForFunction(()=>document.querySelector('#makeSong')?.textContent.includes('Continue reading'));
@@ -56,6 +57,6 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   await page.reload({waitUntil:'domcontentloaded'});await page.locator('.magic-song-bubble').waitFor({state:'visible'});await page.locator('.magic-song-bubble').click();await page.locator('#localSongWizard').waitFor({state:'visible'});await page.locator('#recoveredJob').waitFor({state:'visible'});
   assert.match(await page.locator('#recoveredJobInfo').textContent(),/page finished/);
   assert.ok(pageErrors.length===0,`browser runtime errors: ${pageErrors.join('; ')}`);
-  console.log('R2 browser smoke passed: Library selection/playback, crop, minimization, cancel and reload recovery. OMR recognition itself is not exercised by the test worker.');
+  console.log('R2 browser smoke passed: Library selection/playback, single-screen photo import without manual adjustment, minimization, cancel and reload recovery. OMR recognition itself is not exercised by the test worker.');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(err=>{console.error(err);process.exitCode=1});

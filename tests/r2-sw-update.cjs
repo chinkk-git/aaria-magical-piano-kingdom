@@ -10,20 +10,20 @@ const oldWorker=fs.readFileSync(path.join(__dirname,'fixtures/sw-v1.18.1.js'),'u
 const newWorker=fs.readFileSync(path.join(root,'sw.js'),'utf8');
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const installer=fs.readFileSync(path.join(root,'r2-install.js'),'utf8');
-const shellName='aaria-piano-v1.19.0';
-assert.match(newWorker,/const CACHE='aaria-piano-v1\.19\.0'/);
+const shellName='aaria-piano-v1.20.0';
+assert.match(newWorker,/const CACHE='aaria-piano-v1\.20\.0'/);
 for(const url of [
   './r2-music.js?v=aaria-piano-r2.2',
   './r2-image.js?v=aaria-piano-r2.1',
-  './piano-hero-v2.css?v=aaria-piano-v1.13.0',
-  './song-import.js?v=aaria-piano-r2.3',
-  './my-songs.js?v=aaria-piano-r2.3',
-  './r2-install.js?v=aaria-piano-r2.5'
+  './piano-hero-v2.css?v=aaria-piano-v1.14.0',
+  './song-import.js?v=aaria-piano-r2.4',
+  './my-songs.js?v=aaria-piano-r2.4',
+  './r2-install.js?v=aaria-piano-r2.6'
 ]){
   assert.ok(index.includes(url),`HTML references ${url}`);
   assert.ok(newWorker.includes(url),`worker precaches ${url}`);
 }
-assert.match(index,/id="appBuildInfo"[^>]*>App build: aaria-piano-v1\.19\.0/);
+assert.match(index,/id="appBuildInfo"[^>]*>App build: aaria-piano-v1\.20\.0/);
 assert.match(installer,/__aariaPwaUpdateReloadBound/);
 assert.match(installer,/location\.reload\(\)/);
 assert.ok(newWorker.includes("/^aaria-piano-v\\d+\\.\\d+\\.\\d+$/.test(key)"),'activation only removes prior versioned app-shell caches');
@@ -46,8 +46,8 @@ const server=http.createServer((req,res)=>{
     res.writeHead(200,{'content-type':contentTypes[path.extname(file)]||'application/octet-stream'});
     fs.createReadStream(file).pipe(res);return;
   }
-  // The shell worker precaches OMR payloads. This test isolates update/cache behavior
-  // and supplies inert bytes for large runtime/model files not present in source checkout.
+  // The shell worker is tested separately from model bytes; the default route
+  // supplies inert fixture responses for requests made by this upgrade test.
   res.writeHead(200,{'content-type':'application/octet-stream'});res.end('fixture-payload');
 });
 
@@ -98,10 +98,10 @@ const server=http.createServer((req,res)=>{
         req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('songs','readonly'),get=tx.objectStore('songs').get('kept-song');get.onsuccess=()=>{const song=get.result;db.close();resolve(song)};get.onerror=()=>reject(get.error)};
       });
       const verified=await (await caches.open('aaria-piano-r2-install-v1')).match('./models/verified-fixture.onnx');
-      const shell=await caches.open('aaria-piano-v1.19.0');
-      const script=await shell.match('./song-import.js?v=aaria-piano-r2.3');
-      const libraryScript=await shell.match('./my-songs.js?v=aaria-piano-r2.3');
-      const styles=await shell.match('./piano-hero-v2.css?v=aaria-piano-v1.13.0');
+      const shell=await caches.open('aaria-piano-v1.20.0');
+      const script=await shell.match('./song-import.js?v=aaria-piano-r2.4');
+      const libraryScript=await shell.match('./my-songs.js?v=aaria-piano-r2.4');
+      const styles=await shell.match('./piano-hero-v2.css?v=aaria-piano-v1.14.0');
       const html=await shell.match('./index.html');
       return {
         keys,
@@ -116,12 +116,12 @@ const server=http.createServer((req,res)=>{
     assert.ok(result.keys.includes('aaria-piano-r2-install-v1'),'verified OMR cache is retained');
     assert.equal(result.song?.title,'Saved fixture');assert.equal(result.idbSong?.title,'Saved fixture');
     assert.equal(result.favorite,true);assert.equal(result.verifiedModel,'verified-model-marker');
-    assert.match(result.script,/await lib\.saveSong\(draftSong\)/,'updated automatic save code is cached');
-    assert.match(result.libraryScript,/songPickerButton/,'updated custom song selector code is cached');
+    assert.match(result.script,/await lib\.saveSong\(draftSong\)/,'updated automatic save code is cached');assert.match(result.script,/Add New Song/,'new workshop flow is cached');
+    assert.match(result.libraryScript,/songPickerButton/,'updated custom song selector code is cached');assert.match(result.libraryScript,/Add New Song/,'library entry is renamed in the cached app');
     assert.match(result.styles,/app-build-info/,'updated stylesheet is cached');
-    assert.match(result.html,/id="songPickerButton"/,'updated song selector HTML is cached');
+    assert.match(result.html,/id="songPickerButton"/,'updated song selector HTML is cached');assert.ok(!result.html.includes('release2InstallGate'),'updated shell no longer has the startup gate');
     assert.match(result.html,/id="zoomKeys"/,'Zoom Keys control remains available');
-    assert.match(result.html,/id="appBuildInfo"[^>]*>App build: aaria-piano-v1\.19\.0/,'Settings build identifier is available');
+    assert.match(result.html,/id="appBuildInfo"[^>]*>App build: aaria-piano-v1\.20\.0/,'Settings build identifier is available');
     assert.match(result.html,/Speed/,'updated playback label is available');
     console.log('PWA update upgrade passed: prior shell replaced, updated UI assets cached, localStorage/IndexedDB songs and favorites retained, verified OMR cache retained.');
     await context.close();
