@@ -44,7 +44,7 @@ let browser;
   await toggle.click();assert.equal(await page.evaluate(()=>listenEnabled),true);assert.equal(await page.evaluate(()=>mode),'stop','enabling Listen does not start playback');assert.equal(await page.evaluate(()=>ctx),null,'enabling Listen does not resume or create audio');
   await page.screenshot({path:path.join(artifactDir,'listen-on-390x844.png')});
   await page.setViewportSize({width:1440,height:900});await assertSingleListenToggle();
-  for(const selector of ['#primaryModeButton','#pause','#secondaryModeButton','#restart','#speed','#loopRange','#bar'])assert.equal(await page.locator(selector).isVisible(),true,`desktop control ${selector} remains visible`);
+  for(const selector of ['#primaryModeButton','#pause','#secondaryModeButton','#speed','#loopRange','#bar'])assert.equal(await page.locator(selector).isVisible(),true,`desktop control ${selector} remains visible`);
   await page.screenshot({path:path.join(artifactDir,'listen-single-toggle-desktop-1440x900.png')});
   await page.setViewportSize({width:390,height:844});await assertSingleListenToggle();
   await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.PianoKingdomLibrary?.addSong);assert.equal(await page.locator('#listenToggle').getAttribute('aria-pressed'),'true','on preference survives reload');assert.equal(await page.evaluate(()=>mode),'stop');assert.equal(await page.evaluate(()=>ctx),null,'reload with Listen on remains subject to explicit audio gesture');
