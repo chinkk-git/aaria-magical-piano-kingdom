@@ -11,7 +11,7 @@ const oldShell=fs.readFileSync(path.join(__dirname,'fixtures/installed-shell-v1.
 const newWorker=fs.readFileSync(path.join(root,'sw.js'),'utf8');
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const installer=fs.readFileSync(path.join(root,'r2-install.js'),'utf8');
-const shellName='aaria-piano-v1.20.2';
+const shellName='aaria-piano-v1.20.3';
 assert.match(newWorker,/const CACHE='aaria-piano-v1\.20\.2'/);
 for(const url of [
   './r2-music.js?v=aaria-piano-r2.2',
@@ -109,7 +109,7 @@ const server=http.createServer((req,res)=>{
         req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('songs','readonly'),get=tx.objectStore('songs').get('kept-song');get.onsuccess=()=>{const song=get.result;db.close();resolve(song)};get.onerror=()=>reject(get.error)};
       });
       const verified=await (await caches.open('aaria-piano-r2-install-v1')).match('./models/verified-fixture.onnx');
-      const shell=await caches.open('aaria-piano-v1.20.2');
+      const shell=await caches.open('aaria-piano-v1.20.3');
       const script=await shell.match('./song-import.js?v=aaria-piano-r2.4');
       const libraryScript=await shell.match('./my-songs.js?v=aaria-piano-r2.4');
       const styles=await shell.match('./piano-hero-v2.css?v=aaria-piano-v1.14.0');
