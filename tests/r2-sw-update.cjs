@@ -91,6 +91,11 @@ const server=http.createServer((req,res)=>{
       const registration=await navigator.serviceWorker.getRegistration('./');
       await registration.update();
     });
+    await page.waitForFunction(async()=>Boolean((await navigator.serviceWorker.getRegistration('./'))?.waiting),null,{timeout:30000});
+    await page.evaluate(async()=>{
+      const registration=await navigator.serviceWorker.getRegistration('./');
+      registration.waiting.postMessage({type:'AARIA_ACTIVATE_UPDATE'});
+    });
     await page.waitForFunction(async name=>{
       const keys=await caches.keys();
       return keys.includes(name)&&!keys.includes('aaria-piano-v1.20.2');
