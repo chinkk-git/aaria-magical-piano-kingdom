@@ -218,3 +218,6 @@ main[data-piano-layout="hero"] #heroPlayfield .magic-song-bubble:focus-visible{o
 /* Anchor the resumable workshop control directly above the keyboard so its
    bottom edge always follows the live keybed height in portrait and landscape. */
 main[data-piano-layout="hero"] #heroPlayfield .magic-song-bubble{top:auto;bottom:calc(var(--keybed-height) + 8px)}
+/* Keep the optional install affordance clear of every interactive toolbar hit target. */
+main[data-piano-layout="hero"] .compact-title{grid-template-columns:minmax(0,1fr) auto auto auto auto!important;padding-right:max(84px,calc(env(safe-area-inset-right) + 84px))!important}
+@media(max-width:540px){main[data-piano-layout="hero"] .compact-title{grid-template-columns:minmax(0,1fr) 58px 34px 34px 34px!important;gap:3px!important;padding-right:max(84px,calc(env(safe-area-inset-right) + 84px))!important}main[data-piano-layout="hero"] .compact-title .song-picker{width:100%;min-width:0}main[data-piano-layout="hero"] .compact-title .song-picker button{width:100%;max-width:none}}
