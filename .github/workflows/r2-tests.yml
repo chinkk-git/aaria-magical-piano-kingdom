@@ -130,6 +130,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Check crystal visual and PianoGeometry regressions
+        run: |
+          node --check tests/piano-hero-crystal-visual.cjs
+          node tests/piano-geometry.test.js
       - name: Install Playwright Chromium for screenshot capture
         run: |
           npm install --no-save --no-package-lock playwright@1.62.1
