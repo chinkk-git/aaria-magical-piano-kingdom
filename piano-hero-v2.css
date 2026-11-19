@@ -221,3 +221,9 @@ main[data-piano-layout="hero"] #heroPlayfield .magic-song-bubble{top:auto;bottom
 /* Keep the optional install affordance clear of every interactive toolbar hit target. */
 main[data-piano-layout="hero"] .compact-title{grid-template-columns:minmax(0,1fr) auto auto auto auto!important;padding-right:max(84px,calc(env(safe-area-inset-right) + 84px))!important}
 @media(max-width:540px){main[data-piano-layout="hero"] .compact-title{grid-template-columns:minmax(0,1fr) 58px 34px 34px 34px!important;gap:3px!important;padding-right:max(84px,calc(env(safe-area-inset-right) + 84px))!important}main[data-piano-layout="hero"] .compact-title .song-picker{width:100%;min-width:0}main[data-piano-layout="hero"] .compact-title .song-picker button{width:100%;max-width:none}}
+/* Keep Home immediately left of Settings in the Hero toolbar at every width. */
+main[data-piano-layout="hero"] .compact-title{grid-template-columns:minmax(0,1fr) auto auto auto!important}
+main[data-piano-layout="hero"] .compact-title #zoomKeys{grid-column:2;grid-row:1}
+main[data-piano-layout="hero"] .compact-title #openMySongs{grid-column:3;grid-row:1}
+main[data-piano-layout="hero"] .compact-title #setupKeyboard{grid-column:4;grid-row:1}
+@media(max-width:540px){main[data-piano-layout="hero"] .compact-title{grid-template-columns:minmax(0,1fr) 58px 34px 34px!important}main[data-piano-layout="hero"] .compact-title #zoomKeys{grid-column:2;grid-row:1}main[data-piano-layout="hero"] .compact-title #openMySongs{grid-column:3;grid-row:1}main[data-piano-layout="hero"] .compact-title #setupKeyboard{grid-column:4;grid-row:1}}
