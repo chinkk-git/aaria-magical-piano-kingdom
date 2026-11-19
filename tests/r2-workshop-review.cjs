@@ -58,7 +58,7 @@ const workerStub=`let requests=0;const xml=${JSON.stringify(xml)};self.onmessage
   assert.equal(playback.id,id);assert.deepEqual(playback.engineEvents,playback.savedEvents,'selected Basic note data reaches the shared playback engine');
   assert.equal(await page.locator('#songSelect').isVisible(),false,'old native selector stays disabled');
   await page.locator('#songPickerButton').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});
-  await page.locator('.library-card').filter({hasText:'Dalmatian Cradle Song'}).getByRole('button',{name:'▶ Play'}).click();
+  await page.locator('.library-card').filter({hasText:'Cradle Song'}).getByRole('button',{name:'▶ Play'}).click();
   await page.waitForFunction(()=>document.querySelector('#songSelect')?.value==='cradle'&&mode==='listen');
   assert.equal(await page.locator('#songPickerButton').textContent().then(t=>t.includes('Dalmatian Cradle Song')),true,'built-in song selection updates the visible selector');
   await page.locator('#songPickerButton').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});
