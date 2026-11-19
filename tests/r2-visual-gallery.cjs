@@ -68,7 +68,7 @@ async function snap(page,name,w,h){await page.setViewportSize({width:w,height:h}
   await snap(page,'OMR processing Magic Song Workshop fixture',390,844);
   await page.locator('#keepPlaying').click();await snap(page,'Magic Bubble OMR processing fixture',1180,820);
   await page.waitForFunction(()=>document.querySelector('.magic-song-bubble')&&!document.querySelector('.magic-song-bubble').hidden&&/Review your score/.test(document.querySelector('.magic-song-bubble').textContent),null,{timeout:30000});
-  await page.locator('.magic-song-bubble').click();await page.locator('#scoreReview:not([hidden])').waitFor({timeout:10000});
+  await page.locator('.magic-song-bubble').click({force:true});await page.locator('#scoreReview:not([hidden])').waitFor({timeout:10000});
   await snap(page,'Recognized score correction and review fixture',390,844);await snap(page,'Recognized score correction and review fixture',820,1180);await snap(page,'Recognized score correction and review fixture',1440,900);
   const measures=await page.locator('#reviewMeasure option').count();for(let i=0;i<measures;i++){await page.locator('#reviewMeasure').selectOption(String(i+1));await delay(80)}
   await page.locator('#scoreChecked').check({force:true});await delay(350);
