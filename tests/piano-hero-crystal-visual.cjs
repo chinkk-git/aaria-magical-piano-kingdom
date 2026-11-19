@@ -11,9 +11,9 @@ async function snapshot(page,label,w,h,index){await page.setViewportSize({width:
  const launchOptions={headless:true,args:['--no-sandbox']};if(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH)launchOptions.executablePath=process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
  const browser=await chromium.launch(launchOptions);
  try{
-  const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,recordVideo:{dir:out,size:{width:390,height:844}},reducedMotion:'no-preference'}),page=await context.newPage();
+  const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,recordVideo:{dir:out,size:{width:390,height:844}},reducedMotion:'no-preference'}),page=await context.newPage();
   const errors=[];page.on('pageerror',e=>errors.push(String(e)));page.on('requestfailed',r=>{if(!r.url().startsWith('data:'))errors.push('request failed '+r.url()+' · '+r.failure()?.errorText)});
-  await page.addInitScript(()=>localStorage.setItem('aaria-piano-layout-v1','hero'));
+  await page.addInitScript(()=>{localStorage.setItem('aaria-piano-layout-v1','hero');window.__impactFrameCount=0;window.addEventListener('piano-note-arrival',()=>window.__impactFrameCount++);});
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.PianoHeroVisual&&!!document.querySelector('#rain'),null,{timeout:20000});
   // Unlock only the legacy install dialog in the test harness; the screenshot
@@ -21,8 +21,11 @@ async function snapshot(page,label,w,h,index){await page.setViewportSize({width:
   await page.evaluate(()=>{const gate=document.querySelector('#release2InstallGate'),app=document.querySelector('#pianoApp');if(gate)gate.hidden=true;if(app){app.inert=false;app.removeAttribute('aria-hidden')}document.body.classList.remove('r2-installing')});
   await page.waitForFunction(()=>document.querySelector('#rain')?.width>0&&document.querySelector('#keys [data-pitch]'),null,{timeout:20000});
   await snapshot(page,'Ready idle',390,844,1);
-  await page.locator('#secondaryModeButton').click();await wait(4200);
-  await snapshot(page,'Live notes portrait',390,844,2);
+  await page.locator('#secondaryModeButton').click();
+  await page.waitForFunction(()=>window.__impactFrameCount>0,null,{timeout:15000});await wait(90);
+  await snapshot(page,'Android note impact frame',390,844,2);
+  await wait(1400);await snapshot(page,'Live notes portrait',390,844,9);
+  const impactCount=await page.evaluate(()=>window.__impactFrameCount);if(impactCount<1)throw Error('No real piano-note-arrival impact event was observed.');
   await page.locator('#pause').click();if(await page.locator('#pause').innerText()!=='▶ Resume')throw Error('Pause did not switch the active playback control to Resume.');await wait(300);
   await snapshot(page,'Paused portrait',390,844,3);
   await page.locator('#pause').click();if(await page.locator('#pause').innerText()!=='⏸ Pause')throw Error('Resume did not restore the playback control.');await wait(300);
@@ -34,7 +37,7 @@ async function snapshot(page,label,w,h,index){await page.setViewportSize({width:
   const video=await page.video().path();fs.copyFileSync(video,path.join(out,'piano-hero-crystal-notes-live.webm'));
   await context.close();
   if(errors.length)throw Error('Browser reported errors: '+errors.join(' | '));
-  fs.writeFileSync(path.join(out,'README.md'),'# Piano Hero crystal visual evidence\n\nCaptured from the running application in Chromium at source SHA `'+sha+'`. These are real app renders; the design concept was used as a reference only. The WebM shows the live renderer and controls. Viewports: 390×844, 844×390, 834×1194, 1194×834, 1440×900. Reduced-motion preference was applied and verified.\n');
+  fs.writeFileSync(path.join(out,'README.md'),'# Piano Hero crystal visual evidence\n\nCaptured from the running application in Chromium at source SHA `'+sha+'`. These are real app renders; the design concept was used as a reference only. The WebM shows the live renderer and controls. Android-touch emulation: 390×844 at device scale 2. Viewports: 390×844, 844×390, 834×1194, 1194×834, 1440×900. An actual piano-note-arrival impact event was observed and captured. Reduced-motion preference was applied and verified.\n');
   const zip=path.join(process.env.GITHUB_WORKSPACE||process.cwd(),'piano-hero-crystal-visual-evidence.zip');execFileSync('python3',['-m','zipfile','-c',zip,out]);
   console.log('Captured actual Piano Hero screenshots and WebM at '+sha+'; evidence ZIP: '+zip);
  }finally{await browser.close();await new Promise(r=>server.close(r))}
