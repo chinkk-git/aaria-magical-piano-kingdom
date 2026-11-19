@@ -40,4 +40,15 @@ assert.match(music,/if\(!options\.scoreVerified&&!options\.automatic\)/,'arrange
 assert.match(music,/estimate\.level==='Advanced'/,'Advanced is offered only for advanced original scores');
 assert.ok(music.includes('recognized-original'),'Advanced preserves the recognized original');
 assert.ok(!importer.includes('62%'),'the illustrative 62% asset is not used as progress');
+
+assert.match(importer,/runPhotoPrescan\(\[\.\.\.photos\]\)/,'selected photos receive a local pre-scan before processing');
+assert.match(importer,/sourceFingerprint\(file\)/,'page checkpoints are tied to source-image content');
+assert.match(importer,/pageCheckpointMatches/,'recovery reuses only validated, version-matched page results');
+assert.match(importer,/MAX_PAGE_ATTEMPTS=3/,'automatic recovery is bounded to three attempts per page');
+assert.match(importer,/Retrying this page only/,'recovery reports and retries only the failed page');
+assert.match(importer,/sourceMusicXMLByPage/,'validated per-page MusicXML is retained in the saved song record');
+assert.match(importer,/AariaWorkshopProgress/,'fast path reports through Worker 1 progress events');
+assert.match(sw,/aaria-piano-v1\.20\.6/,'fast path shell advances the scoped PWA update build');
+assert.match(pwaBuild(),/aaria-piano-v1\.20\.6/,'Settings and service worker agree on the new app build');
+function pwaBuild(){return read('pwa-update.js')}
 console.log('R2 integration invariants passed');

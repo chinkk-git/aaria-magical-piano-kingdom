@@ -62,6 +62,7 @@ jobs:
           node --check tests/r2-integration.test.js
           node --check tests/r2-browser-smoke.cjs
           node --check tests/r2-omr-ground-truth.cjs
+          node --check tests/r2-fastpath-recovery.cjs
           node --check tests/r2-workshop-review.cjs
           node --check tests/piano-hero-crystal-visual.cjs
       - name: Test difficulty and arrangement rules
@@ -101,6 +102,15 @@ jobs:
         env:
           APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
         run: node tests/r2-workshop-review.cjs
+      - name: Verify local photo pre-scan and page-only recovery
+        run: node tests/r2-fastpath-recovery.cjs
+      - name: Upload fast-path responsive screenshots and recovery recording
+        uses: actions/upload-artifact@v4
+        with:
+          name: fastpath-recovery-responsive-evidence-${{ github.event.pull_request.head.sha }}
+          path: /tmp/fastpath-evidence/
+          retention-days: 14
+          if-no-files-found: error
       - name: Upload Android-sized selector screenshot
         uses: actions/upload-artifact@v4
         with:
@@ -233,8 +243,36 @@ jobs:
           cp omr-source/LICENSE _site/vendor/omr-licenses/partsong-LICENSE
           touch _site/.nojekyll
           python3 scripts/create-r2-install-manifest.py
-      - name: Test known score recognition online and offline
-        run: node tests/r2-omr-ground-truth.cjs _site
+      - name: Stage the pull-request base as a matched OMR benchmark baseline
+        env:
+          FASTPATH_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$FASTPATH_BASE_SHA"
+          git worktree add --detach /tmp/fastpath-base FETCH_HEAD
+          mkdir -p /tmp/fastpath-base/_site/assets/release2 /tmp/fastpath-base/_site/assets/piano-hero-v2 /tmp/fastpath-base/_site/vendor/omr-licenses
+          cp /tmp/fastpath-base/{index.html,song-import.js,my-songs.js,r2-music.js,r2-image.js,r2-install.js,pwa-update.js,sw.js,piano-geometry.js,piano-hero-v2.css,manifest.webmanifest,icon-192.png,icon-512.png,icon-maskable-512.png,apple-touch-icon.png,OMR-THIRD-PARTY-NOTICES.md} /tmp/fastpath-base/_site/
+          cp /tmp/fastpath-base/assets/release2/{magic-book.svg,magic-bubble.svg} /tmp/fastpath-base/_site/assets/release2/
+          cp /tmp/fastpath-base/assets/piano-hero-v2/{home_button.png,settings_button.png} /tmp/fastpath-base/_site/assets/piano-hero-v2/
+          cp -R _site/omr _site/models _site/lib /tmp/fastpath-base/_site/
+          cp _site/omr-worker.js _site/release2-install-manifest.json /tmp/fastpath-base/_site/
+          cp vendor/omr-licenses/partsong-LICENSE /tmp/fastpath-base/_site/vendor/omr-licenses/
+          touch /tmp/fastpath-base/_site/.nojekyll
+      - name: Measure matched baseline with the pinned local OMR engine
+        env:
+          FASTPATH_RUN_LABEL: baseline
+        run: node tests/r2-omr-ground-truth.cjs /tmp/fastpath-base/_site | tee /tmp/fastpath-baseline.log
+      - name: Measure candidate with the same fixture and runner
+        env:
+          FASTPATH_RUN_LABEL: candidate
+        run: node tests/r2-omr-ground-truth.cjs _site | tee /tmp/fastpath-candidate.log
+      - name: Upload Android processing screenshots and OMR recording
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fastpath-omr-benchmark-evidence-${{ github.event.pull_request.head.sha }}
+          path: /tmp/fastpath-evidence/
+          retention-days: 14
+          if-no-files-found: error
       - name: Upload temporary owner review site
         if: always() && hashFiles('_site/index.html') != ''
         uses: actions/upload-artifact@v4
