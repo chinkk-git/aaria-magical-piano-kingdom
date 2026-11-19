@@ -101,3 +101,17 @@ The production baseline remains main `f9739d0071e6e8586e3d9f1b5a049cea9b50534f`,
 | Physical Android acceptance | Not a code PR | Pending owner-run physical-device test. Chromium emulation is not physical-device evidence. |
 
 The owner-run device matrix above remains unchecked until physical evidence is supplied. The actual OMR image → MusicXML → app timing → save → reopen → playback semantic gate remains unverified; the first run timed out. License/provenance clearance remains **LEGAL REVIEW REQUIRED**.
+
+
+## Worker 1 progress snapshot — 2026-11-19 16:45 BRT
+
+This snapshot supersedes the earlier implementation-tracker status above where it conflicts. Current production baseline and owner-device status remain unchanged.
+
+| Work | Current draft head | Evidence / status |
+|---|---|---|
+| Settings update check — PR #40 | `831cf14808de38379f7c2fc7987448dfa033df6b` | Focused run [#44600947605](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44600947605) passed. Covered old-worker upgrade/reopen, version check, offline, busy second tab/import, duplicate clicks, stale metadata, 503 recovery, and song/favorite/IndexedDB/verified OMR-cache preservation. Chromium artifact [#14567922600](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44600947605). Draft only. |
+| Workshop progress/cancel — PR #41 | `3223f440d5ad836e49f9f756914b67da348abd8f` | Run [#44598893902](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44598893902) passed targeted browser tests, including minimized stage parity, cancel dismissal, confirmed termination, and no partial save. Draft only; the recognition flow uses a controlled test worker. |
+| Playback state/Play Again — PR #42 | `041ef02c758d41374f7cffb1b0518484be3a26aa` | Run [#44601356610](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44601356610) is in progress. Previous run [#44600707366](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44600707366) failed when the Classic settings save control remained hidden after the test switched layout. Current head changes the test setup sequence; acceptance is pending the new run. Draft only. |
+| Checklist / audit — PR #39 | This update | Keeps the device matrix pending until physical evidence exists. |
+
+**Open gates:** actual pinned OMR image → MusicXML → app timebase/arrangement → save → reopen → playback semantic comparison remains **BLOCKED / NOT VERIFIED**. The prior actual-engine CI attempt timed out; no stub-backed test is counted as real OMR evidence. Model/training-data provenance remains **LEGAL REVIEW REQUIRED**. Physical Android/iOS/iPadOS checks remain **PENDING**; Chromium is emulation only. No implementation PR is merged/deployed and Release 2 is not owner-approved.

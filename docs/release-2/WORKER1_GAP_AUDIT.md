@@ -48,3 +48,12 @@ The audit above records the verified main-branch state before code changes. Draf
 | R2-W1-08/09 | [Device checklist](OWNER-DEVICE-CHECKLIST.md); progress comment added to Issue #11. | Physical device is pending. Control Tower final reconciliation awaits current CI and owner review. |
 
 PR #39 and PRs #40–#42 remain drafts; none has been merged or deployed.
+
+
+## Worker 1 follow-up verification — 2026-11-19 16:45 BRT
+
+- PR #40 update-check implementation is still draft, head `831cf14808de38379f7c2fc7987448dfa033df6b`. Run [#44600947605](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44600947605) passed the updater, upgrade/reopen, data-retention, offline, busy-tab, busy-import, duplicate-click and recoverable-failure cases. Chromium artifact: [#14567922600](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44600947605).
+- PR #41 remains draft, head `3223f440d5ad836e49f9f756914b67da348abd8f`; targeted run [#44598893902](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44598893902) passed Workshop progress/cancel coverage.
+- PR #42 remains draft, current head `041ef02c758d41374f7cffb1b0518484be3a26aa`; its new run [#44601356610](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44601356610) is pending. Earlier [#44600707366](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44600707366) failed at the Classic layout settings dialog sequence; the current test sequence is adjusted and must pass before this gate is marked complete.
+- The actual OMR semantic flow remains unverified after a 600-second actual-engine CI timeout with `ERR_INVALID_URL`. Physical-device checks remain pending. OMR rights remain `LEGAL REVIEW REQUIRED`.
+- No Worker 1 code PR has been merged or deployed. Release 2 is not owner-approved.

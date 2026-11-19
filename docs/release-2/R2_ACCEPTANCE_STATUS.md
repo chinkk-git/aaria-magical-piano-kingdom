@@ -33,3 +33,17 @@ Draft implementation PRs: [#40](https://github.com/chinkk-git/aaria-magical-pian
 The first update PR CI run [#44594125078](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44594125078) found tests still pinned to the old shell build, and its actual-engine OMR test timed out after 600 seconds with installation state `idle` and browser console `ERR_INVALID_URL`. The old-build expectations have been corrected; OMR semantic acceptance is still **BLOCKED / NOT VERIFIED**. The initial workshop run [#44595003522](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44595003522) found a broad test assertion that counted existing built-in songs; that assertion is narrowed, and updated run [#44597715880](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44597715880) is in progress.
 
 Physical-device checks remain pending. No implementation PR is merged/deployed and Release 2 is not owner-approved.
+
+
+## Worker 1 progress snapshot — 2026-11-19 16:45 BRT
+
+This snapshot supersedes the earlier implementation-tracker status above where it conflicts. Current production baseline and owner-device status remain unchanged.
+
+| Work | Current draft head | Evidence / status |
+|---|---|---|
+| Settings update check — PR #40 | `831cf14808de38379f7c2fc7987448dfa033df6b` | Focused run [#44600947605](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44600947605) passed. Covered old-worker upgrade/reopen, version check, offline, busy second tab/import, duplicate clicks, stale metadata, 503 recovery, and song/favorite/IndexedDB/verified OMR-cache preservation. Chromium artifact [#14567922600](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44600947605). Draft only. |
+| Workshop progress/cancel — PR #41 | `3223f440d5ad836e49f9f756914b67da348abd8f` | Run [#44598893902](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44598893902) passed targeted browser tests, including minimized stage parity, cancel dismissal, confirmed termination, and no partial save. Draft only; the recognition flow uses a controlled test worker. |
+| Playback state/Play Again — PR #42 | `041ef02c758d41374f7cffb1b0518484be3a26aa` | Run [#44601356610](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44601356610) is in progress. Previous run [#44600707366](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44600707366) failed when the Classic settings save control remained hidden after the test switched layout. Current head changes the test setup sequence; acceptance is pending the new run. Draft only. |
+| Checklist / audit — PR #39 | This update | Keeps the device matrix pending until physical evidence exists. |
+
+**Open gates:** actual pinned OMR image → MusicXML → app timebase/arrangement → save → reopen → playback semantic comparison remains **BLOCKED / NOT VERIFIED**. The prior actual-engine CI attempt timed out; no stub-backed test is counted as real OMR evidence. Model/training-data provenance remains **LEGAL REVIEW REQUIRED**. Physical Android/iOS/iPadOS checks remain **PENDING**; Chromium is emulation only. No implementation PR is merged/deployed and Release 2 is not owner-approved.
