@@ -57,3 +57,20 @@ PR #39 and PRs #40–#42 remain drafts; none has been merged or deployed.
 - PR #42 remains draft, current head `041ef02c758d41374f7cffb1b0518484be3a26aa`; its new run [#44601356610](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44601356610) is pending. Earlier [#44600707366](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44600707366) failed at the Classic layout settings dialog sequence; the current test sequence is adjusted and must pass before this gate is marked complete.
 - The actual OMR semantic flow remains unverified after a 600-second actual-engine CI timeout with `ERR_INVALID_URL`. Physical-device checks remain pending. OMR rights remain `LEGAL REVIEW REQUIRED`.
 - No Worker 1 code PR has been merged or deployed. Release 2 is not owner-approved.
+
+
+## Worker 1 progress correction — 2026-11-19 16:51 BRT
+
+This replaces the prior pending/failing PR #42 snapshot above where it differs.
+
+| Item | Latest draft head | Latest evidence |
+|---|---|---|
+| PR #40 — update check and R2 regression harness | `e705b0f6e353b0c0419c97d89903719283dfcaff` | Focused update regression [#44600947605](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44600947605) passed. Full Release 2 validation [#44602363699](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44602363699) is in progress after replacing old fixed-version assertions and repairing the actual-OMR test’s obsolete startup-gate wait. |
+| PR #41 — Workshop progress/cancel | `3223f440d5ad836e49f9f756914b67da348abd8f` | Targeted Chromium run [#44598893902](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44598893902) passed. |
+| PR #42 — playback completion/Play Again | `b217db2407f81cf0329a0f93cfb4d53ff8be6b06` | Run [#44601879559](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44601879559) passed all browser-regression steps; screenshots artifact #14568586014. This run used the earlier PR #40 base and must be repeated after stacking the latest #40 head. |
+
+### OMR acceptance status correction
+
+The earlier actual-engine attempt [#44594125078](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44594125078) did not reach recognition. Its test waited for an OMR startup installer gate that had been removed for the on-demand flow; the page reported installer state `idle`, workshop status “Choose a photo to begin.”, and the 600-second wait expired. Therefore no real OMR semantic pass or fail was observed in that attempt. The harness now waits for the usable app and exercises photo → local recognition → automatic save → Library → playback. The current full run must establish the outcome before this gate is revised.
+
+Physical-device acceptance remains **PENDING**. OMR model/training-data rights remain **LEGAL REVIEW REQUIRED**. No implementation PR is merged or deployed; Release 2 is not owner-approved.
