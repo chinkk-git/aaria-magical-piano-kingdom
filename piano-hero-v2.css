@@ -239,6 +239,11 @@ main[data-piano-layout="hero"] .compact-title #addSongOpen{order:3;flex:0 0 auto
 main[data-piano-layout="hero"] .compact-title #openMySongs{display:inline-flex!important;order:4;flex:0 0 auto;position:relative!important;inset:auto!important;margin:0!important;background-position:center;background-size:contain;background-repeat:no-repeat;color:transparent;z-index:3}
 main[data-piano-layout="hero"] .compact-title #setupKeyboard{order:5;flex:0 0 auto}
 main[data-piano-layout="hero"] .compact-title .kingdom-brand{order:6;flex:0 1 clamp(64px,12vw,136px);min-width:0}
+
+/* Keep the secondary playback row comfortable to tap on narrow portrait too. */
+main[data-piano-layout="hero"] #player .extras{min-height:36px}
+main[data-piano-layout="hero"] #player .extras select{min-height:36px}
+main[data-piano-layout="hero"] #player .extras input[type="range"]{min-height:32px;touch-action:pan-x}
 main[data-piano-layout="hero"] #heroPlayfield .magic-song-bubble{position:absolute;z-index:8;right:max(5px,env(safe-area-inset-right));top:clamp(42px,18%,calc(100% - var(--keybed-height) - 52px));bottom:auto;left:auto;transform:none;width:46px;height:46px;min-width:46px;min-height:46px;max-width:46px;padding:0;display:grid;place-items:center;border:1px solid #ffdc8f;border-radius:50%;background-image:url('./assets/release2/magic-bubble.svg'),linear-gradient(130deg,#623d9a,#31215f);background-size:27px 27px,cover;background-position:center;background-repeat:no-repeat;box-shadow:0 4px 16px #0009;color:transparent;font-size:0;touch-action:manipulation}
 main[data-piano-layout="hero"] #heroPlayfield .magic-song-bubble[hidden]{display:none}
 main[data-piano-layout="hero"] #heroPlayfield .magic-song-bubble:focus-visible{outline:3px solid #fff1bd;outline-offset:3px}
