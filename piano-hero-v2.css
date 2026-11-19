@@ -244,6 +244,40 @@ main[data-piano-layout="hero"] .compact-title .kingdom-brand{order:6;flex:0 1 cl
 main[data-piano-layout="hero"] #player .extras{min-height:36px}
 main[data-piano-layout="hero"] #player .extras select{min-height:36px}
 main[data-piano-layout="hero"] #player .extras input[type="range"]{min-height:32px;touch-action:pan-x}
+
+/* Hero keys live inside #heroPlayfield, not the legacy .keyboard-panel.
+   Give their impact state its own bright overlay while keeping the original
+   360 ms flash (120 ms for reduced motion). */
+main[data-piano-layout="hero"] #keys .white.impact-lit,
+main[data-piano-layout="hero"] #keys .black.impact-lit{
+  filter:brightness(1.5)!important;
+  box-shadow:0 0 30px #fff2b4,0 0 19px var(--impact-color),inset 0 0 12px var(--impact-color)!important;
+}
+main[data-piano-layout="hero"] #keys .white.impact-lit::after,
+main[data-piano-layout="hero"] #keys .black.impact-lit::after{
+  content:"";
+  position:absolute;
+  z-index:4;
+  top:0;
+  left:-15%;
+  width:130%;
+  height:34px;
+  border-radius:50%;
+  pointer-events:none;
+  opacity:.98;
+  background:radial-gradient(ellipse at 50% 18%,#fff 0 9%,#fff5c8 23%,var(--impact-color) 48%,transparent 76%);
+  box-shadow:0 0 20px 5px var(--impact-color),inset 0 0 9px #fff;
+  animation:piano-hero-impact-flash .36s ease-out both;
+}
+@keyframes piano-hero-impact-flash{
+  0%{opacity:1;transform:scale(.55)}
+  44%{opacity:.94;transform:scale(1)}
+  100%{opacity:0;transform:scale(1.35)}
+}
+@media(prefers-reduced-motion:reduce){
+  main[data-piano-layout="hero"] #keys .white.impact-lit::after,
+  main[data-piano-layout="hero"] #keys .black.impact-lit::after{animation:none;opacity:.94;transform:none}
+}
 main[data-piano-layout="hero"] #heroPlayfield .magic-song-bubble{position:absolute;z-index:8;right:max(5px,env(safe-area-inset-right));top:clamp(42px,18%,calc(100% - var(--keybed-height) - 52px));bottom:auto;left:auto;transform:none;width:46px;height:46px;min-width:46px;min-height:46px;max-width:46px;padding:0;display:grid;place-items:center;border:1px solid #ffdc8f;border-radius:50%;background-image:url('./assets/release2/magic-bubble.svg'),linear-gradient(130deg,#623d9a,#31215f);background-size:27px 27px,cover;background-position:center;background-repeat:no-repeat;box-shadow:0 4px 16px #0009;color:transparent;font-size:0;touch-action:manipulation}
 main[data-piano-layout="hero"] #heroPlayfield .magic-song-bubble[hidden]{display:none}
 main[data-piano-layout="hero"] #heroPlayfield .magic-song-bubble:focus-visible{outline:3px solid #fff1bd;outline-offset:3px}
