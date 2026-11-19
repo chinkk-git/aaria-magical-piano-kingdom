@@ -108,6 +108,9 @@ jobs:
           path: |
             /tmp/android-song-selector-open.png
             /tmp/issue25-minimized-processing-390x844-${{ github.event.pull_request.head.sha }}.png
+            /tmp/magic-music-progress-portrait-${{ github.event.pull_request.head.sha }}.png
+            /tmp/magic-music-progress-landscape-${{ github.event.pull_request.head.sha }}.png
+            /tmp/magic-music-progress-video-${{ github.event.pull_request.head.sha }}.webm
           retention-days: 14
           if-no-files-found: error
 
