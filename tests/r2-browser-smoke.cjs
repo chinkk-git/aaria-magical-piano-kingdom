@@ -51,6 +51,7 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   await page.waitForTimeout(1900);assert.equal(await page.evaluate(()=>mode==='listen'&&bar===2),true,'loop mode repeats the selected measure instead of completing');
   await page.locator('#loopRange').selectOption('0');await page.waitForFunction(()=>mode==='completed',{timeout:10000});
   assert.match(await page.locator('#pause').textContent(),/Play Again/,'COMPLETED exposes the Play Again action');
+  assert.match(await page.locator('#status').textContent(),/Song complete.*Play Again/,'completion status announces the available restart action');
   await page.screenshot({path:`/tmp/piano-playback-state-390x844-${process.env.APP_SOURCE_SHA||'local'}.png`});
   await page.locator('#pause').click();await page.waitForFunction(()=>mode==='listen'&&bar===1&&beat<1,{timeout:5000});
   assert.equal(await page.locator('#pause').isDisabled(),false,'restarted playback is active at the first measure');
