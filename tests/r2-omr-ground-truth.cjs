@@ -21,7 +21,9 @@ const noteName=midi=>{const names=['C','C♯','D','D♯','E','F','F♯','G','G�
  const started=Date.now();
  try{
   await page.goto(`http://127.0.0.1:${server.address().port}/index.html`,{waitUntil:'networkidle'});
-  await page.waitForFunction(()=>window.AariaR2Installer?.state==='ready',null,{timeout:600000});
+  await page.waitForFunction(()=>['ready','error'].includes(window.AariaR2Installer?.state),null,{timeout:600000});
+  const installation=await page.evaluate(()=>({state:window.AariaR2Installer?.state,status:document.querySelector('#release2InstallStatus')?.textContent,detail:document.querySelector('#release2InstallDetail')?.textContent}));
+  assert.equal(installation.state,'ready',`installation gate did not unlock: ${JSON.stringify(installation)}`);
   await page.waitForFunction(()=>window.PianoKingdomLibrary?.saveSong&&window.AariaR2Music?.generateArrangements,null,{timeout:30000});
   const builtins=await page.locator('#songSelect option').evaluateAll(options=>options.map(o=>o.value));
   assert.ok(builtins.includes('cradle')&&builtins.includes('ddlj'),'existing built-in songs remain available');
@@ -65,6 +67,6 @@ const noteName=midi=>{const names=['C','C♯','D','D♯','E','F','F♯','G','G�
   console.log('OMR TO PLAYBACK ACCEPTANCE',JSON.stringify({recognitionElapsedMs:Date.now()-started,score:saved,librarySelection:libraryPlayback.selected,scheduledTones:played,quarterNoteGapsSeconds:gaps}));
   assert.deepEqual(errors,[],'no browser runtime errors');
   console.log('PASS: actual pinned OMR → production MusicXML tick conversion → score correction → Basic → save → Song Library → real playback scheduler.');
- }catch(error){console.error('OMR-TO-PLAYBACK FAILURE',JSON.stringify({elapsedMs:Date.now()-started,message:error.message,stack:error.stack,status:await page.locator('#scoreImportStatus').textContent().catch(()=>''),browserErrors:errors,consoleErrors:messages}));throw error
+ }catch(error){console.error('OMR-TO-PLAYBACK FAILURE',JSON.stringify({elapsedMs:Date.now()-started,message:error.message,stack:error.stack,installation:await page.evaluate(()=>({state:window.AariaR2Installer?.state,status:document.querySelector('#release2InstallStatus')?.textContent,detail:document.querySelector('#release2InstallDetail')?.textContent,gateHidden:document.querySelector('#release2InstallGate')?.hidden})).catch(()=>null),workshopStatus:await page.locator('#scoreImportStatus').textContent().catch(()=>''),browserErrors:errors,consoleErrors:messages}));throw error
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(e=>{console.error(e);process.exitCode=1});
