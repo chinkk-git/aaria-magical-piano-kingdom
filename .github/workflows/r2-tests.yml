@@ -35,7 +35,7 @@ jobs:
           print("full=" + str(bool(paths-targeted)).lower())
           print("workshop=" + str(bool(paths & {"song-import.js","tests/r2-workshop-review.cjs"})).lower())
           print("install=" + str(bool(paths & {"index.html","sw.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-on-demand-installer.cjs",".github/workflows/piano-deploy.yml"})).lower())
-          print("omr=" + str(bool(paths & {"omr-worker.js","tests/r2-omr-ground-truth.cjs",".github/workflows/piano-deploy.yml"})).lower())
+          print("omr=" + str(bool(paths & {"omr-worker.js","song-import.js","tests/r2-omr-ground-truth.cjs",".github/workflows/piano-deploy.yml"})).lower())
           print("visual=" + str(bool(paths & {"index.html","piano-hero-v2.css","tests/piano-hero-crystal-visual.cjs","tests/android-landscape-controls.cjs","tests/neon-label-impact.cjs"})).lower())
           PY
   validate:
