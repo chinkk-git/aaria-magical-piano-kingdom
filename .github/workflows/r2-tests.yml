@@ -1,0 +1,183 @@
+name: Release 2 validation
+
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      full: ${{ steps.route.outputs.full }}
+      workshop: ${{ steps.route.outputs.workshop }}
+      install: ${{ steps.route.outputs.install }}
+      omr: ${{ steps.route.outputs.omr }}
+      visual: ${{ steps.route.outputs.visual }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 2
+      - id: route
+        shell: bash
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import subprocess
+          paths=set(subprocess.check_output(["git","diff","--name-only","HEAD^","HEAD"],text=True).splitlines())
+          targeted={".github/workflows/r2-tests.yml",".github/workflows/piano-deploy.yml","index.html","sw.js","song-import.js","r2-music.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-workshop-review.cjs","tests/r2-install-gate.cjs","tests/r2-omr-ground-truth.cjs","tests/r2-visual-gallery.cjs"}
+          print("full=" + str(bool(paths-targeted)).lower())
+          print("workshop=" + str(bool(paths & {"song-import.js","tests/r2-workshop-review.cjs"})).lower())
+          print("install=" + str(bool(paths & {"index.html","sw.js","r2-install.js","scripts/create-r2-install-manifest.py","tests/r2-install-gate.cjs",".github/workflows/piano-deploy.yml"})).lower())
+          print("omr=" + str(bool(paths & {"r2-music.js","r2-install.js","sw.js","tests/r2-omr-ground-truth.cjs",".github/workflows/piano-deploy.yml"})).lower())
+          print("visual=" + str("tests/r2-visual-gallery.cjs" in paths).lower())
+          PY
+  validate:
+    needs: changes
+    if: needs.changes.outputs.full == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check JavaScript syntax
+        run: |
+          node --check r2-music.js
+          node --check r2-image.js
+          node --check r2-install.js
+          node --check tests/r2-install-gate.cjs
+          node --check song-import.js
+          node --check my-songs.js
+          node --check tests/r2-music.test.js
+          node --check tests/r2-integration.test.js
+          node --check tests/r2-browser-smoke.cjs
+          node --check tests/r2-omr-ground-truth.cjs
+          node --check tests/r2-workshop-review.cjs
+      - name: Test difficulty and arrangement rules
+        run: node --test tests/r2-music.test.js tests/r2-image.test.js tests/r2-integration.test.js
+      - name: Install pinned Playwright
+        run: npm install --no-save --no-package-lock playwright@1.62.1
+      - name: Install Chromium for headless acceptance
+        run: npx playwright install chromium
+      - name: Test integrated browser behavior
+        run: node tests/r2-browser-smoke.cjs
+      - name: Test score correction and arrangement playback
+        run: node tests/r2-workshop-review.cjs
+
+  workshop-targeted:
+    needs: changes
+    if: needs.changes.outputs.workshop == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install pinned Playwright
+        run: npm install --no-save --no-package-lock playwright@1.62.1
+      - name: Install Chromium
+        run: npx playwright install chromium
+      - name: Run only the workshop correction and playback integration
+        run: node tests/r2-workshop-review.cjs
+
+  installation-gate-targeted:
+    needs: changes
+    if: needs.changes.outputs.install == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check installation scripts
+        run: |
+          node --check r2-install.js
+          node --check tests/r2-install-gate.cjs
+          python3 -m py_compile scripts/create-r2-install-manifest.py
+      - name: Install pinned Playwright
+        run: npm install --no-save --no-package-lock playwright@1.62.1
+      - name: Install Chromium
+        run: npx playwright install chromium
+      - name: Test installation gate, integrity, retry, storage and recovery
+        run: node tests/r2-install-gate.cjs
+
+  visual-gallery:
+    needs: changes
+    if: needs.changes.outputs.visual == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install Playwright Chromium for screenshot capture
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install chromium
+      - name: Capture Release 2 development screens
+        env:
+          APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node tests/r2-visual-gallery.cjs
+      - name: Upload screenshot gallery
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-2-actual-screen-gallery-${{ github.event.pull_request.head.sha }}
+          path: release-2-actual-screen-gallery.zip
+          retention-days: 14
+          if-no-files-found: error
+
+  omr-ground-truth:
+    needs: changes
+    if: needs.changes.outputs.omr == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install pinned Playwright
+        run: npm install --no-save --no-package-lock playwright@1.62.1
+      - name: Install Chromium for full local-engine test
+        run: npx playwright install --with-deps chromium
+      - name: Check out pinned Partsong engine source
+        uses: actions/checkout@v4
+        with:
+          repository: pzfreo/partsong
+          ref: 9834842408b3012730b76249e0c3738820a08912
+          path: omr-source
+          persist-credentials: false
+      - name: Fetch pinned local runtime and model pack
+        run: |
+          cd omr-source
+          bash scripts/fetch-libs.sh
+          bash scripts/fetch-models.sh
+          cd ..
+      - name: Stage the same local OMR payload used by Pages
+        run: |
+          mkdir -p _site/assets/release2 _site/assets/piano-hero-v2 _site/vendor/omr-licenses _site/omr _site/models _site/lib/onnxruntime-web@1.30.0
+          cp index.html song-import.js my-songs.js r2-music.js r2-image.js r2-install.js sw.js piano-geometry.js piano-hero-v2.css manifest.webmanifest icon-192.png icon-512.png icon-maskable-512.png apple-touch-icon.png _site/
+          cp assets/release2/magic-book.svg assets/release2/magic-bubble.svg _site/assets/release2/
+          cp assets/piano-hero-v2/home_button.png assets/piano-hero-v2/settings_button.png _site/assets/piano-hero-v2/
+          cp omr-source/omr-worker.js _site/
+          cp -R omr-source/omr/. _site/omr/
+          cp -R omr-source/models/. _site/models/
+          cp -R omr-source/lib/onnxruntime-web@1.30.0/. _site/lib/onnxruntime-web@1.30.0/
+          cp OMR-THIRD-PARTY-NOTICES.md _site/
+          cp omr-source/LICENSE _site/vendor/omr-licenses/partsong-LICENSE
+          touch _site/.nojekyll
+          python3 scripts/create-r2-install-manifest.py
+      - name: Test known score recognition online and offline
+        run: node tests/r2-omr-ground-truth.cjs _site
+      - name: Upload temporary owner review site
+        if: always() && hashFiles('_site/index.html') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-2-v1-review-site
+          path: _site/
+          retention-days: 7
+          if-no-files-found: error
