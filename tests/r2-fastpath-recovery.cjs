@@ -4,12 +4,12 @@ const {chromium}=require('playwright');
 const root=path.resolve(process.argv[2]||path.join(__dirname,'..'));
 const out=process.env.FASTPATH_EVIDENCE_DIR||'/tmp/fastpath-evidence';fs.mkdirSync(out,{recursive:true});
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
-const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname),file=path.resolve(root,'.'+pathname);if(!file.startsWith(root+path.sep)&&file!==root){res.writeHead(403).end();return}fs.readFile(file,(error,body)=>{if(error){res.writeHead(404).end('not found');return}res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'}).end(body)})});
+const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname),file=path.resolve(root,'.'+(pathname==='/'?'/index.html':pathname));if(!file.startsWith(root+path.sep)&&file!==root){res.writeHead(403).end();return}fs.readFile(file,(error,body)=>{if(error){res.writeHead(404).end('not found');return}res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'}).end(body)})});
 const xml=`<?xml version="1.0" encoding="UTF-8"?><score-partwise version="3.1"><part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list><part id="P1"><measure number="1"><attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes><note><pitch><step>C</step><octave>4</octave></pitch><duration>1</duration><type>quarter</type></note></measure></part></score-partwise>`;
 const dirtyPage=`<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1800"><rect width="100%" height="100%" fill="#28233a"/><g stroke="#fff" stroke-width="5" opacity=".9">${[400,440,480,520,560].map(y=>`<path d="M100 ${y}H1300"/>`).join('')}</g><g fill="#fff"><ellipse cx="300" cy="530" rx="18" ry="12"/><ellipse cx="500" cy="490" rx="18" ry="12"/><ellipse cx="700" cy="450" rx="18" ry="12"/></g></svg>`;
 (async()=>{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
- const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+ const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox']});
  const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true,serviceWorkers:'block',recordVideo:{dir:path.join(out,'video'),size:{width:390,height:844}}});
  await context.addInitScript(({scoreXml})=>{
   window.__fastpathRecogniseCalls=0;window.__fastpathProgress=[];window.addEventListener('aaria-workshop-progress',event=>window.__fastpathProgress.push(event.detail));
