@@ -68,6 +68,7 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
    keyBox=await keys.boundingBox();dockBox=await dock.boundingBox();
    const layout=await page.locator('#pianoApp').getAttribute('data-piano-layout')||'classic';
    const targets=await visible.evaluateAll(bs=>bs.map(b=>{const r=b.getBoundingClientRect();return{key:b.dataset.key,x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height}}));
+   const labels=await page.locator('.v21-wheel-actions:not([hidden]) .v21-action-label').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return{key:e.dataset.key,x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height,text:e.textContent.trim(),opacity:getComputedStyle(e).opacity}}));
    const regions=await page.evaluate(()=>Object.fromEntries(['.v21-wheel-art','#keys','#rain','#heroPlayfield','.v21-dock','.v21-star-assembly','.v21-star'].map(sel=>{const e=document.querySelector(sel),r=e?.getBoundingClientRect();return[sel,r?{x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height}:null]})));
    const wheelBounds={x:left,y:shape.center.y-shape.radius,right:right,bottom:shape.center.y+shape.radius,width:shape.radius,height:shape.radius*2};
    const intersects=(a,b)=>!!a&&!!b&&Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math.min(a.bottom,b.bottom)-Math.max(a.y,b.y)>1;
@@ -79,7 +80,6 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
 
    for(const t of targets){assert.ok(t.x>=0&&t.y>=0&&t.right<=vp.width+1&&t.bottom<=vp.height+1,'action is not clipped: '+t.key);assert.ok(t.width>=44&&t.height>=44,'action has 44px minimum target: '+t.key)}
    for(let a=0;a<targets.length;a++)for(let b=a+1;b<targets.length;b++){const dx=targets[a].x+targets[a].width/2-(targets[b].x+targets[b].width/2),dy=targets[a].y+targets[a].height/2-(targets[b].y+targets[b].height/2);assert.ok(Math.hypot(dx,dy)>=44,'circular touch targets do not intersect: '+targets[a].key+' / '+targets[b].key)}
-   const labels=await page.locator('.v21-wheel-actions:not([hidden]) .v21-action-label').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return{key:e.dataset.key,x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height,text:e.textContent.trim(),opacity:getComputedStyle(e).opacity}}));
    for(const l of labels){assert.equal(l.text,titles[l.key],'label stays complete');assert.ok(l.x>=0&&l.y>=0&&l.right<=vp.width+1&&l.bottom<=vp.height+1,'label is within screen: '+l.key);assert.ok(Number(l.opacity)>.8,'label visible after transition: '+l.key)}
    for(let a=0;a<labels.length;a++)for(let b=a+1;b<labels.length;b++)assert.ok(!overlap(labels[a],labels[b]),'labels do not collide: '+labels[a].key+' / '+labels[b].key);
    assert.ok(await page.locator('.v21-wheel-art').evaluate(e=>e.complete&&e.naturalWidth===600),'five-action adapted source-geometry wheel SVG loaded');
