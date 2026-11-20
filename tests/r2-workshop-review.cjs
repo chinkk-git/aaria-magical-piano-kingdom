@@ -84,7 +84,7 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   assert.equal(playback.id,id);assert.deepEqual(playback.engineEvents,playback.savedEvents,'selected Basic note data reaches the shared playback engine');
   assert.equal(await page.locator('#songSelect').isVisible(),false,'old native selector stays disabled');
   await page.evaluate(()=>window.AariaPianoNavigation.openSongs());await page.locator('#mySongsDialog').waitFor({state:'visible'});
-  await page.locator('.library-card').filter({hasText:'Cradle Song'}).getByRole('button',{name:'▶ Play'}).click();
+  await page.locator('.library-card').filter({hasText:'Cradle Song'}).locator('.v21-song-details').evaluate(el=>{el.open=true});await page.locator('.library-card').filter({hasText:'Cradle Song'}).getByRole('button',{name:'▶ Play'}).click();
   await page.waitForFunction(()=>document.querySelector('#songSelect')?.value==='cradle'&&mode==='listen');
   assert.equal(await page.locator('#songPickerButton').textContent().then(t=>t.includes('Dalmatian Cradle Song')),true,'built-in song selection updates the visible selector');
   await page.evaluate(()=>window.AariaPianoNavigation.openSongs());await page.locator('#mySongsDialog').waitFor({state:'visible'});
