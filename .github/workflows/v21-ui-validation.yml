@@ -1,25 +1,20 @@
-name: V2.1 UI and long-song acceptance
+name: Phase 1 — Magic Star wheel owner review
 
 on:
   pull_request:
     branches: [main]
     paths:
-      - index.html
-      - my-songs.js
-      - piano-hero-v2.css
-      - sw.js
-      - pwa-update.js
       - v2.1-ui.js
       - v2.1-ui.css
       - assets/v2.1-magic-wheel/**
-      - tests/v21-ui.cjs
+      - tests/magic-star-phase1.cjs
       - .github/workflows/v21-ui-validation.yml
 
 permissions:
   contents: read
 
 jobs:
-  ui-and-long-song-acceptance:
+  phase1-magic-star:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,28 +23,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Check JavaScript syntax
-        run: |
-          node --check v2.1-ui.js
-          node --check my-songs.js
-          node --check tests/v21-ui.cjs
-          node --check sw.js
-          node --check pwa-update.js
       - name: Install pinned Playwright and Chromium
         run: |
           npm install --no-save --no-package-lock playwright@1.62.1
           npx playwright install chromium
-      - name: Exercise unified controls, practice panels, long songs, and responsive layouts
+      - name: Test wheel interactions and capture owner-review evidence
         env:
           APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
-        run: node tests/v21-ui.cjs
-      - name: Upload responsive and panel screenshots
+          RUNNER_TEMP: ${{ runner.temp }}
+        run: node tests/magic-star-phase1.cjs
+      - name: Upload Phase 1 owner-review ZIP
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v21-ui-acceptance-${{ github.event.pull_request.head.sha }}
-          path: |
-            AARIA_V2_1_FINAL_VISUAL_EVIDENCE.zip
-            ${{ runner.temp }}/AARIA_V2_1_FINAL_VISUAL_EVIDENCE/
-          retention-days: 14
+          name: AARIA_MAGIC_STAR_PHASE1_OWNER_REVIEW
+          path: AARIA_MAGIC_STAR_PHASE1_OWNER_REVIEW.zip
+          retention-days: 30
           if-no-files-found: error
