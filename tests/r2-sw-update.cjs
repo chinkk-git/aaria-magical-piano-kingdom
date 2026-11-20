@@ -23,12 +23,13 @@ for(const url of [
   './song-import.js?v=aaria-piano-r2.5',
   './my-songs.js?v=aaria-piano-r2.4',
   './shared-song-loader.js',
-  './shared-song-library.json',
   './r2-install.js?v=aaria-piano-r2.7'
 ]){
   assert.ok(index.includes(url),`HTML references ${url}`);
   assert.ok(newWorker.includes(url),`worker precaches ${url}`);
 }
+assert.ok(fs.readFileSync(path.join(root,'shared-song-loader.js'),'utf8').includes("const path='./shared-song-library.json'"),'shared loader fetches the bundled catalog');
+assert.ok(newWorker.includes("'./shared-song-library.json'"),'worker precaches the bundled catalog');
 assert.match(index,/id="appBuildInfo"[^>]*>Installed build: checking…/);
 assert.match(installer,/__aariaPwaUpdateReloadBound/);
 assert.match(installer,/location\.reload\(\)/);
