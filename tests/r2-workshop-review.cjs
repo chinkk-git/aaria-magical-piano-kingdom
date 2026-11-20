@@ -21,13 +21,14 @@ const xml=`<?xml version="1.0"?><score-partwise version="3.1"><part-list><score-
 <note><pitch><step>F</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note><note><chord/><pitch><step>A</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note>
 <note><pitch><step>E</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note><note><chord/><pitch><step>G</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note>
 <note><pitch><step>D</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note><note><chord/><pitch><step>F</step><octave>3</octave></pitch><duration>1</duration><type>quarter</type></note></measure></part></score-partwise>`;
-const workerStub=`let requests=0,failFirstRecognition=true;const xml=${JSON.stringify(xml)};self.onmessage=({data})=>{if(data.type==='init'){self.postMessage({type:'ready'});return}if(data.type==='layout'){self.postMessage({type:'result',id:data.id,classes:[]});return}if(data.type==='recognise'){requests++;if(failFirstRecognition){failFirstRecognition=false;self.postMessage({type:'error',id:data.id,msg:'Simulated recognition failure'});return}setTimeout(()=>self.postMessage({type:'result',id:data.id,xml}),700)}}`;
+const workerStub=`let requests=0,failFirstRecognition=true;const xml=${JSON.stringify(xml)};self.onmessage=({data})=>{if(data.type==='init'){self.postMessage({type:'ready'});return}if(data.type==='layout'){self.postMessage({type:'result',id:data.id,classes:[]});return}if(data.type==='recognise'){requests++;if(failFirstRecognition){failFirstRecognition=false;self.postMessage({type:'error',id:data.id,msg:'Simulated recognition failure'});return}setTimeout(()=>self.postMessage({type:'result',id:data.id,xml}),1200)}}`;
 const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>{if(data.type==='init'){self.postMessage({type:'ready'});return}if(data.type==='layout'){self.postMessage({type:'result',id:data.id,classes:[]});return}if(data.type==='recognise'){setTimeout(()=>self.postMessage({type:'result',id:data.id,xml}),12000)}}`;
 (async()=>{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox']});
- const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block',reducedMotion:'reduce'});
- const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ fs.mkdirSync('/tmp/magic-progress-video',{recursive:true});
+ const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block',reducedMotion:'reduce',recordVideo:{dir:'/tmp/magic-progress-video',size:{width:390,height:844}}});
+ const page=await context.newPage(),progressVideo=page.video(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
   await page.route('**/omr-worker.js',route=>route.fulfill({status:200,contentType:'text/javascript',body:workerStub}));
   await page.route('**/r2-install.js*',route=>route.fulfill({status:200,contentType:'text/javascript',body:"(()=>{window.AariaR2Installer={state:'ready',ensureReady:async()=>true}})()"}));
@@ -56,7 +57,9 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   assert.ok(bubbleBox.y+bubbleBox.height<=playbackBox.y,'minimized button stays clear of playback controls');
   const sha=process.env.APP_SOURCE_SHA||'local';await page.screenshot({path:`/tmp/issue25-minimized-processing-390x844-${sha}.png`});
   await page.locator('.magic-song-bubble').click();await page.locator('#localSongWizard').waitFor({state:'visible'});
-  await page.waitForFunction(()=>/This song could not be saved/i.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:30000});
+  await page.waitForTimeout(5000);
+  const saveFailureState=await page.evaluate(()=>({status:document.querySelector('#scoreImportStatus')?.textContent,stage:document.querySelector('#workshopStage')?.textContent,pages:document.querySelector('#workshopProgressPages')?.textContent,eta:document.querySelector('#workshopProgressEta')?.textContent,retry:document.querySelector('#retrySongSave')?.hidden,busy:window.AariaSongImportIsBusy?.()}));console.log('save failure state',JSON.stringify({saveFailureState,errors}));
+  assert.match(saveFailureState.status,/needs help saving/i,'simulated Library save failure is reported clearly');
   assert.equal(await page.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).some(song=>song?.title==='Automatic Workshop Song')),false,'storage failure does not claim a saved song');
   assert.equal(await page.locator('#retrySongSave').isVisible(),true,'storage failure offers a retry');
   await page.evaluate(()=>{window.PianoKingdomLibrary.saveSong=window.__originalSaveSong});
@@ -116,6 +119,7 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   cancelPage.on('dialog',dismissed);
   await cancelPage.locator('#makeSong').click();
   await cancelPage.waitForFunction(()=>/Reading notes and rhythm 1 of 1/.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:15000});
+  assert.equal(await cancelPage.locator('#workshopProgressEta').textContent(),'Estimating time…','ETA shows an honest placeholder before enough page timings exist');
   await cancelPage.locator('#keepPlaying').click();
   await cancelPage.locator('.magic-song-bubble').waitFor({state:'visible'});
   assert.equal((await cancelPage.locator('.magic-song-bubble').textContent()).trim(),(await cancelPage.locator('#scoreImportStatus').textContent()).trim(),'the minimized bubble mirrors the real recognition stage');
@@ -133,8 +137,59 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   await cancelPage.waitForTimeout(1200);
   assert.equal(await cancelPage.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).filter(song=>song?.title==='My song').length),0,'terminated worker cannot complete late or create a duplicate partial song');
   assert.deepEqual(cancelErrors,[],'cancel flow has no uncaught browser errors');
+  await cancelPage.waitForTimeout(1200);
+  await cancelPage.reload();await cancelPage.waitForFunction(()=>window.PianoKingdomLibrary?.saveSong);await cancelPage.locator('#openMySongs').click();await cancelPage.locator('#makeNewSong').click();await cancelPage.locator('#recoveredJob').waitFor({state:'visible'});
+  assert.match(await cancelPage.locator('#recoveredJobInfo').textContent(),/0 of 1 page finished/,'the paused page count recovers from the existing IndexedDB job record');
+  assert.equal(await cancelPage.locator('#workshopProgressPages').textContent(),'0 of 1 pages finished','the progress meter restores the saved completed-page count');
   await cancelPage.close();
 
-  console.log('Issue #25 workshop browser checks passed: no startup OMR gate, one-screen Add New Song → Make Music, recognition failure and retry, minimized processing restore, storage failure recovery, auto-save, optional correction, arrangement playback, custom selector and responsive layouts. Screenshots are labeled in /tmp with viewport and source SHA.');
- }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
+  await page.setViewportSize({width:390,height:844});await page.locator('#closeMySongs').click();
+  const importPageCount=async(count,title)=>{
+   await page.locator('#openMySongs').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.locator('#makeNewSong').click();await page.locator('#localSongWizard').waitFor({state:'visible'});
+   await page.locator('#scoreSongTitle').fill(title);
+   const files=Array.from({length:count},(_,i)=>({name:`page-${i+1}.png`,mimeType:'image/png',buffer:Buffer.from(png64,'base64')}));
+   await page.locator('#scorePhotos').setInputFiles(files);
+   await page.locator('#makeSong').click();
+   await page.waitForFunction(()=>/Your magical song is ready/i.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:60000});
+   assert.equal(await page.locator('#workshopProgressBar').getAttribute('aria-valuenow'),'100',`${count}-page job reports all completed pages`);
+   assert.match(await page.locator('#workshopProgressPages').textContent(),new RegExp(`${count} of ${count} pages finished`));
+  };
+  await importPageCount(3,'Three Page Progress Song');
+  await page.locator('#localSongWizard').waitFor({state:'visible'});
+  assert.equal(await page.locator('#workshopProgressEta').isHidden(),true,'ETA is omitted when the completed import has no remaining page work');
+  await page.locator('#closeSongWizard').click();await page.locator('#localSongWizard').waitFor({state:'hidden'});
+  await context.setOffline(true);
+  await page.locator('#openMySongs').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.locator('#makeNewSong').click();await page.locator('#localSongWizard').waitFor({state:'visible'});
+  await page.locator('#scoreSongTitle').fill('Twenty Page Progress Song');
+  await page.locator('#scorePhotos').setInputFiles(Array.from({length:20},(_,i)=>({name:`large-${i+1}.png`,mimeType:'image/png',buffer:Buffer.from(png64,'base64')})));
+  await page.evaluate(()=>{window.__progressSamples=[];const el=document.querySelector('#workshopProgressBar');new MutationObserver(()=>window.__progressSamples.push(Number(el.getAttribute('aria-valuenow')))).observe(el,{attributes:true,attributeFilter:['aria-valuenow']})});
+  await page.locator('#makeSong').click();
+  await page.waitForFunction(()=>/Reading notes and rhythm 4 of 20/.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:30000});
+  assert.equal(await page.locator('#workshopProgressPages').textContent(),'3 of 20 pages finished','page progress follows three actual completed page results');
+  assert.equal(await page.locator('#workshopProgressEta').isHidden(),false,'ETA appears only after at least three observed page durations');
+  assert.equal(await page.evaluate(()=>typeof window.AariaWorkshopProgress?.report),'function','Worker 2 has the shared Workshop event API');
+  assert.equal(await page.evaluate(()=>window.AariaWorkshopProgress.report({stage:'recover_page',page:{current:4,total:20,completed:3},message:'Recovering page 4 of 20…'})),true,'external recovery event is accepted into the shared state');
+  assert.equal(await page.locator('#workshopStage').textContent(),'Recovering a page');
+  assert.equal(await page.locator('#workshopProgressPages').textContent(),'3 of 20 pages finished','recovery keeps the genuine completed-page count');
+  await page.evaluate(()=>window.AariaWorkshopProgress.report({stage:'recognize_music',page:{current:4,total:20,completed:3},message:'Reading notes and rhythm 4 of 20…'}));
+  await page.screenshot({path:`/tmp/magic-music-progress-portrait-${sha}.png`});
+  const progressBox=await page.locator('#workshopProgress').boundingBox(),previewBox=await page.locator('#scorePhotoPreviews').boundingBox(),actionsBox=await page.locator('#workshopPrimaryActions').boundingBox();
+  assert.ok(progressBox.y>=previewBox.y+previewBox.height-1,'progress sits after, and does not cover, the photo previews');
+  assert.ok(actionsBox.y>=progressBox.y+progressBox.height-1,'progress does not cover Keep Playing or Cancel actions');
+  const samples=await page.evaluate(()=>window.__progressSamples);assert.ok(samples.every((value,index)=>index===0||value>=samples[index-1]),'percentage does not move backwards within one attempt');
+  try{await page.waitForFunction(()=>/Your magical song is ready|I couldn’t make that song yet|This device needs more free space|I need Wi-Fi/i.test(document.querySelector('#scoreImportStatus')?.textContent||''),null,{timeout:120000})}catch(error){const stalled=await page.evaluate(()=>({status:document.querySelector('#scoreImportStatus')?.textContent,stage:document.querySelector('#workshopStage')?.textContent,pages:document.querySelector('#workshopProgressPages')?.textContent,percent:document.querySelector('#workshopProgressBar')?.getAttribute('aria-valuenow'),eta:document.querySelector('#workshopProgressEta')?.textContent,busy:window.AariaSongImportIsBusy?.()}));console.log('20-page import stalled state',JSON.stringify({stalled,pageErrors:errors}));throw error}
+  const largeImportStatus=await page.locator('#scoreImportStatus').textContent();console.log('20-page import terminal status',largeImportStatus,'progress',await page.locator('#workshopProgressPages').textContent(),'stage',await page.locator('#workshopStage').textContent(),'pageErrors',JSON.stringify(errors));
+  assert.match(largeImportStatus,/Your magical song is ready/i,'20-page offline import completes and saves');
+  await context.setOffline(false);
+  await page.setViewportSize({width:844,height:390});
+  const landscape=await page.locator('#workshopProgress').boundingBox(),landscapeActions=await page.locator('#workshopPrimaryActions').boundingBox();
+  const landscapeDialog=await page.locator('#localSongWizard').evaluate(el=>({rect:el.getBoundingClientRect().toJSON(),clientHeight:el.clientHeight,scrollHeight:el.scrollHeight,overflow:getComputedStyle(el).overflowY}));
+  assert.ok(landscapeDialog.rect.height<=390&&landscapeDialog.scrollHeight>landscapeDialog.clientHeight&&landscapeDialog.overflow==='auto','landscape Workshop remains viewport-bounded and scrollable');
+  await page.locator('#localSongWizard').evaluate(el=>{el.scrollTop=el.scrollHeight});
+  const actionsAfterScroll=await page.locator('#workshopPrimaryActions').boundingBox(),dialogAfterScroll=await page.locator('#localSongWizard').boundingBox();
+  assert.ok(actionsAfterScroll.y>=dialogAfterScroll.y&&actionsAfterScroll.y+actionsAfterScroll.height<=dialogAfterScroll.y+dialogAfterScroll.height,'landscape actions remain reachable by scrolling');
+  await page.screenshot({path:`/tmp/magic-music-progress-landscape-${sha}.png`});
+  await page.locator('#closeSongWizard').click();await page.locator('#localSongWizard').waitFor({state:'hidden'});
+  console.log('Workshop progress checks passed: one-page existing import, three-page import, 20-page offline run, monotonic page completion, measured ETA, photo/action spacing, portrait/landscape screenshots, save/retry and cancellation recovery.');
+ }finally{if(!page.isClosed())await page.close();if(progressVideo)await progressVideo.saveAs(`/tmp/magic-music-progress-video-${process.env.APP_SOURCE_SHA||'local'}.webm`);await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(e=>{console.error(e);process.exitCode=1});
