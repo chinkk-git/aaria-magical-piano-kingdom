@@ -11,7 +11,7 @@
   const enumValues={
     state:new Set(['checking','downloading','installing','installed','ready','failed','redundant','timeout','restarting','offline','up-to-date']),
     phase:new Set(['preparing','downloading','verifying','ready','failed']),
-    stage:new Set(['prescan','recognition','recovery','arranging','saving','complete','failed']),
+    stage:new Set(['prescan','recognition','recovery','arranging','saving','complete','failed','check_photos','prepare_photos','recognize_music','recover_page','interpret_notes','create_arrangement','save_song','prepare_reader','completed','needs_attention','paused']),
     category:new Set(['network','http','storage','quota','integrity','worker','unsupported','unknown']),
     result:new Set(['started','same-build','new-build','ready','failed','timeout','restarted'])
   };
@@ -48,6 +48,7 @@
   function categoryFor(value){const text=String(value||'').toLowerCase();if(/quota|storage|space/.test(text))return 'quota';if(/integrity|checksum|hash/.test(text))return 'integrity';if(/\b\d{3}\b/.test(text))return 'http';if(/network|fetch|offline|connection/.test(text))return 'network';if(/worker/.test(text))return 'worker';return 'unknown'}
   if(root.navigator?.serviceWorker)root.navigator.serviceWorker.addEventListener('message',event=>{const data=event.data||{};if(data.type!=='AARIA_SW_INSTALL_ERROR')return;const detail=String(data.detail||'');const marker='after 3 attempts: ';const start=detail.indexOf(marker);const asset=start>=0?detail.slice(start+marker.length).split(' ')[0]:undefined;const httpStatus=detail.match(/\((\d{3})\)/)?.[1];log('update',{state:'failed',asset,httpStatus,category:categoryFor(detail),result:'failed'})});
   root.addEventListener?.('aaria:omr-progress',event=>{const d=event.detail||{};const category=d.error?categoryFor(d.text):undefined;log('omrDownload',{phase:d.error?'failed':d.busy?'downloading':d.percent>=100?'ready':'verifying',bytes:d.done,totalBytes:d.total,percent:d.percent,category})});
+  root.addEventListener?.('aaria-workshop-progress',event=>{const d=event.detail||{},page=d.page||{};const percent=page.total>0?Math.round(Math.min(page.completed||0,page.total)/page.total*100):undefined;log('omrImport',{stage:d.stage,pagesDone:page.completed,pagesTotal:page.total,percent,category:d.stage==='failed'?'worker':undefined})});
   root.AariaDiagnostics={log,download,read};
   const button=root.document?.getElementById('downloadAppDiagnostics');
   if(button)button.addEventListener('click',download);
