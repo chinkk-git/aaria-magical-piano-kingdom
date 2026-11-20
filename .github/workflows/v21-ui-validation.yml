@@ -8,6 +8,8 @@ on:
       - v2.1-ui.css
       - assets/v2.1-magic-wheel/**
       - tests/magic-star-phase1.cjs
+      - tests/visual-fixtures/**
+      - docs/v2.1/**
       - .github/workflows/v21-ui-validation.yml
 
 permissions:
@@ -36,7 +38,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: AARIA_MAGIC_STAR_PHASE1_OWNER_REVIEW
-          path: AARIA_MAGIC_STAR_PHASE1_OWNER_REVIEW.zip
+          name: AARIA_MAGIC_STAR_PHASE1_CORRECTED_OWNER_REVIEW
+          path: AARIA_MAGIC_STAR_PHASE1_CORRECTED_OWNER_REVIEW.zip
           retention-days: 30
           if-no-files-found: error
