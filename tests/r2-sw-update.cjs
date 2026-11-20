@@ -165,7 +165,7 @@ const server=http.createServer((req,res)=>{
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('version could not be checked'),{timeout:10000});
     versionCheckStatus=200;
 
-    const result=await reopened.evaluate(async()=>{
+    const result=await reopened.evaluate(async(shellName)=>{
       const keys=await caches.keys();
       const library=await new Promise((resolve,reject)=>{
         const req=indexedDB.open('aaria-piano-library',2);
@@ -186,7 +186,7 @@ const server=http.createServer((req,res)=>{
         verifiedModel:await verified?.text(),
         script:await script?.text(),updater:await updater?.text(),libraryScript:await libraryScript?.text(),styles:await styles?.text(),html:await html?.text()
       };
-    });
+    },shellName);
     assert.ok(!result.keys.includes('aaria-piano-v1.20.2'),`old app-shell cache is retired; caches remaining: ${result.keys.join(', ')}`);
     assert.ok(result.keys.includes('aaria-piano-r2-install-v1'),'verified OMR cache is retained');
     assert.match(result.updater,/AariaPwaUpdateCore/,'the updater is cached in the new shell');
