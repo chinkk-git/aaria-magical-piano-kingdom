@@ -39,7 +39,7 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
     const song={id:'custom-play-again-state',title:'Play Again State Fixture',events:[{bar:1,at:0,dur:2,midi:60,hand:'right'},{bar:2,at:0,dur:2,midi:62,hand:'right'}],total:2,barLengths:[8,8],bpm:240,imported:true,difficulty:{level:'easy',reasons:[]},arrangements:{}};
     await window.PianoKingdomLibrary.saveSong(song);window.PianoKingdomLibrary.addSong(song,{select:false});window.PianoKingdomLibrary.selectSong(song.id);
   });
-  assert.equal(await page.locator('#v21Play').isDisabled(),true,'READY cannot display a misleading Resume action');
+  assert.equal(await page.locator('#v21Play').isDisabled(),false,'READY exposes the available Play Along action');
   await page.locator('#speed').evaluate(el=>{el.value='120';el.dispatchEvent(new Event('input',{bubbles:true}))});
   await page.locator('#v21Sound').click();assert.equal(await page.locator('#v21Sound').getAttribute('aria-pressed'),'false','Sound Off mutes sound without disabling visual playback');
   await page.locator('#v21Sound').click();assert.equal(await page.locator('#v21Sound').getAttribute('aria-pressed'),'true','Sound On restores the sound preference');
