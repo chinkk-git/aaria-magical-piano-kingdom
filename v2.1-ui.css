@@ -145,3 +145,6 @@ html[data-v21-ui] .hero-zoom{display:none!important}.v21-speed input{height:40px
 .v21-wheel[data-side="right"] button[data-key="measure"],.v21-wheel[data-side="right"] button[data-key="home"],.v21-wheel[data-side="right"] button[data-key="makeMusic"],.v21-wheel[data-side="right"] button[data-key="updateApp"]{left:calc(90% - 22px)}
 .v21-wheel[data-side="right"] button[data-key="loop"],.v21-wheel[data-side="right"] button[data-key="songs"],.v21-wheel[data-side="right"] button[data-key="practice"],.v21-wheel[data-side="right"] button[data-key="settings"]{left:calc(65% - 22px)}
 .v21-wheel[data-side="right"] button[data-key="jump"],.v21-wheel[data-side="right"] button[data-key="pianoMode"]{left:calc(57% - 22px)}
+
+/* Per-action selectors previously set percentage widths; enforce the audited 44px hit boxes. */
+.v21-wheel button[data-key]{width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important}
