@@ -29,7 +29,8 @@
   }
   function safeReason(value){
     if(value===null||value===undefined)return undefined;
-    let text=String(value).replace(/[\r\n\t]+/g,' ').trim();
+    let text=String(value).replace(/[\r
+\t]+/g,' ').trim();
     text=text.replace(/https?:\/\/[^\s)]+/gi,match=>safeResource(match)||'[resource]');
     text=text.replace(/\b[A-Za-z0-9_-]+\.(?:png|jpe?g|webp|gif|pdf|mxl|musicxml|mid)\b/gi,'[user-file]');
     text=text.replace(/(?:\/storage\/emulated\/0|\/data\/user\/\d+|[A-Z]:\\Users\\)[^\s)]+/gi,'[device-path]');
@@ -86,7 +87,10 @@
     if(!Object.prototype.hasOwnProperty.call(rules,type))return;
     const row={at:new Date().toISOString(),type};
     for(const key of rules[type]){const value=safeValue(key,details[key]);if(value!==undefined)row[key]=value}
-    const rows=read();\n    if(type==='omrImport'&&row.stage==='prepare_reader'){const previous=rows.slice().reverse().find(item=>item.type===type&&item.stage===row.stage&&item.pagesDone===row.pagesDone&&item.pagesTotal===row.pagesTotal&&item.attempt===row.attempt);if(previous&&Date.now()-Date.parse(previous.at)<10000)return}\n    if(type==='omrDownload'&&row.asset){const previous=rows.slice().reverse().find(item=>item.type===type&&item.asset===row.asset&&item.attempt===row.attempt);if(previous){const terminal=['failed','ready','worker-ready'].includes(row.phase)||row.percent===100||row.phase!==previous.phase;const crossed=Number.isFinite(row.percent)&&Number.isFinite(previous.percent)&&Math.floor(row.percent/10)>Math.floor(previous.percent/10);if(!terminal&&!crossed)return}}\n    rows.push(row);
+    const rows=read();
+    if(type==='omrImport'&&row.stage==='prepare_reader'){const previous=rows.slice().reverse().find(item=>item.type===type&&item.stage===row.stage&&item.pagesDone===row.pagesDone&&item.pagesTotal===row.pagesTotal&&item.attempt===row.attempt);if(previous&&Date.now()-Date.parse(previous.at)<10000)return}
+    if(type==='omrDownload'&&row.asset){const previous=rows.slice().reverse().find(item=>item.type===type&&item.asset===row.asset&&item.attempt===row.attempt);if(previous){const terminal=['failed','ready','worker-ready'].includes(row.phase)||row.percent===100||row.phase!==previous.phase;const crossed=Number.isFinite(row.percent)&&Number.isFinite(previous.percent)&&Math.floor(row.percent/10)>Math.floor(previous.percent/10);if(!terminal&&!crossed)return}}
+    rows.push(row);
     try{root.localStorage.setItem(KEY,JSON.stringify(rows.slice(-LIMIT)))}catch{}
   }
   function download(){
@@ -99,7 +103,8 @@
   }
   function categoryFor(value){
     const text=String(value||'').toLowerCase();
-    if(/quota|storage|space/.test(text))return 'quota';\n    if(/timed out|timeout/.test(text))return 'timeout';
+    if(/quota|storage|space/.test(text))return 'quota';
+    if(/timed out|timeout/.test(text))return 'timeout';
     if(/integrity|checksum|hash/.test(text))return 'integrity';
     if(/\b\d{3}\b|http/.test(text))return 'http';
     if(/network|fetch|offline|connection/.test(text))return 'network';
@@ -121,7 +126,8 @@
     const percent=page.total>0?Math.round(Math.min(page.completed||0,page.total)/page.total*100):undefined;
     log('omrImport',{stage:d.stage,operation:diag.operation,pagesDone:page.completed,pagesTotal:page.total,percent,category:diag.errorCode==='OMR_TIMEOUT'?'timeout':diag.reason?categoryFor(diag.reason):d.stage==='failed'?'worker':undefined,pageIndex:diag.pageIndex,attempt:diag.attempt,maxAttempts:diag.maxAttempts,failureClass:diag.failureClass,errorName:diag.errorName,errorCode:diag.errorCode,reason:diag.reason,workerAsset:diag.workerAsset,line:diag.line,column:diag.column});
     const engine=d.engine||{};
-    if(engine.phase)log('omrDownload',{phase:engine.phase,asset:engine.asset,bytes:engine.bytes,totalBytes:engine.total,percent:engine.total>0?engine.bytes/engine.total*100:undefined,category:engine.category,errorName:engine.errorName,errorCode:engine.errorCode,reason:engine.reason});\n    if(diag.operation||diag.errorCode||d.stage==='failed')log('omrImport',{stage:d.stage,operation:diag.operation,pagesDone:page.completed,pagesTotal:page.total,category:diag.errorCode==='OMR_TIMEOUT'?'timeout':diag.reason?categoryFor(diag.reason):undefined,pageIndex:diag.pageIndex,attempt:diag.attempt,maxAttempts:diag.maxAttempts,failureClass:diag.failureClass,errorName:diag.errorName,errorCode:diag.errorCode,reason:diag.reason,workerAsset:diag.workerAsset,line:diag.line,column:diag.column});
+    if(engine.phase)log('omrDownload',{phase:engine.phase,asset:engine.asset,bytes:engine.bytes,totalBytes:engine.total,percent:engine.total>0?engine.bytes/engine.total*100:undefined,category:engine.category,errorName:engine.errorName,errorCode:engine.errorCode,reason:engine.reason});
+    if(diag.operation||diag.errorCode||d.stage==='failed')log('omrImport',{stage:d.stage,operation:diag.operation,pagesDone:page.completed,pagesTotal:page.total,category:diag.errorCode==='OMR_TIMEOUT'?'timeout':diag.reason?categoryFor(diag.reason):undefined,pageIndex:diag.pageIndex,attempt:diag.attempt,maxAttempts:diag.maxAttempts,failureClass:diag.failureClass,errorName:diag.errorName,errorCode:diag.errorCode,reason:diag.reason,workerAsset:diag.workerAsset,line:diag.line,column:diag.column});
   });
   root.AariaDiagnostics={log,download,read};
   const button=root.document?.getElementById('downloadAppDiagnostics');
