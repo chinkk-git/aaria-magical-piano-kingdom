@@ -18,7 +18,7 @@ const versionParts=shellName.match(/^aaria-piano-v(\d+)\.(\d+)\.(\d+)$/);
 const nextShellName=`aaria-piano-v${versionParts[1]}.${versionParts[2]}.${Number(versionParts[3])+1}`;
 for(const url of [
   './r2-music.js?v=aaria-piano-r2.2',
-  './r2-image.js?v=aaria-piano-r2.1',
+  './r2-image.js?v=aaria-piano-r2.2',
   './piano-hero-v2.css?v=aaria-piano-v1.14.0',
   './song-import.js?v=aaria-piano-r2.5',
   './my-songs.js?v=aaria-piano-r2.4',
