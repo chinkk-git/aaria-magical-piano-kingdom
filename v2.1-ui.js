@@ -54,11 +54,17 @@ $('v21Sound').addEventListener('click',()=>{engine.setSound(!engine.state().soun
 function anchorPixels(){return{width:wheel.offsetWidth||Math.min(310,innerWidth*.76),height:wheel.offsetHeight||Math.min(310,innerWidth*.76),x:anchor.side==='left'?Math.max(0,parseFloat(getComputedStyle(star).left)||10):innerWidth-(parseFloat(getComputedStyle(star).right)||10)-star.offsetWidth,y:anchor.y*innerHeight}}
 function placeOverlay(){
  const vv=window.visualViewport,viewH=vv?.height||innerHeight,viewW=vv?.width||innerWidth,offsetTop=vv?.offsetTop||0,safeTop=Math.max(16,parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--v21-safe-top'))||0),sr=star.getBoundingClientRect(),dockRect=dock.getBoundingClientRect(),keyRect=$('keys')?.getBoundingClientRect();
- const safeLeft=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--v21-safe-left'))||0,safeRight=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--v21-safe-right'))||0;const bottom=Math.min(viewH+offsetTop-14,dockRect.top-12,keyRect?.top-12??viewH+offsetTop-14),top=offsetTop+safeTop;
- const maxRadius=Math.max(0,Math.min(180,(viewW-22)/2.4,(bottom-top)/2));
- const radius=maxRadius;
- const minCenter=top+radius,maxCenter=bottom-radius;
- const centerY=Math.max(minCenter,Math.min(maxCenter,offsetTop+anchor.y*viewH));
+ const safeLeft=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--v21-safe-left'))||0,safeRight=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--v21-safe-right'))||0;const usableBottom=Math.min(viewH+offsetTop-14,dockRect.top-12),top=offsetTop+safeTop;
+ const maxByWidth=Math.max(0,Math.min(180,(viewW-22)/2.4));
+ const upperBottom=Math.min(usableBottom,keyRect?.top-12??usableBottom),lowerTop=keyRect?keyRect.bottom+12:top;
+ const upperRadius=Math.max(0,Math.min(maxByWidth,(upperBottom-top)/2));
+ const lowerRadius=Math.max(0,Math.min(maxByWidth,(usableBottom-lowerTop)/2));
+ const useBelowKeyboard=lowerRadius>=80;
+ const radius=useBelowKeyboard?lowerRadius:upperRadius;
+ const regionTop=useBelowKeyboard?lowerTop:top,regionBottom=useBelowKeyboard?usableBottom:upperBottom;
+ const minCenter=regionTop+radius,maxCenter=regionBottom-radius;
+ const preferredCenter=useBelowKeyboard?(minCenter+maxCenter)/2:offsetTop+anchor.y*viewH;
+ const centerY=Math.max(minCenter,Math.min(maxCenter,preferredCenter));
  anchor.y=(centerY-offsetTop)/viewH;
  const starSize=Math.max(40,Math.min(58,radius*.52));
  const centerX=anchor.side==='left'?safeLeft+8+radius*.28:viewW-safeRight-8-radius*.28;
