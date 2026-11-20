@@ -135,3 +135,13 @@ html[data-v21-ui] .hero-zoom{display:none!important}.v21-speed input{height:40px
 .v21-wheel[data-side="right"] button[data-key="loop"],.v21-wheel[data-side="right"] button[data-key="songs"],.v21-wheel[data-side="right"] button[data-key="practice"],.v21-wheel[data-side="right"] button[data-key="settings"]{left:calc(66% - 22px)}
 .v21-wheel[data-side="right"] button[data-key="jump"],.v21-wheel[data-side="right"] button[data-key="pianoMode"]{left:calc(59% - 22px)}
 @media(max-height:500px){.v21-wheel button{width:44px;height:44px;grid-template-rows:32px 12px}.v21-wheel button .v21-action-art{width:32px;height:32px;min-width:30px;min-height:30px}}
+
+/* Landscape arc spacing: separate adjacent target boxes at the compact wheel size. */
+.v21-wheel button[data-key="measure"],.v21-wheel button[data-key="home"]{left:calc(10% - 22px);top:calc(17% - 22px)}
+.v21-wheel button[data-key="loop"],.v21-wheel button[data-key="songs"]{left:calc(35% - 22px);top:calc(30% - 22px)}
+.v21-wheel button[data-key="jump"],.v21-wheel button[data-key="pianoMode"]{left:calc(43% - 22px);top:calc(50% - 22px)}
+.v21-wheel button[data-key="practice"],.v21-wheel button[data-key="settings"]{left:calc(35% - 22px);top:calc(70% - 22px)}
+.v21-wheel button[data-key="makeMusic"],.v21-wheel button[data-key="updateApp"]{left:calc(10% - 22px);top:calc(83% - 22px)}
+.v21-wheel[data-side="right"] button[data-key="measure"],.v21-wheel[data-side="right"] button[data-key="home"],.v21-wheel[data-side="right"] button[data-key="makeMusic"],.v21-wheel[data-side="right"] button[data-key="updateApp"]{left:calc(90% - 22px)}
+.v21-wheel[data-side="right"] button[data-key="loop"],.v21-wheel[data-side="right"] button[data-key="songs"],.v21-wheel[data-side="right"] button[data-key="practice"],.v21-wheel[data-side="right"] button[data-key="settings"]{left:calc(65% - 22px)}
+.v21-wheel[data-side="right"] button[data-key="jump"],.v21-wheel[data-side="right"] button[data-key="pianoMode"]{left:calc(57% - 22px)}
