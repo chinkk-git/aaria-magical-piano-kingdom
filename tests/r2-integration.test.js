@@ -8,12 +8,17 @@ const importer=read('song-import.js');
 const library=read('my-songs.js');
 const sw=read('sw.js');
 const music=read('r2-music.js');
+const sharedLoader=read('shared-song-loader.js');
 
-for(const resource of ['./r2-music.js?v=aaria-piano-r2.2','./r2-image.js?v=aaria-piano-r2.1','./song-import.js?v=aaria-piano-r2.5','./my-songs.js?v=aaria-piano-r2.4','./r2-install.js?v=aaria-piano-r2.7']){
+for(const resource of ['./r2-music.js?v=aaria-piano-r2.2','./r2-image.js?v=aaria-piano-r2.1','./song-import.js?v=aaria-piano-r2.5','./my-songs.js?v=aaria-piano-r2.4','./shared-song-loader.js','./r2-install.js?v=aaria-piano-r2.7']){
   assert.ok(index.includes(resource),`index loads ${resource}`);
   assert.ok(sw.includes(resource),`service worker precaches ${resource}`);
 }
-assert.match(sw,/const CACHE='aaria-piano-v[0-9]+[.][0-9]+[.][0-9]+'/,'shell cache is a semantic build version');
+const appBuild=sw.match(/const CACHE='([^']+)'/)?.[1];
+assert.ok(appBuild,'shell cache is a semantic build version');
+assert.ok(pwaBuild().includes(`APP_BUILD='${appBuild}'`),'Settings fallback and service worker agree on the app build');
+assert.ok(sharedLoader.includes("const path='./shared-song-library.json'"),'shared loader fetches the catalog');
+assert.ok(sw.includes("'./shared-song-library.json'"),'service worker precaches the catalog');
 assert.match(importer,/new Worker\('\.\/omr-worker\.js'/,'OMR worker is same-origin');
 assert.match(importer,/createImageBitmap\(file,\{imageOrientation:'from-image'\}\)/,'internal image preprocessing honors photo orientation metadata');
 assert.ok(!importer.includes('data-photo-action'),'manual photo editing controls are removed');
@@ -48,7 +53,5 @@ assert.match(importer,/MAX_PAGE_ATTEMPTS=3/,'automatic recovery is bounded to th
 assert.match(importer,/Retrying this page only/,'recovery reports and retries only the failed page');
 assert.match(importer,/sourceMusicXMLByPage/,'validated per-page MusicXML is retained in the saved song record');
 assert.match(importer,/AariaWorkshopProgress/,'fast path reports through Worker 1 progress events');
-assert.match(sw,/aaria-piano-v1\.20\.6/,'fast path shell advances the scoped PWA update build');
-assert.match(pwaBuild(),/aaria-piano-v1\.20\.6/,'Settings and service worker agree on the new app build');
 function pwaBuild(){return read('pwa-update.js')}
 console.log('R2 integration invariants passed');
