@@ -4,7 +4,7 @@ const fs=require('node:fs');
 const http=require('node:http');
 const path=require('node:path');
 const {chromium}=require('playwright');
-const root=path.resolve(process.argv[2]||path.join(__dirname,'..','_site'));
+const root=path.resolve(process.argv[2]||path.join(__dirname,'..','_site')),evidenceLabel=process.env.FASTPATH_RUN_LABEL||'candidate',evidenceDir='/tmp/fastpath-evidence';fs.mkdirSync(evidenceDir,{recursive:true});
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.wasm':'application/wasm','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
 const server=http.createServer((req,res)=>{const p=decodeURIComponent(new URL(req.url,'http://localhost').pathname),file=path.resolve(root,'.'+p);if(!file.startsWith(root+path.sep)&&file!==root){res.writeHead(403).end();return}fs.readFile(file,(e,data)=>{if(e){res.writeHead(404).end('not found');return}res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'}).end(data)})});
 const expected=[67,69,71,72,74,72,71,67];
@@ -14,8 +14,8 @@ const noteName=midi=>{const names=['C','C♯','D','D♯','E','F','F♯','G','G�
 (async()=>{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
- const context=await browser.newContext({viewport:{width:1600,height:1200},serviceWorkers:'allow'});
- const page=await context.newPage(),errors=[],messages=[];
+ const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true,serviceWorkers:'allow',recordVideo:{dir:path.join(evidenceDir,'omr-video'),size:{width:390,height:844}}});
+ const page=await context.newPage(),errors=[],messages=[];await page.addInitScript(()=>{window.__workshopProgress=[];window.addEventListener('aaria-workshop-progress',event=>window.__workshopProgress.push(event.detail))});
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')messages.push(m.text())});
  await page.addInitScript(()=>{window.__audioStarts=[];const AC=window.AudioContext||window.webkitAudioContext;if(AC?.prototype?.createOscillator){const create=AC.prototype.createOscillator;AC.prototype.createOscillator=function(){const oscillator=create.call(this),start=oscillator.start.bind(oscillator),context=this;oscillator.start=(when)=>{window.__audioStarts.push({frequency:oscillator.frequency.value,when:Number.isFinite(when)?when:context.currentTime});return start(when)};return oscillator}}});
  const started=Date.now();
@@ -29,8 +29,8 @@ const noteName=midi=>{const names=['C','C♯','D','D♯','E','F','F♯','G','G�
   await page.locator('#openMySongs').click();await page.locator('#makeNewSong').click();
   await page.locator('#scoreSongTitle').fill('OMR Ground Truth Playback');
   const png64=await page.evaluate(async source=>{const image=new Image(),url=URL.createObjectURL(new Blob([source],{type:'image/svg+xml'}));image.src=url;await image.decode();const canvas=document.createElement('canvas');canvas.width=1500;canvas.height=360;canvas.getContext('2d').drawImage(image,0,0);URL.revokeObjectURL(url);return canvas.toDataURL('image/png').split(',')[1]},fixtureSvg);
-  await page.locator('#scorePhotos').setInputFiles({name:'omr-ground-truth.png',mimeType:'image/png',buffer:Buffer.from(png64,'base64')});
-  await page.locator('#makeSong').click();
+  const prescanStarted=Date.now();await page.locator('#scorePhotos').setInputFiles({name:'omr-ground-truth.png',mimeType:'image/png',buffer:Buffer.from(png64,'base64')});await page.waitForFunction(()=>{const button=document.querySelector('#makeSong');return button&&!button.disabled},{timeout:15000});const prescanElapsedMs=Date.now()-prescanStarted;await page.screenshot({path:path.join(evidenceDir,`${evidenceLabel}-android-portrait-prescan-390x844.png`),fullPage:true});
+  const processingStarted=Date.now();await page.locator('#makeSong').click();await page.waitForFunction(()=>window.__workshopProgress?.some(event=>event.stage==='recognize_music'),null,{timeout:30000});await page.screenshot({path:path.join(evidenceDir,`${evidenceLabel}-android-portrait-processing-390x844.png`),fullPage:true});
   await page.waitForFunction(()=>{
     const songs=window.PianoKingdomLibrary?.songs||{};
     const saved=Object.values(songs).some(song=>song?.title==='OMR Ground Truth Playback');
@@ -44,7 +44,7 @@ const noteName=midi=>{const names=['C','C♯','D','D♯','E','F','F♯','G','G�
   assert.deepEqual(saved.original,expectedEvents,'real OMR production conversion preserves pitches, measure boundaries, onsets and durations in app ticks');
   assert.deepEqual(saved.basic,expectedEvents,'Basic arrangement preserves the ground-truth event sequence');
   assert.deepEqual(saved.barLengths,[8,8]);assert.equal(saved.bpm,72);
-  console.log('ACTUAL ENGINE → PRODUCTION CONVERSION',JSON.stringify({recognitionElapsedMs:Date.now()-started,expectedAppEvents:expectedEvents,observed:saved}));
+  const measurements=await page.evaluate(()=>({progress:window.__workshopProgress||[],memory:{usedJSHeapSize:performance.memory?.usedJSHeapSize||null,totalJSHeapSize:performance.memory?.totalJSHeapSize||null,apiAvailable:!!performance.memory}}));console.log('FASTPATH OMR BENCHMARK',JSON.stringify({label:evidenceLabel,fixture:'same synthetic one-page eight-note score',prescanElapsedMs,processingElapsedMs:Date.now()-processingStarted,endToEndElapsedMs:Date.now()-started,pageDurationMs:measurements.progress.findLast(event=>Number.isFinite(event.pageDurationMs))?.pageDurationMs||null,memory:measurements.memory,expectedAppEvents:expectedEvents,observed:saved}));
   await page.locator('#closeSongWizard').click();await page.locator('#openMySongs').click();
   const card=page.locator('.library-card').filter({hasText:'OMR Ground Truth Playback'});await card.waitFor();
   await card.locator('select[data-version-select]').selectOption('basic');
@@ -58,9 +58,9 @@ const noteName=midi=>{const names=['C','C♯','D','D♯','E','F','F♯','G','G�
   const played=await page.evaluate(first=>window.__audioStarts.slice(first,first+4).map(e=>({midi:Math.round(69+12*Math.log2(e.frequency/440)),when:e.when})),firstPlaybackTone);
   assert.deepEqual(played.map(e=>e.midi),expected.slice(0,4),'real piano scheduler starts the expected OMR pitches in order');
   const gaps=played.slice(1).map((e,i)=>e.when-played[i].when);assert.ok(gaps.every(gap=>Math.abs(gap-(60/72))<.25),`quarter-note onset spacing should be 60/72 seconds; observed ${JSON.stringify(gaps)}`);
-    console.log('OMR TO PLAYBACK ACCEPTANCE',JSON.stringify({recognitionElapsedMs:Date.now()-started,score:saved,librarySelection:libraryPlayback.selected,scheduledTones:played,quarterNoteGapsSeconds:gaps}));
+    console.log('OMR TO PLAYBACK ACCEPTANCE',JSON.stringify({endToEndElapsedMs:Date.now()-started,score:saved,librarySelection:libraryPlayback.selected,scheduledTones:played,quarterNoteGapsSeconds:gaps}));
   assert.deepEqual(errors,[],'no browser runtime errors');
   console.log('PASS: actual pinned OMR → production MusicXML tick conversion → Basic → automatic save → Song Library → real playback scheduler.');
  }catch(error){console.error('OMR-TO-PLAYBACK FAILURE',JSON.stringify({elapsedMs:Date.now()-started,message:error.message,stack:error.stack,installation:await page.evaluate(()=>({state:window.AariaR2Installer?.state,status:document.querySelector('#release2InstallStatus')?.textContent,detail:document.querySelector('#release2InstallDetail')?.textContent,gateHidden:document.querySelector('#release2InstallGate')?.hidden})).catch(()=>null),workshopStatus:await page.locator('#scoreImportStatus').textContent().catch(()=>''),browserErrors:errors,consoleErrors:messages}));throw error
- }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
+ }finally{const video=page.video();await context.close().catch(()=>{});const recorded=await video?.path().catch(()=>null);if(recorded&&fs.existsSync(recorded))fs.copyFileSync(recorded,path.join(evidenceDir,`${evidenceLabel}-omr-playback-390x844.webm`));await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(e=>{console.error(e);process.exitCode=1});

@@ -11,8 +11,8 @@ const oldShell=fs.readFileSync(path.join(__dirname,'fixtures/installed-shell-v1.
 const newWorker=fs.readFileSync(path.join(root,'sw.js'),'utf8');
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const installer=fs.readFileSync(path.join(root,'r2-install.js'),'utf8');
-const shellName='aaria-piano-v1.20.4';
-assert.match(newWorker,/const CACHE='aaria-piano-v1\.20\.5'/);
+const shellName='aaria-piano-v1.20.6';
+assert.match(newWorker,/const CACHE='aaria-piano-v1\.20\.6'/);
 for(const url of [
   './r2-music.js?v=aaria-piano-r2.2',
   './r2-image.js?v=aaria-piano-r2.1',
@@ -118,7 +118,7 @@ const server=http.createServer((req,res)=>{
     assert.equal(await reopened.locator('#playbackModeControls button.listen-toggle').count(),1,'one Listen preference toggle remains after upgrade');
     await reopened.locator('#setupKeyboard').click();
     await reopened.locator('#appBuildInfo').waitFor({state:'visible'});
-    await reopened.waitForFunction(()=>document.querySelector('#appBuildInfo')?.textContent.includes('aaria-piano-v1.20.5'));
+    await reopened.waitForFunction(()=>document.querySelector('#appBuildInfo')?.textContent.includes('aaria-piano-v1.20.6'));
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes("You're up to date"),{timeout:15000});
     await reopened.screenshot({path:'/tmp/pwa-update-settings.png'});
@@ -166,7 +166,7 @@ const server=http.createServer((req,res)=>{
         req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('songs','readonly'),get=tx.objectStore('songs').get('kept-song');get.onsuccess=()=>{const song=get.result;db.close();resolve(song)};get.onerror=()=>reject(get.error)};
       });
       const verified=await (await caches.open('aaria-piano-r2-install-v1')).match('./models/verified-fixture.onnx');
-      const shell=await caches.open('aaria-piano-v1.20.5');
+      const shell=await caches.open('aaria-piano-v1.20.6');
       const script=await shell.match('./song-import.js?v=aaria-piano-r2.5');
       const updater=await shell.match('./pwa-update.js?v=aaria-pwa-update-1.0');
       const libraryScript=await shell.match('./my-songs.js?v=aaria-piano-r2.4');
@@ -195,24 +195,24 @@ const server=http.createServer((req,res)=>{
     assert.match(result.html,/Speed/,'updated playback label is available');assert.match(result.html,/id="listenToggle"/,'Listen preference control is in the updated shell');assert.match(result.html,/note-impact-style/,'note impact key glow styling is in the updated shell');assert.match(result.html,/spawnNoteExplosion/,'note impact implementation is in the updated shell');assert.match(result.html,/NOTE_FX_DURATION\*1000/,'note flash uses millisecond timing in the updated shell');
     console.log('PWA update-and-reopen passed: prior v1.19.0 shell and warning/gate were replaced; current Piano Hero opened without OMR setup; localStorage/IndexedDB songs, favorites and verified OMR cache remained intact.');
 
-    const futureWorker=newWorker.replace("const CACHE='aaria-piano-v1.20.5'","const CACHE='aaria-piano-v1.20.6'");
+    const futureWorker=newWorker.replace("const CACHE='aaria-piano-v1.20.6'","const CACHE='aaria-piano-v1.20.7'");
     assert.notEqual(futureWorker,newWorker,'future worker fixture advances the authoritative build identifier');
     versionCheckWorker=futureWorker;servedWorker=futureWorker;
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('Update available. Restart App when you are ready.'),null,{timeout:15000});
     assert.equal(await reopened.locator('#restartAppUpdate').isVisible(),true,'a waiting worker exposes the explicit Restart App action');
     await reopened.locator('#restartAppUpdate').click();
-    await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('Update installed and verified: aaria-piano-v1.20.6'),null,{timeout:20000});
-    await reopened.waitForFunction(()=>document.querySelector('#appBuildInfo')?.textContent.includes('aaria-piano-v1.20.6'),null,{timeout:10000});
+    await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('Update installed and verified: aaria-piano-v1.20.7'),null,{timeout:20000});
+    await reopened.waitForFunction(()=>document.querySelector('#appBuildInfo')?.textContent.includes('aaria-piano-v1.20.7'),null,{timeout:10000});
     const afterConfirmedRestart=await reopened.evaluate(async()=>({build:document.querySelector('#appBuildInfo')?.textContent,status:document.querySelector('#appUpdateStatus')?.textContent,caches:await caches.keys(),song:JSON.parse(localStorage.getItem('aaria-piano-custom-songs-v1')||'[]').find(s=>s.id==='kept-song'),favorite:JSON.parse(localStorage.getItem('aaria-piano-favorites-v1')||'[]').includes('kept-song'),verified:await(async()=>{const cache=await caches.open('aaria-piano-r2-install-v1');const response=await cache.match('./models/verified-fixture.onnx');return response?.text()})()}));
-    assert.match(afterConfirmedRestart.build,/aaria-piano-v1.20.6/,'Settings reports the future worker build after restart');
-    assert.match(afterConfirmedRestart.status,/Update installed and verified: aaria-piano-v1.20.6/,'restart is confirmed only after the active worker reports the future build');
-    assert.ok(afterConfirmedRestart.caches.includes('aaria-piano-v1.20.6'));
-    assert.ok(!afterConfirmedRestart.caches.includes('aaria-piano-v1.20.5'),'the prior app-shell cache is retired');
+    assert.match(afterConfirmedRestart.build,/aaria-piano-v1.20.7/,'Settings reports the future worker build after restart');
+    assert.match(afterConfirmedRestart.status,/Update installed and verified: aaria-piano-v1.20.7/,'restart is confirmed only after the active worker reports the future build');
+    assert.ok(afterConfirmedRestart.caches.includes('aaria-piano-v1.20.7'));
+    assert.ok(!afterConfirmedRestart.caches.includes('aaria-piano-v1.20.6'),'the prior app-shell cache is retired');
     assert.equal(afterConfirmedRestart.song?.title,'Saved fixture','confirmed restart preserves the saved song');
     assert.equal(afterConfirmedRestart.favorite,true,'confirmed restart preserves favorites');
     assert.equal(afterConfirmedRestart.verified,'verified-model-marker','confirmed restart preserves the verified OMR cache');
-    console.log('Safe update restart passed: a user-confirmed waiting worker activated, reloaded, verified v1.20.6, and retained songs, favorites and OMR cache.');
+    console.log('Safe update restart passed: a user-confirmed waiting worker activated, reloaded, verified v1.20.7, and retained songs, favorites and OMR cache.');
     await context.close();
 
     const freshContext=await browser.newContext();
