@@ -27,5 +27,6 @@ assert.match(updater,/Update ready\. Restart App/,'Settings exposes a clear rest
 assert.match(updater,/120000/,'slow mobile updates get enough time to finish');
 assert.match(updater,/AARIA_SW_INSTALL_ERROR/,'service worker install failures are recorded');
 assert.match(fs.readFileSync(path.join(root,'pwa-diagnostics.js'),'utf8'),/aaria-piano-diagnostics-v1/,'diagnostics are kept locally');
-assert.match(fs.readFileSync(path.join(root,'pwa-diagnostics.js'),'utf8'),/excludes score/,'export privacy note is present');
+assert.ok(index.includes('excludes score photos, song notes and saved-song contents'),'Settings explains the local diagnostics file contents');
+assert.ok(deploy.includes('pwa-diagnostics.js'),'Pages build includes the local diagnostics logger');
 console.log('PWA update build and Settings invariants passed');
