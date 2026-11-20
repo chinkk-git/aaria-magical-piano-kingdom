@@ -48,7 +48,7 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
   assert.ok(dockBox&&dockBox.y>=0&&dockBox.y+dockBox.height<=vp.height+1,'fixed toolbar remains in safe viewport');
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'no horizontal page overflow');
   const base=vp.name;
-  async function capture(state){const mode=await page.locator('#pianoApp').getAttribute('data-piano-layout')||'classic',file=path.join(out,base+'__'+mode+'__'+state+'.png');await page.screenshot({path:file,fullPage:false});shots.push({file,label:base+' · '+mode+' · '+state.replaceAll('-',' '),width:vp.width,height:vp.height,layout:mode})}
+  async function capture(state){const mode=await page.locator('#pianoLayoutSelect').inputValue().catch(()=> 'classic'),file=path.join(out,base+'__'+mode+'__'+state+'.png');await page.screenshot({path:file,fullPage:false});shots.push({file,label:base+' · '+mode+' · '+state.replaceAll('-',' '),width:vp.width,height:vp.height,layout:mode})}
   await page.waitForTimeout(420);await capture('01-closed');
   const sourceRoutes=fs.readFileSync(path.join(root,'v2.1-ui.js'),'utf8');
   for(const route of [/\['measure','loop','jump','practice'\]\.includes\(key\)/,/key==='makeMusic'[\s\S]*?openNewSong/,/key==='songs'[\s\S]*?openSongs/,/key==='home'/,/key==='pianoMode'/,/key==='settings'/,/key==='updateApp'[\s\S]*?checkAppUpdate/])assert.match(sourceRoutes,route,'preserved action route '+route);
@@ -66,7 +66,7 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
    assert.ok(shape.radius>=80,'wheel retains enough scale for distinct touch targets');assert.ok(Math.abs(shape.origin[0]-shape.art.w*.2)<1&&Math.abs(shape.origin[1]-shape.art.h*.5)<1,'shell transform origin equals the supplied star pivot');
    const left=shape.side==='left'?shape.center.x:shape.center.x-shape.radius,right=shape.side==='left'?shape.center.x+shape.radius:shape.center.x;
    keyBox=await keys.boundingBox();dockBox=await dock.boundingBox();
-   const layout=await page.locator('#pianoApp').getAttribute('data-piano-layout')||'classic';
+   const layout=await page.locator('#pianoLayoutSelect').inputValue().catch(()=> 'classic');
    const targets=await visible.evaluateAll(bs=>bs.map(b=>{const r=b.getBoundingClientRect();return{key:b.dataset.key,x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height}}));
    const labels=await page.locator('.v21-wheel-actions:not([hidden]) .v21-action-label').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return{key:e.dataset.key,x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height,text:e.textContent.trim(),opacity:getComputedStyle(e).opacity}}));
    const regions=await page.evaluate(()=>Object.fromEntries(['.v21-wheel-art','#keys','#rain','#heroPlayfield','.v21-dock','.v21-star-assembly','.v21-star'].map(sel=>{const e=document.querySelector(sel),r=e?.getBoundingClientRect();return[sel,r?{x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height}:null]})));
@@ -117,7 +117,7 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
   console.log('PASS '+vp.name+' '+vp.width+'x'+vp.height+' — wheel geometry, actions, collisions, labels, safe viewport, gameplay and fixed controls');
  }
  const reduced=await browser.newPage({viewport:{width:390,height:844}});await reduced.emulateMedia({reducedMotion:'reduce'});
- const reducedErrors=[];reduced.on('pageerror',e=>reducedErrors.push(e.message));await reduced.route('**/omr-worker.js',route=>route.fulfill({status:200,contentType:'text/javascript',body:'/* fixture */'}));await reduced.goto(origin+'/index.html',{waitUntil:'domcontentloaded'});await reduced.waitForSelector('.v21-star-assembly');
+ const reducedErrors=[];reduced.on('pageerror',e=>reducedErrors.push(e.message));await reduced.route('**/omr-worker.js',route=>route.fulfill({status:200,contentType:'text/javascript',body:'/* fixture */'}));await reduced.goto(origin+'/index.html',{waitUntil:'domcontentloaded'});await reduced.waitForSelector('.v21-star-assembly',{state:'attached'});
  await reduced.evaluate(()=>{const g=document.querySelector('#release2InstallGate'),a=document.querySelector('#pianoApp');if(g)g.hidden=true;if(a){a.inert=false;a.removeAttribute('aria-hidden')}document.body.classList.remove('r2-installing')});
  const reducedMs=await reduced.locator('.v21-wheel-art').evaluate(e=>parseFloat(getComputedStyle(e).transitionDuration)*1000);assert.ok(reducedMs<=1.1,'reduced motion limits wheel transition to 1ms');
  await reduced.locator('.v21-star').click();await reduced.waitForTimeout(15);assert.equal(await reduced.locator('.v21-wheel-actions:not([hidden]) .v21-wheel-action').count(),5,'reduced-motion wheel remains interactive');await reduced.keyboard.press('Escape');await reduced.waitForTimeout(10);assert.equal(reducedErrors.length,0,'reduced-motion path has no runtime error');await reduced.close();
