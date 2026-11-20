@@ -46,4 +46,4 @@ The built-in catalogue is stored in `shared-song-library.json` and included in t
 
 `python3 scripts/import_shared_songs.py <backup.json> shared-song-library.json`
 
-The importer checks song/event structure, merges records by ID, preserves musical events and arrangement data, and excludes local OMR diagnostics and source-image metadata. When publishing a catalogue update, increment the service-worker cache version in `sw.js` so installed PWAs fetch the new library.
+The importer checks song/event structure, merges records by ID, preserves musical events and arrangement data, and excludes local OMR diagnostics and source-image metadata. When publishing a catalogue update, increment the service-worker cache version in `sw.js` and the matching `APP_BUILD` in `pwa-update.js` so installed PWAs fetch the new library.
