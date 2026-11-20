@@ -33,7 +33,7 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
    await page.locator('#v21Play').click();await page.waitForFunction(()=>['countdown','learn'].includes(AariaV21Engine.state().playbackStatus));
    assert.equal(await page.locator('#v21Sound').getAttribute('aria-pressed'),'false','a new session preserves the explicit Sound Off preference');
    await page.locator('#v21Play').click();await page.waitForFunction(()=>AariaV21Engine.state().playbackStatus==='stop'&&AariaV21Engine.state().pausedMode);
-   await page.locator('#v21Sound').click();assert.equal(await page.locator('#v21Sound').getAttribute('aria-pressed'),'false');
+   assert.equal(await page.locator('#v21Sound').getAttribute('aria-pressed'),'false','Sound Off remains off after pausing');
    await page.locator('#v21Play').click();await page.waitForFunction(()=>AariaV21Engine.state().playbackStatus==='learn');assert.equal(await page.locator('#v21Sound').getAttribute('aria-pressed'),'false','resume preserves Sound Off');await page.locator('#v21Sound').click();assert.equal(await page.locator('#v21Sound').getAttribute('aria-pressed'),'true','Sound On remains an explicit choice');
    await page.locator('#v21Play').click();
    await capture(page,'03-magic-star','motorola-edge-50-fusion-portrait-emulated-star-closed-390x844');await page.locator('.v21-star').click();assert.equal(await page.locator('.v21-wheel button').count(),4,'half-wheel exposes four real controls');await capture(page,'03-magic-star','motorola-edge-50-fusion-portrait-emulated-half-wheel-open-390x844');

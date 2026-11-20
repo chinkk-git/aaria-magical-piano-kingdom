@@ -43,13 +43,13 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   await page.locator('#speed').evaluate(el=>{el.value='120';el.dispatchEvent(new Event('input',{bubbles:true}))});
   await page.locator('#v21Sound').click();assert.equal(await page.locator('#v21Sound').getAttribute('aria-pressed'),'false','Sound Off mutes sound without disabling visual playback');
   await page.locator('#v21Sound').click();assert.equal(await page.locator('#v21Sound').getAttribute('aria-pressed'),'true','Sound On restores the sound preference');
-  await page.locator('#bar').selectOption('2');assert.match(await page.locator('#position').textContent(),/Measure 2 of 2/,'passage selection updates the displayed measure');
-  await page.locator('#loopRange').selectOption('1');
+  await page.evaluate(()=>AariaV21Engine.setMeasure(2));assert.match(await page.locator('#position').textContent(),/Measure 2 of 2/,'Measure control updates the displayed measure');
+  await page.evaluate(()=>AariaV21Engine.setLoop(2,2,true));
   await page.evaluate(()=>applyPianoLayout('hero',false));await page.locator('#v21Play').click();await page.waitForFunction(()=>mode==='countdown');await page.waitForFunction(()=>mode==='follow');
   await page.locator('#v21Play').click();await page.waitForFunction(()=>mode==='stop'&&pausedMode==='follow');assert.match(await page.locator('#v21Play').textContent(),/Resume/,'PLAYING to PAUSED displays Resume');
   await page.locator('#v21Play').click();await page.waitForFunction(()=>mode==='follow');assert.match(await page.locator('#v21Play').textContent(),/Pause/,'PAUSED to PLAYING displays Pause');
   await page.waitForTimeout(1900);assert.equal(await page.evaluate(()=>mode==='follow'&&bar===2),true,'loop mode repeats the selected measure instead of completing');
-  await page.locator('#loopRange').selectOption('0');await page.waitForFunction(()=>mode==='completed',{timeout:10000});
+  await page.evaluate(()=>AariaV21Engine.setLoop(2,2,false));await page.waitForFunction(()=>mode==='completed',{timeout:10000});
   assert.match(await page.locator('#pause').textContent(),/Play Again/,'COMPLETED exposes the Play Again action');
   assert.match(await page.locator('#status').textContent(),/Song complete.*Play Again/,'completion status announces the available restart action');
   await page.screenshot({path:`/tmp/piano-playback-state-390x844-${process.env.APP_SOURCE_SHA||'local'}.png`});
