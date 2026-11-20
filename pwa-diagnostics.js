@@ -29,8 +29,7 @@
   }
   function safeReason(value){
     if(value===null||value===undefined)return undefined;
-    let text=String(value).replace(/[\r
-\t]+/g,' ').trim();
+    let text=String(value).replace(/[\r\n\t]+/g,' ').trim();
     text=text.replace(/https?:\/\/[^\s)]+/gi,match=>safeResource(match)||'[resource]');
     text=text.replace(/\b[A-Za-z0-9_-]+\.(?:png|jpe?g|webp|gif|pdf|mxl|musicxml|mid)\b/gi,'[user-file]');
     text=text.replace(/(?:\/storage\/emulated\/0|\/data\/user\/\d+|[A-Z]:\\Users\\)[^\s)]+/gi,'[device-path]');
