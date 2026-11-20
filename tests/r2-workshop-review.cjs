@@ -44,6 +44,8 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   assert.match(await page.locator('#localSongWizardTitle').textContent(),/Add New Song/);
   assert.match(await page.locator('#makeSong').textContent(),/Make Music/);
   await page.locator('#scorePhotos').setInputFiles({name:'known-score.png',mimeType:'image/png',buffer:Buffer.from(png64,'base64')});
+  // Isolate the manual failure/retry path; automatic page recovery has its own test below.
+  await page.evaluate(()=>{const choose=window.AariaR2Image.chooseRecovery;window.AariaR2Image.chooseRecovery=(details)=>details.failureClass==='OMR_OUTPUT_INVALID'?{retry:false,reason:null}:choose(details)});
   await page.locator('#makeSong').click();
   await page.waitForFunction(()=>document.querySelector('#makeSong')?.textContent.includes('Try again'),{timeout:30000});
   assert.equal(await page.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).some(song=>song?.title==='Automatic Workshop Song')),false,'recognition failure does not create a library record');

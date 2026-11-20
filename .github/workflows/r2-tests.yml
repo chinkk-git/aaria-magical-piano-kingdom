@@ -255,7 +255,7 @@ jobs:
           cp /tmp/fastpath-base/assets/piano-hero-v2/{home_button.png,settings_button.png} /tmp/fastpath-base/_site/assets/piano-hero-v2/
           cp -R _site/omr _site/models _site/lib /tmp/fastpath-base/_site/
           cp _site/omr-worker.js _site/release2-install-manifest.json /tmp/fastpath-base/_site/
-          cp vendor/omr-licenses/partsong-LICENSE /tmp/fastpath-base/_site/vendor/omr-licenses/
+          cp _site/vendor/omr-licenses/partsong-LICENSE /tmp/fastpath-base/_site/vendor/omr-licenses/
           touch /tmp/fastpath-base/_site/.nojekyll
       - name: Measure matched baseline with the pinned local OMR engine
         env:
