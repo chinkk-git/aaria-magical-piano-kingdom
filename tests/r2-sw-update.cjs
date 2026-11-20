@@ -205,7 +205,7 @@ const server=http.createServer((req,res)=>{
     assert.notEqual(futureWorker,newWorker,'future worker fixture advances the authoritative build identifier');
     versionCheckWorker=futureWorker;servedWorker=futureWorker;
     await reopened.locator('#checkAppUpdate').click();
-    await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('Update available. Restart App when you are ready.'),null,{timeout:15000});
+    await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('Update ready. Restart App when you are ready.'),null,{timeout:15000});
     assert.equal(await reopened.locator('#restartAppUpdate').isVisible(),true,'a waiting worker exposes the explicit Restart App action');
     await reopened.locator('#restartAppUpdate').click();
     await reopened.waitForFunction(build=>document.querySelector('#appUpdateStatus')?.textContent.includes('Update installed and verified: '+build),nextShellName,{timeout:20000});
