@@ -151,3 +151,6 @@ html[data-v21-ui] .hero-zoom{display:none!important}.v21-speed input{height:40px
 
 /* Landscape compact hit-box separation */
 @media(max-height:500px){.v21-wheel[data-side="left"] button[data-key="loop"],.v21-wheel[data-side="left"] button[data-key="songs"]{top:32%}}
+
+/* Compact landscape practice target spacing */
+@media(max-height:500px){.v21-wheel[data-side="left"] button[data-key="practice"],.v21-wheel[data-side="left"] button[data-key="settings"]{top:72%}}
