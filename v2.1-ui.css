@@ -148,3 +148,6 @@ html[data-v21-ui] .hero-zoom{display:none!important}.v21-speed input{height:40px
 
 /* Per-action selectors previously set percentage widths; enforce the audited 44px hit boxes. */
 .v21-wheel button[data-key]{width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important}
+
+/* Landscape compact hit-box separation */
+@media(max-height:500px){.v21-wheel[data-side="left"] button[data-key="loop"],.v21-wheel[data-side="left"] button[data-key="songs"]{top:32%}}
