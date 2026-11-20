@@ -38,3 +38,12 @@ Desktop/browser checks do not replace Android or iPhone hardware testing. Confir
 
 ## Approved Piano Hero component bundle v2
 The 21 owner-approved transparent PNG components remain in the source tree as reference assets, but the active Magical Piano Hero gameplay screen does not render character or scenery artwork. It uses CSS lighting and depth with one integrated note canvas and reference keyboard. Falling notes and keyboard highlights share measured key geometry. The Hero screen offers Play Along, immediate Listen, speed, looping, measure selection, keyboard zoom, song selection and Settings. Both layouts share the song library and playback engine; Classic Piano remains the default when no layout preference exists. Only functional Home and Settings artwork required by Classic is packaged for offline use.
+
+
+## Shared song library
+
+The built-in catalogue is stored in `shared-song-library.json` and included in the offline app shell. To add songs from a future app backup, merge it with:
+
+`python3 scripts/import_shared_songs.py <backup.json> shared-song-library.json`
+
+The importer checks song/event structure, merges records by ID, preserves musical events and arrangement data, and excludes local OMR diagnostics and source-image metadata. When publishing a catalogue update, increment the service-worker cache version in `sw.js` so installed PWAs fetch the new library.
