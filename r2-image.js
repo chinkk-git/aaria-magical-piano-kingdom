@@ -8,7 +8,7 @@
     const count=Math.floor(data.length/4),luminance=new Float32Array(count);let sum=0,edge=0,edgeCount=0;
     for(let i=0,p=0;i<data.length;i+=4,p++){const y=.2126*data[i]+.7152*data[i+1]+.0722*data[i+2];luminance[p]=y;sum+=y}
     const mean=sum/Math.max(1,count);let variance=0;for(const y of luminance)variance+=(y-mean)**2;const contrast=Math.sqrt(variance/Math.max(1,count));
-    const rowInk=[];for(let y=0;y<height;y++){let ink=0;for(let x=0;x<width;x++){const i=y*width+x;if(luminance[i]<150)ink++;if(x+1<width){edge+=Math.abs(luminance[i]-luminance[i+1]);edgeCount++}if(y+1<height){edge+=Math.abs(luminance[i]-luminance[i+width]);edgeCount++}}rowInk.push(ink/Math.max(1,width))}
+    const rowInk=[],deepInk=[];for(let y=0;y<height;y++){let ink=0,deep=0;for(let x=0;x<width;x++){const i=y*width+x;if(luminance[i]<150)ink++;if(luminance[i]<96)deep++;if(x+1<width){edge+=Math.abs(luminance[i]-luminance[i+1]);edgeCount++}if(y+1<height){edge+=Math.abs(luminance[i]-luminance[i+width]);edgeCount++}}rowInk.push(ink/Math.max(1,width));deepInk.push(deep/Math.max(1,width))}
     const edgeEnergy=edge/Math.max(1,edgeCount),warnings=[];
     if(Math.max(sourceWidth,sourceHeight)<1000)warnings.push({code:'small',message:'This picture is small; the music may be hard to read.'});
     if(mean<72)warnings.push({code:'dark',message:'This picture looks quite dark. More light may help.'});
@@ -20,6 +20,11 @@
     const band=Math.max(1,Math.ceil(height*.02)),inkRatio=(from,to)=>{let ink=0,total=0;for(let y=from;y<to;y++)for(let x=0;x<width;x++){if(luminance[y*width+x]<150)ink++;total++}return ink/Math.max(1,total)};
     const edgeInk=Math.max(inkRatio(0,band),inkRatio(height-band,height)),innerInk=inkRatio(band,height-band);
     if(edgeInk>.48&&edgeInk-innerInk>.26&&mean>80)warnings.push({code:'edge-risk',message:'Music may reach the photo edge. Check that no notes or staff lines are cut off.'});
+    // A dense, near-black horizontal band at an image edge often comes from a screen ad or viewer bar.
+    // Keep this as an advisory crop hint; never block the source photo or alter the OMR input.
+    const edgeRows=Math.max(1,Math.ceil(height*.18)),minDenseRows=Math.max(4,Math.ceil(height*.015));
+    const hasDenseEdgeBand=(from,to)=>{let run=0;for(let y=from;y<to;y++){run=deepInk[y]>=.68?run+1:0;if(run>=minDenseRows)return true}return false};
+    if(hasDenseEdgeBand(0,edgeRows)||hasDenseEdgeBand(height-edgeRows,height))warnings.push({code:'screen-capture',message:'A dark banner or viewer bar may be in the picture. Crop to the music before making the song.'});
     return{mean,contrast,edgeEnergy,staffLineRows:lineRows,edgeInk,warnings};
   }
 
