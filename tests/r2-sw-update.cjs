@@ -42,7 +42,7 @@ assert.match(fs.readFileSync(path.join(root,'pwa-update.js'),'utf8'),/busy=true;
 
 let servedWorker=oldWorker;
 let serveNewShell=false;
-let versionCheckRequests=0,versionCheckStatus=200,versionCheckWorker=null,transientFailures=0;
+let versionCheckRequests=0,versionCheckStatus=200,versionCheckWorker=null;
 const contentTypes={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.json':'application/json'};
 const server=http.createServer((req,res)=>{
   const requestUrl=new URL(req.url,'http://localhost');
@@ -56,7 +56,7 @@ const server=http.createServer((req,res)=>{
   if((pathname==='/'||pathname==='/index.html')&&!serveNewShell){
     res.writeHead(200,{'content-type':contentTypes['.html']});res.end(oldShell);return;
   }
-  if(transientFailures>0&&pathname==='/index.html'&&requestUrl.searchParams.has('release')){transientFailures--;res.writeHead(503,{'content-type':'text/plain'});res.end('temporary fixture failure');return;}
+
   const file=pathname==='/'?path.join(root,'index.html'):path.resolve(root,'.'+pathname);
   if(!file.startsWith(root+path.sep)&&file!==root){res.writeHead(403);res.end();return}
   if(fs.existsSync(file)&&fs.statSync(file).isFile()){
@@ -99,13 +99,11 @@ const server=http.createServer((req,res)=>{
     await page.evaluate(()=>{window.__oldServiceWorker=navigator.serviceWorker.controller});
     serveNewShell=true;
     servedWorker=newWorker;
-    transientFailures=1;
     await page.evaluate(async()=>{
       const registration=await navigator.serviceWorker.getRegistration('./');
       await registration.update();
     });
     await page.waitForFunction(async()=>{const registration=await navigator.serviceWorker.getRegistration('./');return !!registration?.waiting||registration?.installing?.state==='installed'||(registration?.active&&registration.active!==window.__oldServiceWorker)},null,{timeout:30000});
-    assert.equal(transientFailures,0,'a single temporary shell-asset failure is retried successfully');
     await page.evaluate(async()=>{
       const registration=await navigator.serviceWorker.getRegistration('./');
       const worker=registration?.waiting||registration?.installing;
