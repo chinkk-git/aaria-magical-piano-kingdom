@@ -128,12 +128,25 @@ const server=http.createServer((req,res)=>{
     await reopened.waitForFunction(build=>document.querySelector('#appBuildInfo')?.textContent.includes(build),shellName);
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes("You're up to date"),{timeout:15000});
+    await reopened.evaluate(()=>{
+      const now=new Date().toISOString();
+      localStorage.setItem('aaria-piano-r2-install-diagnostics-v1',JSON.stringify({schemaVersion:1,event:'failure',state:'error',attempt:1,serviceWorkerVersion:'aaria-piano-r2-install-v1',at:now,assetPath:'./models/model.onnx',expectedBytes:1024,actualBytes:0,httpStatus:404,cacheStatus:'miss',failureReason:'A required file could not be downloaded (404).',transitions:[{state:'downloading',event:'on-demand-start',at:now},{state:'error',event:'failure',at:now}]}));
+      localStorage.setItem('aaria-piano-r2-install-state-v1',JSON.stringify({version:'partsong-v1',workerReady:false,totalBytes:1024}));
+      window.dispatchEvent(new CustomEvent('aaria-workshop-progress',{detail:{stage:'prepare_reader',page:{current:1,total:2,completed:0},engine:{phase:'downloading',asset:'https://cdn.example/models/model.onnx?token=secret',bytes:256,total:1024}}}));
+      window.dispatchEvent(new CustomEvent('aaria-workshop-progress',{detail:{stage:'failed',page:{current:1,total:2,completed:0},diagnostic:{errorName:'Error',errorCode:'WORKER_START_FAILED',failureClass:'WORKER_START_FAILED',pageIndex:1,attempt:3,maxAttempts:3,reason:'Failed to load https://cdn.example/omr-worker.js?token=secret from /storage/emulated/0/DCIM/1000078649.png',workerAsset:'https://cdn.example/omr-worker.js?token=secret'}}}));
+    });
     const [diagnosticDownload]=await Promise.all([reopened.waitForEvent('download'),reopened.locator('#downloadAppDiagnostics').click()]);
     assert.equal(diagnosticDownload.suggestedFilename(),'aaria-piano-diagnostics.json','Settings downloads a diagnostics report');
     const diagnosticPayload=JSON.parse(fs.readFileSync(await diagnosticDownload.path(),'utf8'));
     assert.ok(diagnosticPayload.entries.some(row=>row.type==='update'&&row.state==='up-to-date'),'diagnostics include update state');
+    assert.equal(diagnosticPayload.omrEngine.verified.installed,false,'diagnostics show the OMR engine is not verified');
+    assert.equal(diagnosticPayload.omrEngine.installer.httpStatus,404,'diagnostics include engine download HTTP failure');
+    assert.equal(diagnosticPayload.omrEngine.installer.assetPath,'./models/model.onnx','diagnostics identify the failed engine asset');
+    assert.ok(diagnosticPayload.entries.some(row=>row.type==='omrDownload'&&row.phase==='downloading'&&row.asset==='cdn.example/models/model.onnx'&&row.bytes===256),'diagnostics include first-time engine download progress');
+    assert.ok(diagnosticPayload.entries.some(row=>row.type==='omrImport'&&row.failureClass==='WORKER_START_FAILED'&&row.pageIndex===1&&row.workerAsset==='cdn.example/omr-worker.js'),'diagnostics include the worker failure and page');
     const diagnosticText=JSON.stringify(diagnosticPayload);
     assert.ok(!diagnosticText.includes('Saved fixture')&&!diagnosticText.includes('kept-song'),'diagnostics exclude saved song contents');
+    assert.ok(!diagnosticText.includes('token=secret')&&!diagnosticText.includes('1000078649.png'),'diagnostics exclude URL tokens and photo filenames');
     await reopened.screenshot({path:'/tmp/pwa-update-settings.png'});
     await context.setOffline(true);
     await reopened.locator('#checkAppUpdate').click();
