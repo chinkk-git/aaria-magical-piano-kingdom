@@ -58,7 +58,7 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
    const visible=page.locator('.v21-wheel-actions:not([hidden]) .v21-wheel-action');
    const actual=await visible.evaluateAll(bs=>bs.map(b=>b.dataset.key));
    assert.deepEqual(actual,groups[expected],expected+' group exposes exactly its five mapped actions');
-   const state=await page.evaluate(()=>window.AariaV21UI.getState());assert.equal(state.menuGroup,expected,'group state matches visible group');
+   const state=await page.evaluate(()=>window.AariaV21UI.getState());assert.equal(state.group,expected,'group state matches visible group');
    const center=await star.boundingBox(),assemblyRect=await assembly.boundingBox();assert.ok(center&&assemblyRect,'star and assembly are visible');
    assert.ok(Math.abs(center.x+center.width/2-assemblyRect.x)<1.5&&Math.abs(center.y+center.height/2-assemblyRect.y)<1.5,'Magic Star is the exact shared wheel pivot');
    assert.equal(await page.locator('.v21-wheel-action:visible').count(),5,'five interactive buttons in visible group');
