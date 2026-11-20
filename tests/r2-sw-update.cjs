@@ -38,7 +38,7 @@ assert.ok(index.includes('Check for Updates'),'Settings includes an update actio
 assert.ok(newWorker.includes("/^aaria-piano-v\\d+\\.\\d+\\.\\d+$/.test(key)"),'activation only removes prior versioned app-shell caches');
 assert.match(newWorker,/if\(!self\.registration\.active\)await self\.skipWaiting\(\)/,'updates wait for the user while first install still controls the app');
 assert.match(newWorker,/AARIA_ACTIVATE_UPDATE/,'Restart App activates a waiting update');
-assert.match(fs.readFileSync(path.join(root,'pwa-update.js'),'utf8'),/busy=true;check\.disabled=true;setStatus\('Checking…',true\);try\{if\(!root\.navigator\.onLine\)/,'the check is serialized before asynchronous multi-tab coordination');
+assert.match(fs.readFileSync(path.join(root,'pwa-update.js'),'utf8'),/busy=true;check\.disabled=true;setStatus\('Checking…',true\);log\('update',\{state:'checking',result:'started'\}\);try\{if\(!root\.navigator\.onLine\)/,'the check is serialized before asynchronous multi-tab coordination');
 
 let servedWorker=oldWorker;
 let serveNewShell=false;
@@ -56,6 +56,7 @@ const server=http.createServer((req,res)=>{
   if((pathname==='/'||pathname==='/index.html')&&!serveNewShell){
     res.writeHead(200,{'content-type':contentTypes['.html']});res.end(oldShell);return;
   }
+
   const file=pathname==='/'?path.join(root,'index.html'):path.resolve(root,'.'+pathname);
   if(!file.startsWith(root+path.sep)&&file!==root){res.writeHead(403);res.end();return}
   if(fs.existsSync(file)&&fs.statSync(file).isFile()){
@@ -127,6 +128,12 @@ const server=http.createServer((req,res)=>{
     await reopened.waitForFunction(build=>document.querySelector('#appBuildInfo')?.textContent.includes(build),shellName);
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes("You're up to date"),{timeout:15000});
+    const [diagnosticDownload]=await Promise.all([reopened.waitForEvent('download'),reopened.locator('#downloadAppDiagnostics').click()]);
+    assert.equal(diagnosticDownload.suggestedFilename(),'aaria-piano-diagnostics.json','Settings downloads a diagnostics report');
+    const diagnosticPayload=JSON.parse(fs.readFileSync(await diagnosticDownload.path(),'utf8'));
+    assert.ok(diagnosticPayload.entries.some(row=>row.type==='update'&&row.state==='up-to-date'),'diagnostics include update state');
+    const diagnosticText=JSON.stringify(diagnosticPayload);
+    assert.ok(!diagnosticText.includes('Saved fixture')&&!diagnosticText.includes('kept-song'),'diagnostics exclude saved song contents');
     await reopened.screenshot({path:'/tmp/pwa-update-settings.png'});
     await context.setOffline(true);
     await reopened.locator('#checkAppUpdate').click();
@@ -174,7 +181,7 @@ const server=http.createServer((req,res)=>{
       const verified=await (await caches.open('aaria-piano-r2-install-v1')).match('./models/verified-fixture.onnx');
       const shell=await caches.open(shellName);
       const script=await shell.match('./song-import.js?v=aaria-piano-r2.5');
-      const updater=await shell.match('./pwa-update.js?v=aaria-pwa-update-1.1');
+      const updater=await shell.match('./pwa-update.js?v=aaria-pwa-update-1.2');
       const libraryScript=await shell.match('./my-songs.js?v=aaria-piano-r2.4');
       const styles=await shell.match('./piano-hero-v2.css?v=aaria-piano-v1.14.0');
       const html=await shell.match('./index.html');
