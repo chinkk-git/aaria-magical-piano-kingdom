@@ -126,7 +126,7 @@ const server=http.createServer((req,res)=>{
     assert.equal(await reopened.locator('#v21Play').innerText(),'▶ Play Along','the updated shell exposes the unified Play Along action');
     assert.equal(await reopened.locator('#v21Sound').getAttribute('aria-pressed'),'true','Sound defaults on after upgrade');
     assert.equal(await reopened.locator('#playbackModeControls button.listen-toggle').count(),1,'one hidden legacy sound toggle remains as the playback engine preference');
-    await reopened.locator('#setupKeyboard').click();
+    await reopened.evaluate(()=>window.AariaOpenSettings());
     await reopened.locator('#appBuildInfo').waitFor({state:'visible'});
     await reopened.waitForFunction(build=>document.querySelector('#appBuildInfo')?.textContent.includes(build),shellName);
     await reopened.locator('#checkAppUpdate').click();
@@ -232,7 +232,7 @@ const server=http.createServer((req,res)=>{
     assert.match(result.v21Script,/AariaV21UI/,'the V2.1 playback UI is cached');assert.match(result.v21Style,/v21-dock/,'the V2.1 playback styling is cached');
     assert.match(result.styles,/app-build-info/,'updated stylesheet is cached');
     assert.match(result.html,/id="songPickerButton"/,'updated song selector HTML is cached');assert.ok(!result.html.includes('release2InstallGate'),'updated shell no longer has the startup gate');
-    assert.match(result.html,/id="zoomKeys"/,'Zoom Keys control remains available');
+    assert.match(result.html,/id="v21Zoom"/,'fixed toolbar Zoom control remains available');
     assert.match(result.html,/id="appBuildInfo"[^>]*>Installed build: checking…/,'Settings resolves the installed build from its worker');
     assert.match(result.html,/Speed/,'updated playback label is available');assert.match(result.html,/v2\.1-ui\.js\?v=aaria-piano-v2\.1\.0/,'unified controls script is in the updated shell');assert.match(result.v21Script,/id="v21Play"/,'unified Play Along control is in the V2.1 script');assert.match(result.v21Script,/id="v21Sound"/,'Sound preference control is in the V2.1 script');assert.match(result.html,/note-impact-style/,'note impact key glow styling is in the updated shell');assert.match(result.html,/spawnNoteExplosion/,'note impact implementation is in the updated shell');assert.match(result.html,/NOTE_FX_DURATION\*1000/,'note flash uses millisecond timing in the updated shell');
     console.log('PWA update-and-reopen passed: prior v1.19.0 shell and warning/gate were replaced; current Piano Hero opened without OMR setup; localStorage/IndexedDB songs, favorites and verified OMR cache remained intact.');

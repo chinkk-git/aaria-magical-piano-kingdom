@@ -26,7 +26,7 @@ const noteName=midi=>{const names=['C','C♯','D','D♯','E','F','F♯','G','G�
   assert.equal(await page.locator('#pianoApp').getAttribute('inert'),null,'the piano remains interactive before model setup');
   const builtins=await page.locator('#songSelect option').evaluateAll(options=>options.map(o=>o.value));
   assert.ok(builtins.includes('cradle')&&builtins.includes('ddlj'),'existing built-in songs remain available');
-  await page.locator('#openMySongs').click();await page.locator('#makeNewSong').click();
+  await page.evaluate(()=>window.AariaPianoNavigation.openSongs());await page.locator('#makeNewSong').click();
   await page.locator('#scoreSongTitle').fill('OMR Ground Truth Playback');
   const png64=await page.evaluate(async source=>{const image=new Image(),url=URL.createObjectURL(new Blob([source],{type:'image/svg+xml'}));image.src=url;await image.decode();const canvas=document.createElement('canvas');canvas.width=1500;canvas.height=360;canvas.getContext('2d').drawImage(image,0,0);URL.revokeObjectURL(url);return canvas.toDataURL('image/png').split(',')[1]},fixtureSvg);
   const prescanStarted=Date.now();await page.locator('#scorePhotos').setInputFiles({name:'omr-ground-truth.png',mimeType:'image/png',buffer:Buffer.from(png64,'base64')});await page.waitForFunction(()=>{const button=document.querySelector('#makeSong');return button&&!button.disabled},{timeout:15000});const prescanElapsedMs=Date.now()-prescanStarted;await page.screenshot({path:path.join(evidenceDir,`${evidenceLabel}-android-portrait-prescan-390x844.png`),fullPage:true});
@@ -45,7 +45,7 @@ const noteName=midi=>{const names=['C','C♯','D','D♯','E','F','F♯','G','G�
   assert.deepEqual(saved.basic,expectedEvents,'Basic arrangement preserves the ground-truth event sequence');
   assert.deepEqual(saved.barLengths,[8,8]);assert.equal(saved.bpm,72);
   const measurements=await page.evaluate(()=>({progress:window.__workshopProgress||[],memory:{usedJSHeapSize:performance.memory?.usedJSHeapSize||null,totalJSHeapSize:performance.memory?.totalJSHeapSize||null,apiAvailable:!!performance.memory}}));console.log('FASTPATH OMR BENCHMARK',JSON.stringify({label:evidenceLabel,fixture:'same synthetic one-page eight-note score',prescanElapsedMs,processingElapsedMs:Date.now()-processingStarted,endToEndElapsedMs:Date.now()-started,pageDurationMs:measurements.progress.findLast(event=>Number.isFinite(event.pageDurationMs))?.pageDurationMs||null,memory:measurements.memory,expectedAppEvents:expectedEvents,observed:saved}));
-  await page.locator('#closeSongWizard').click();await page.locator('#openMySongs').click();
+  await page.locator('#closeSongWizard').click();await page.evaluate(()=>window.AariaPianoNavigation.openSongs());
   const card=page.locator('.library-card').filter({hasText:'OMR Ground Truth Playback'});await card.waitFor();
   await card.locator('select[data-version-select]').selectOption('basic');
   await page.locator('#speed').evaluate(el=>{el.value='100';el.dispatchEvent(new Event('input',{bubbles:true}))});

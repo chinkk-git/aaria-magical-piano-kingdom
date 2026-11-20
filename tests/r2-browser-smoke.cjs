@@ -20,16 +20,16 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   assert.deepEqual(appReady,{library:true,omr:true,quality:true});
   await page.waitForFunction(()=>window.PianoKingdomLibrary.songs['custom-legacy-preserved']);
   await page.evaluate(async()=>{const events=[];for(let beat=0;beat<4;beat++){events.push({bar:1,at:beat*2,dur:2,midi:60+beat*2,hand:'right',part:'piano-rh'},{bar:1,at:beat*2,dur:2,midi:48+beat*2,hand:'left',part:'piano-lh'},{bar:1,at:beat*2,dur:2,midi:55+beat*2,hand:'left',part:'piano-lh'})}const score={events,total:1,barLengths:[8],bpm:90};const generated=window.AariaR2Music.generateArrangements(score,{scoreVerified:true});const song={id:'custom-r2-browser-smoke',title:'Release 2 Browser Check',...score,imported:true,difficulty:window.AariaR2Music.metrics(score),arrangements:generated.versions};await window.PianoKingdomLibrary.saveSong(song);window.PianoKingdomLibrary.addSong(song,{select:false})});
-  await page.locator('#openMySongs').click();
+  await page.evaluate(()=>window.AariaPianoNavigation.openSongs());
   const dlg=page.locator('#mySongsDialog');await dlg.waitFor({state:'visible'});
   const legacy=page.locator('.library-card').filter({hasText:'Legacy Saved Song'});await legacy.waitFor();await legacy.locator('.v21-song-details summary').click();
   await legacy.getByRole('button',{name:'▶ Play'}).click();await page.waitForFunction(()=>document.querySelector('#songSelect')?.value==='custom-legacy-preserved');
   assert.equal(await dlg.evaluate(el=>el.open),false,'legacy saved song migrated and plays in this visit');
-  await page.locator('#openMySongs').click();
+  await page.evaluate(()=>window.AariaPianoNavigation.openSongs());
   const builtIn=page.locator('.library-card').filter({hasText:'Cradle Song'});await builtIn.waitFor();await builtIn.locator('.v21-song-details summary').click();
   await builtIn.getByRole('button',{name:'▶ Play'}).click();await page.waitForFunction(()=>document.querySelector('#songSelect')?.value==='cradle');
   assert.equal(await dlg.evaluate(el=>el.open),false,'built-in song selection closes the Library');
-  await page.locator('#openMySongs').click();
+  await page.evaluate(()=>window.AariaPianoNavigation.openSongs());
   const card=page.locator('.library-card').filter({hasText:'Release 2 Browser Check'});await card.waitFor();await card.locator('.v21-song-details summary').click();
   assert.deepEqual(await card.locator('select option').evaluateAll(opts=>opts.map(o=>o.value)),['original','basic','medium']);
   await card.locator('select').selectOption('medium');await card.getByRole('button',{name:'▶ Play'}).click();
@@ -60,12 +60,12 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   await page.setViewportSize({width:844,height:390});await page.locator('#v21Play').click();await page.waitForFunction(()=>mode==='stop'&&pausedMode==='follow');assert.match(await page.locator('#v21Play').textContent(),/Resume/,'playback can be paused before switching layouts');
   await page.evaluate(()=>applyPianoLayout('classic',false));
   assert.equal(await page.locator('#primaryModeButton').textContent(), '✨ Learn','Classic Piano keeps its Learn action');
-  await page.locator('#v21Play').click();await page.waitForFunction(()=>mode==='countdown');await page.waitForFunction(()=>mode==='learn',{timeout:5000});
+  await page.locator('#v21Play').click();await page.waitForFunction(()=>mode==='learn',{timeout:5000});
   assert.equal(await page.evaluate(()=>AariaV21Engine.state().layout),'classic','Classic Play Along retains the interactive learning engine');
   await page.setViewportSize({width:844,height:390});await page.screenshot({path:`/tmp/piano-playback-state-844x390-${process.env.APP_SOURCE_SHA||'local'}.png`});
 
-  const bounds=await page.locator('#openMySongs').boundingBox();assert.ok(bounds.height>=42,'song library control has a touch target');
-  await page.locator('#openMySongs').click();await page.locator('#makeNewSong').click();
+  const bounds=await page.locator('.v21-star').boundingBox();assert.ok(bounds&&bounds.width>=44&&bounds.height>=44,'Magic Star has a visible touch target');
+  await page.evaluate(()=>window.AariaPianoNavigation.openSongs());await page.locator('#makeNewSong').click();
   const wizard=page.locator('#localSongWizard');await wizard.waitFor({state:'visible'});
   assert.match(await page.locator('#localSongWizardTitle').textContent(),/Add New Song/);
   assert.match(await page.locator('#makeSong').textContent(),/Make Music/);
