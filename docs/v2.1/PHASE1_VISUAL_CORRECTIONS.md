@@ -1,16 +1,15 @@
-# Phase 1 visual corrections
+# Phase 1 visual corrections — diagnostic result
 
-**Current status: owner visual approval pending.** The prior wheel version was rejected; its screenshots are labeled accordingly and are not treated as acceptance evidence.
+**Status: NOT ready for owner approval.** This document describes the tested implementation at commit `cd776c7aa4d15c325f860ce7348acb0dfc099f4c`. The Magic Star wheel is an incremental visual correction, not a release approval.
 
-| Rejected defect | Phase 1 correction |
+| Requirement or prior defect | Implementation and measured result |
 |---|---|
-| Flat colored shell | Rebuilt the wheel derivative from the supplied original half-wheel source pivot, radii, raised hub proportions, layered gold rim, dimensional gradients and shadow. Direct supplied star/action SVGs remain in the running application. |
-| Tiny detached labels | Added full, live action labels adjacent to each segment's supplied/adapted icon; responsive type, contrast and bounds checks. |
-| Wheel separate from the star | Wheel, labels, action controls and one star button now live in a single `.v21-star-assembly`. |
-| Wheel opens elsewhere | Source pivot x=120/y=300 maps to the star button center and to the shell reveal origin. The same coordinate system is retained on both screen edges and during group switching. |
-| Icons do not match | Four original action icons are loaded directly. The missing Make Music and Navigation visuals use the supplied star-button SVG underneath provisional glyphs and labels. |
-| Gameplay obstruction | Compute one edge anchor and wheel radius against the visible viewport, keyboard top and fixed toolbar. Automated checks assert the wheel remains above the keyboard and toolbar. |
-| Weak responsive positioning | Recompute the one assembly together for viewport changes, safe insets and mirrored sides; no separate open-state wheel coordinates. |
-| Abrupt animation | Open reveals from the hub over 390ms with a restrained ease-out and no bounce; close retracts over 285ms; group labels crossfade over 165ms. Reduced motion uses 1ms transitions. |
+| Dimensional purple-and-gold wheel | The app loads the supplied dimensional SVG assets and a five-action wheel derivative. The visuals are closer to the supplied reference than the rejected flat sectors. The packages contain SVG/PNG artwork, not native 3D geometry. |
+| One star and one shared wheel component | The Magic Star button, shell and actions are mounted under one `.v21-star-assembly` with a shared source-art pivot. The automated shared-pivot check passed in the final captured run. |
+| Readable action labels and icons | Full labels and action hit targets are captured in both groups. Four Music action icons come from the supplied artwork; Make Music and Navigation artwork remains provisional adaptation. |
+| Keyboard and note clearance | The complete assembly now chooses the lower keyboard region when it has enough usable room. This improves Classic portrait. It does not resolve all layouts: 35 runtime geometry rows recorded 2 wheel/keyboard bounding-box intersections, 23 wheel/highway intersections and 0 wheel/toolbar intersections. The Hero and landscape captures show remaining note-highway overlap. |
+| Group switching preserves the tapped star | Three of seven Classic viewport runs recorded star movement during group switching. This requirement is not fully satisfied. |
+| Pressed/selected feedback | The focused check expected a 1.3 brightness filter while pressed. It observed brightness 1 in all 14 pressed samples. The visual state assertion therefore remains unresolved; the captured states are included for owner inspection. |
+| Responsive positioning | The same component is tested at seven Chromium-emulated viewports in Classic and Hero. Physical devices were not tested. |
 
-The app's existing action handlers are preserved. This Phase 1 change does not redesign Magic Loop, Measure, Jump, Practice panels, piano gameplay or Release 2 features.
+The final focused workflow is diagnostic and fails its recorded geometry/interaction checks. Its upload step succeeded and the ZIP contains the captures, measurements, videos, comparison and manifest. Owner visual approval remains pending. No merge or deployment occurred.
