@@ -56,7 +56,7 @@ const server=http.createServer((req,res)=>{
   if((pathname==='/'||pathname==='/index.html')&&!serveNewShell){
     res.writeHead(200,{'content-type':contentTypes['.html']});res.end(oldShell);return;
   }
-  if(transientFailures>0&&pathname==='/pwa-diagnostics.js'){transientFailures--;res.writeHead(503,{'content-type':'text/plain'});res.end('temporary fixture failure');return;}
+  if(transientFailures>0&&pathname==='/index.html'&&requestUrl.searchParams.has('release')){transientFailures--;res.writeHead(503,{'content-type':'text/plain'});res.end('temporary fixture failure');return;}
   const file=pathname==='/'?path.join(root,'index.html'):path.resolve(root,'.'+pathname);
   if(!file.startsWith(root+path.sep)&&file!==root){res.writeHead(403);res.end();return}
   if(fs.existsSync(file)&&fs.statSync(file).isFile()){
