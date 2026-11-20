@@ -21,14 +21,14 @@ async function snapshot(page,label,w,h,index){await page.setViewportSize({width:
   await page.evaluate(()=>{const gate=document.querySelector('#release2InstallGate'),app=document.querySelector('#pianoApp');if(gate)gate.hidden=true;if(app){app.inert=false;app.removeAttribute('aria-hidden')}document.body.classList.remove('r2-installing')});
   await page.waitForFunction(()=>document.querySelector('#rain')?.width>0&&document.querySelector('#keys [data-pitch]'),null,{timeout:20000});
   await snapshot(page,'Ready idle',390,844,1);
-  await page.locator('#secondaryModeButton').click();
+  await page.locator('#v21Play').click();
   await page.waitForFunction(()=>window.__impactFrameCount>0,null,{timeout:15000});await wait(90);
   await snapshot(page,'Android note impact frame',390,844,2);
   await wait(1600);await snapshot(page,'Live notes portrait',390,844,9);
   const evidence=await page.evaluate(()=>{const samples=window.__frameSamples.filter(x=>x>0&&x<100).sort((a,b)=>a-b);return{impactCount:window.__impactFrameCount,frameIntervals:samples.length,frameGapP50Ms:+(samples[Math.floor(samples.length*.5)]||0).toFixed(2),frameGapP95Ms:+(samples[Math.floor(samples.length*.95)]||0).toFixed(2),longTaskCount:window.__longTaskCount,deviceScaleFactor:devicePixelRatio,viewport:`${innerWidth}x${innerHeight}`}});if(evidence.impactCount<1)throw Error('No real piano-note-arrival impact event was observed.');fs.writeFileSync(path.join(out,'android-emulation-performance.json'),JSON.stringify(evidence,null,2)+'\\n');
-  await page.locator('#pause').click();if(await page.locator('#pause').innerText()!=='▶ Resume')throw Error('Pause did not switch the active playback control to Resume.');await wait(300);
+  await page.locator('#v21Play').click();if(await page.locator('#v21Play').innerText()!=='▶ Resume')throw Error('Pause did not switch the active playback control to Resume.');await wait(300);
   await snapshot(page,'Paused portrait',390,844,3);
-  await page.locator('#pause').click();if(await page.locator('#pause').innerText()!=='⏸ Pause')throw Error('Resume did not restore the playback control.');await wait(300);
+  await page.locator('#v21Play').click();if(await page.locator('#v21Play').innerText()!=='⏸ Pause')throw Error('Resume did not restore the playback control.');await wait(300);
   for(const [label,w,h,i] of [['Phone landscape',844,390,4],['Tablet portrait',834,1194,5],['Tablet landscape',1194,834,6],['Laptop landscape',1440,900,7]])await snapshot(page,label,w,h,i);
   await page.emulateMedia({reducedMotion:'reduce'});await wait(350);
   const reduced=await page.evaluate(()=>matchMedia('(prefers-reduced-motion: reduce)').matches);if(!reduced)throw Error('Reduced-motion media preference was not applied.');

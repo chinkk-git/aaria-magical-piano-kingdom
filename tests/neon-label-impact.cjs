@@ -27,9 +27,9 @@ const viewports=[['Android portrait',390,844,2,true],['Android landscape',844,39
   // The install gate is bypassed only in this isolated test browser; the app renderer remains live.
   await page.evaluate(()=>{const gate=document.querySelector('#release2InstallGate'),app=document.querySelector('#pianoApp');if(gate)gate.hidden=true;if(app){app.inert=false;app.removeAttribute('aria-hidden')}document.body.classList.remove('r2-installing')});
   await page.waitForFunction(()=>document.querySelector('#rain')?.width>0&&document.querySelector('#keys [data-pitch]'),null,{timeout:20000});
-  assert((await page.locator('#secondaryModeButton').innerText()).includes('♫ Play Song'),'Hero Play Song label is missing');
-  assert(await page.locator('#listenToggle').getAttribute('aria-pressed')==='true','new profile should start with Listen ON');
-  await page.locator('#secondaryModeButton').click();
+  assert((await page.locator('#v21Play').innerText()).includes('Play Along'),'Unified Play Along control is missing');
+  assert(await page.locator('#v21Sound').getAttribute('aria-pressed')==='true','new profile should start with Sound On');
+  await page.locator('#v21Play').click();
   await page.waitForFunction(()=>window.__arrivals.length>=3,null,{timeout:12000});await wait(45);
   const impact=await page.evaluate(()=>{
    const first=window.__arrivals[0],key=first&&document.querySelector('#keys [data-pitch="'+first.pitch+'"]'),style=key?getComputedStyle(key):null,pseudo=key?getComputedStyle(key,'::after'):null;

@@ -21,7 +21,9 @@ for(const url of [
   './r2-image.js?v=aaria-piano-r2.2',
   './piano-hero-v2.css?v=aaria-piano-v1.14.0',
   './song-import.js?v=aaria-piano-r2.5',
-  './my-songs.js?v=aaria-piano-r2.4',
+  './my-songs.js?v=aaria-piano-r2.5',
+  './v2.1-ui.js?v=aaria-piano-v2.1.0',
+  './v2.1-ui.css?v=aaria-piano-v2.1.0',
   './shared-song-loader.js',
   './r2-install.js?v=aaria-piano-r2.7'
 ]){
@@ -121,8 +123,9 @@ const server=http.createServer((req,res)=>{
     assert.equal(await reopened.locator('#release2InstallGate').count(),0,'reopening after upgrade shows no OMR installation gate');
     assert.equal(await reopened.locator('body').evaluate(el=>el.innerText.includes('Warning: truncated output')||el.innerText.includes('Total output lines: 196')),false,'reopening after upgrade shows no leaked source warning');
     assert.equal(await reopened.locator('#pianoApp').getAttribute('inert'),null,'the piano is interactive after reopening');
-    assert.equal((await reopened.locator('#secondaryModeButton').innerText()).trim(),'♫ Play Song','the updated song-play action replaces the old Listen label');
-    assert.equal(await reopened.locator('#playbackModeControls button.listen-toggle').count(),1,'one Listen preference toggle remains after upgrade');
+    assert.equal(await reopened.locator('#v21Play').innerText(),'▶ Play Along','the updated shell exposes the unified Play Along action');
+    assert.equal(await reopened.locator('#v21Sound').getAttribute('aria-pressed'),'true','Sound defaults on after upgrade');
+    assert.equal(await reopened.locator('#playbackModeControls button.listen-toggle').count(),1,'one hidden legacy sound toggle remains as the playback engine preference');
     await reopened.locator('#setupKeyboard').click();
     await reopened.locator('#appBuildInfo').waitFor({state:'visible'});
     await reopened.waitForFunction(build=>document.querySelector('#appBuildInfo')?.textContent.includes(build),shellName);
@@ -205,7 +208,9 @@ const server=http.createServer((req,res)=>{
       const shell=await caches.open(shellName);
       const script=await shell.match('./song-import.js?v=aaria-piano-r2.5');
       const updater=await shell.match('./pwa-update.js?v=aaria-pwa-update-1.2');
-      const libraryScript=await shell.match('./my-songs.js?v=aaria-piano-r2.4');
+      const libraryScript=await shell.match('./my-songs.js?v=aaria-piano-r2.5');
+      const v21Script=await shell.match('./v2.1-ui.js?v=aaria-piano-v2.1.0');
+      const v21Style=await shell.match('./v2.1-ui.css?v=aaria-piano-v2.1.0');
       const styles=await shell.match('./piano-hero-v2.css?v=aaria-piano-v1.14.0');
       const html=await shell.match('./index.html');
       return {
@@ -214,7 +219,7 @@ const server=http.createServer((req,res)=>{
         favorite:JSON.parse(localStorage.getItem('aaria-piano-favorites-v1')||'[]').includes('kept-song'),
         idbSong:library,
         verifiedModel:await verified?.text(),
-        script:await script?.text(),updater:await updater?.text(),libraryScript:await libraryScript?.text(),styles:await styles?.text(),html:await html?.text()
+        script:await script?.text(),updater:await updater?.text(),libraryScript:await libraryScript?.text(),v21Script:await v21Script?.text(),v21Style:await v21Style?.text(),styles:await styles?.text(),html:await html?.text()
       };
     },shellName);
     assert.ok(!result.keys.includes('aaria-piano-v1.20.2'),`old app-shell cache is retired; caches remaining: ${result.keys.join(', ')}`);
@@ -224,11 +229,12 @@ const server=http.createServer((req,res)=>{
     assert.equal(result.favorite,true);assert.equal(result.verifiedModel,'verified-model-marker');
     assert.match(result.script,/await lib\.saveSong\(draftSong\)/,'updated automatic save code is cached');assert.match(result.script,/Add New Song/,'new workshop flow is cached');
     assert.match(result.libraryScript,/songPickerButton/,'updated custom song selector code is cached');assert.match(result.libraryScript,/Add New Song/,'library entry is renamed in the cached app');assert.match(result.libraryScript,/Delete Song/,'custom songs remain deletable in the updated shell');
+    assert.match(result.v21Script,/AariaV21UI/,'the V2.1 playback UI is cached');assert.match(result.v21Style,/v21-dock/,'the V2.1 playback styling is cached');
     assert.match(result.styles,/app-build-info/,'updated stylesheet is cached');
     assert.match(result.html,/id="songPickerButton"/,'updated song selector HTML is cached');assert.ok(!result.html.includes('release2InstallGate'),'updated shell no longer has the startup gate');
     assert.match(result.html,/id="zoomKeys"/,'Zoom Keys control remains available');
     assert.match(result.html,/id="appBuildInfo"[^>]*>Installed build: checking…/,'Settings resolves the installed build from its worker');
-    assert.match(result.html,/Speed/,'updated playback label is available');assert.match(result.html,/id="listenToggle"/,'Listen preference control is in the updated shell');assert.match(result.html,/note-impact-style/,'note impact key glow styling is in the updated shell');assert.match(result.html,/spawnNoteExplosion/,'note impact implementation is in the updated shell');assert.match(result.html,/NOTE_FX_DURATION\*1000/,'note flash uses millisecond timing in the updated shell');
+    assert.match(result.html,/Speed/,'updated playback label is available');assert.match(result.html,/id="v21Play"/,'unified Play Along control is in the updated shell');assert.match(result.html,/id="v21Sound"/,'Sound preference control is in the updated shell');assert.match(result.html,/note-impact-style/,'note impact key glow styling is in the updated shell');assert.match(result.html,/spawnNoteExplosion/,'note impact implementation is in the updated shell');assert.match(result.html,/NOTE_FX_DURATION\*1000/,'note flash uses millisecond timing in the updated shell');
     console.log('PWA update-and-reopen passed: prior v1.19.0 shell and warning/gate were replaced; current Piano Hero opened without OMR setup; localStorage/IndexedDB songs, favorites and verified OMR cache remained intact.');
 
     const futureWorker=newWorker.replace(`const CACHE='${shellName}'`,`const CACHE='${nextShellName}'`);
