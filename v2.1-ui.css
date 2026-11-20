@@ -154,3 +154,12 @@ html[data-v21-ui] .hero-zoom{display:none!important}.v21-speed input{height:40px
 
 /* Compact landscape practice target spacing */
 @media(max-height:500px){.v21-wheel[data-side="left"] button[data-key="practice"],.v21-wheel[data-side="left"] button[data-key="settings"]{top:72%}}
+
+/* Compact landscape paired target arc */
+@media(max-height:500px){
+.v21-wheel[data-side="left"] button[data-key="measure"],.v21-wheel[data-side="left"] button[data-key="home"]{left:5%;top:0%}
+.v21-wheel[data-side="left"] button[data-key="loop"],.v21-wheel[data-side="left"] button[data-key="songs"]{left:28%;top:20%}
+.v21-wheel[data-side="left"] button[data-key="jump"],.v21-wheel[data-side="left"] button[data-key="pianoMode"]{left:5%;top:40%}
+.v21-wheel[data-side="left"] button[data-key="practice"],.v21-wheel[data-side="left"] button[data-key="settings"]{left:28%;top:60%}
+.v21-wheel[data-side="left"] button[data-key="makeMusic"],.v21-wheel[data-side="left"] button[data-key="updateApp"]{left:5%;top:78%}
+}
