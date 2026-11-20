@@ -1,6 +1,6 @@
-const CACHE='aaria-piano-v1.20.8';
+const CACHE='aaria-piano-v1.20.9';
 const ASSETS=[
- './','./index.html','./shared-song-loader.js','./shared-song-library.json','./pwa-update.js?v=aaria-pwa-update-1.0','./assets/release2/magic-book.svg','./assets/release2/magic-bubble.svg','./r2-music.js?v=aaria-piano-r2.2','./r2-image.js?v=aaria-piano-r2.2','./piano-hero-v2.css?v=aaria-piano-v1.14.0','./piano-geometry.js','./song-import.js?v=aaria-piano-r2.5','./my-songs.js?v=aaria-piano-r2.4','./assets/piano-hero-v2/home_button.png','./assets/piano-hero-v2/settings_button.png','./omr-worker.js','./manifest.webmanifest','./r2-install.js?v=aaria-piano-r2.7','./release2-install-manifest.json',
+ './','./index.html','./shared-song-loader.js','./shared-song-library.json','./pwa-update.js?v=aaria-pwa-update-1.1','./assets/release2/magic-book.svg','./assets/release2/magic-bubble.svg','./r2-music.js?v=aaria-piano-r2.2','./r2-image.js?v=aaria-piano-r2.2','./piano-hero-v2.css?v=aaria-piano-v1.14.0','./piano-geometry.js','./song-import.js?v=aaria-piano-r2.5','./my-songs.js?v=aaria-piano-r2.4','./assets/piano-hero-v2/home_button.png','./assets/piano-hero-v2/settings_button.png','./omr-worker.js','./manifest.webmanifest','./r2-install.js?v=aaria-piano-r2.7','./release2-install-manifest.json',
  './icon-192.png','./icon-512.png','./icon-maskable-512.png','./apple-touch-icon.png',
  './OMR-THIRD-PARTY-NOTICES.md','./vendor/omr-licenses/partsong-LICENSE',
 ];
