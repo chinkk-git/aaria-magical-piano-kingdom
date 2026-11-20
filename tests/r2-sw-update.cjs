@@ -208,8 +208,8 @@ const server=http.createServer((req,res)=>{
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('Update available. Restart App when you are ready.'),null,{timeout:15000});
     assert.equal(await reopened.locator('#restartAppUpdate').isVisible(),true,'a waiting worker exposes the explicit Restart App action');
     await reopened.locator('#restartAppUpdate').click();
-    await reopened.waitForFunction(build=>document.querySelector('#appUpdateStatus')?.textContent.includes('Update installed and verified: '+build),nextShellName,null,{timeout:20000});
-    await reopened.waitForFunction(build=>document.querySelector('#appBuildInfo')?.textContent.includes(build),nextShellName,null,{timeout:10000});
+    await reopened.waitForFunction(build=>document.querySelector('#appUpdateStatus')?.textContent.includes('Update installed and verified: '+build),nextShellName,{timeout:20000});
+    await reopened.waitForFunction(build=>document.querySelector('#appBuildInfo')?.textContent.includes(build),nextShellName,{timeout:10000});
     const afterConfirmedRestart=await reopened.evaluate(async()=>({build:document.querySelector('#appBuildInfo')?.textContent,status:document.querySelector('#appUpdateStatus')?.textContent,caches:await caches.keys(),song:JSON.parse(localStorage.getItem('aaria-piano-custom-songs-v1')||'[]').find(s=>s.id==='kept-song'),favorite:JSON.parse(localStorage.getItem('aaria-piano-favorites-v1')||'[]').includes('kept-song'),verified:await(async()=>{const cache=await caches.open('aaria-piano-r2-install-v1');const response=await cache.match('./models/verified-fixture.onnx');return response?.text()})()}));
     assert.ok(afterConfirmedRestart.build.includes(nextShellName),'Settings reports the future worker build after restart');
     assert.ok(afterConfirmedRestart.status.includes('Update installed and verified: '+nextShellName),'restart is confirmed only after the active worker reports the future build');
