@@ -130,6 +130,12 @@ const server=http.createServer((req,res)=>{
     await reopened.waitForFunction(build=>document.querySelector('#appBuildInfo')?.textContent.includes(build),shellName);
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes("You're up to date"),{timeout:15000});
+    const [diagnosticDownload]=await Promise.all([reopened.waitForEvent('download'),reopened.locator('#downloadAppDiagnostics').click()]);
+    assert.equal(diagnosticDownload.suggestedFilename(),'aaria-piano-diagnostics.json','Settings downloads a diagnostics report');
+    const diagnosticPayload=JSON.parse(fs.readFileSync(await diagnosticDownload.path(),'utf8'));
+    assert.ok(diagnosticPayload.entries.some(row=>row.type==='update'&&row.state==='up-to-date'),'diagnostics include update state');
+    const diagnosticText=JSON.stringify(diagnosticPayload);
+    assert.ok(!diagnosticText.includes('Saved fixture')&&!diagnosticText.includes('kept-song'),'diagnostics exclude saved song contents');
     await reopened.screenshot({path:'/tmp/pwa-update-settings.png'});
     await context.setOffline(true);
     await reopened.locator('#checkAppUpdate').click();
