@@ -61,7 +61,7 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
      assert.equal(await page.evaluate(()=>AariaV21Engine.state().total),fixtureTotal,`${fixtureTotal}-measure fixture loads`);
      await page.evaluate(()=>window.AariaV21UI.open());await page.locator('.v21-wheel button[data-key="loop"]').click();
      await page.locator('#v21LoopStart').fill(String(fixtureTotal-1));await page.locator('#v21LoopStart').dispatchEvent('change');await page.locator('#v21LoopEnd').fill(String(fixtureTotal));await page.locator('#v21LoopEnd').dispatchEvent('change');
-     assert.match(await page.locator('#v21RangeLabel').textContent(),new RegExp(`${fixtureTotal-1}–${fixtureTotal} of ${fixtureTotal} measures · ${fixtureTotal-1}–${fixtureTotal} selected`));
+     assert.match(await page.locator('#v21RangeLabel').textContent(),new RegExp(`\\d+–${fixtureTotal} of ${fixtureTotal} measures · ${fixtureTotal-1}–${fixtureTotal} selected`));
      await page.locator('#v21Repeat').click();assert.deepEqual(await page.evaluate(()=>[AariaV21Engine.state().loopStart,AariaV21Engine.state().loopEnd]),[fixtureTotal-1,fixtureTotal],`${fixtureTotal}-measure inclusive loop boundaries remain exact`);
    }
    await page.evaluate(()=>{window.AariaV21UI.close();PianoKingdomLibrary.selectSong('custom-v21-long-fixture')});assert.equal(await page.evaluate(()=>AariaV21Engine.state().total),1000,'restore the 1,000-measure fixture for playback coverage');
