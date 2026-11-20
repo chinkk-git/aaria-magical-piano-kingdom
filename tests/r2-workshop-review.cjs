@@ -77,7 +77,7 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   await page.locator('#localSongWizard').waitFor({state:'hidden'});
   await page.waitForFunction(expected=>document.querySelector('#songSelect')?.value===expected&&mode==='listen',id);
   await page.evaluate(()=>window.AariaPianoNavigation.openSongs());await page.locator('#mySongsDialog').waitFor({state:'visible'});
-  await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).locator('select').selectOption('basic');
+  await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).locator('.v21-song-details').evaluate(el=>{el.open=true});await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).locator('select').selectOption('basic');
   await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).getByRole('button',{name:'Choose'}).click();
   await page.waitForFunction(expected=>document.querySelector('#songSelect')?.value===expected,id);
   const playback=await page.evaluate(expected=>({id:document.querySelector('#songSelect').value,engineEvents:EVENTS.map(n=>[n.bar,n.at,n.dur,n.midi]),savedEvents:window.PianoKingdomLibrary.songs[expected].arrangements.basic.events.map(n=>[n.bar,n.at,n.dur,n.midi])}),id);
@@ -88,7 +88,7 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   await page.waitForFunction(()=>document.querySelector('#songSelect')?.value==='cradle'&&mode==='listen');
   assert.equal(await page.locator('#songPickerButton').textContent().then(t=>t.includes('Dalmatian Cradle Song')),true,'built-in song selection updates the visible selector');
   await page.evaluate(()=>window.AariaPianoNavigation.openSongs());await page.locator('#mySongsDialog').waitFor({state:'visible'});
-  await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).locator('select').selectOption('basic');
+  await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).locator('.v21-song-details').evaluate(el=>{el.open=true});await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).locator('select').selectOption('basic');
   await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).getByRole('button',{name:'▶ Play'}).click();
   await page.waitForFunction(expected=>document.querySelector('#songSelect')?.value===expected&&mode==='listen',id);
   assert.deepEqual(await page.evaluate(()=>EVENTS.map(n=>[n.bar,n.at,n.dur,n.midi])),playback.savedEvents,'saved song opens in playback with its selected arrangement');

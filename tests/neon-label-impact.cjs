@@ -55,7 +55,7 @@ const viewports=[['Android portrait',390,844,2,true],['Android landscape',844,39
    await page.screenshot({path:path.join(out,String(results.length+3).padStart(2,'0')+'-'+label.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+w+'x'+h+'.png')});
    results.push({label,width:w,height:h,deviceScaleFactor:scale,touch,noteLabelsSeen:state.labels,largestNearKeyLabelFontPx:state.largestNearLabel,clipped:state.clipped,keyBoundaryErrorPx:+state.keyBoundary.toFixed(2)});
   }
-  await page.emulateMedia({reducedMotion:'reduce'});const beforeReduce=await page.evaluate(()=>window.__arrivals.length);await page.locator('#bar').selectOption('2');await page.waitForFunction(n=>window.__arrivals.length>n,beforeReduce,{timeout:5000});
+  await page.emulateMedia({reducedMotion:'reduce'});const beforeReduce=await page.evaluate(()=>window.__arrivals.length);await page.evaluate(()=>window.AariaV21Engine.setMeasure(2));await page.waitForFunction(n=>window.__arrivals.length>n,beforeReduce,{timeout:5000});
   const reduced=await page.evaluate(()=>{const latest=window.__arrivals.at(-1),key=latest&&document.querySelector('#keys [data-pitch="'+latest.pitch+'"]');return{latest,animation:key?getComputedStyle(key,'::after').animationName:null,media:matchMedia('(prefers-reduced-motion: reduce)').matches}});
   assert(reduced.media&&reduced.latest?.flashDurationMs===120&&reduced.latest?.particlesGenerated===0,'reduced-motion did not use the 120 ms, particle-free impact');
   await page.screenshot({path:path.join(out,'08-reduced-motion-impact.png')});
