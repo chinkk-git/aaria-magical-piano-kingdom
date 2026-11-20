@@ -60,7 +60,7 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
    assert.deepEqual(actual,groups[expected],expected+' group exposes exactly its five mapped actions');
    const state=await page.evaluate(()=>window.AariaV21UI.getState());assert.equal(state.group,expected==='music'?'primary':'navigation','group state matches visible group');
    const center=await star.boundingBox(),assemblyRect=await assembly.boundingBox();assert.ok(center&&assemblyRect,'star and assembly are visible');
-   assert.ok(Math.abs(center.x+center.width/2-assemblyRect.x)<1.5&&Math.abs(center.y+center.height/2-assemblyRect.y)<1.5,'Magic Star is the exact shared wheel pivot');
+   if(Math.abs(center.x+center.width/2-assemblyRect.x)>=1.5||Math.abs(center.y+center.height/2-assemblyRect.y)>=1.5){interactionFailures.push({viewport:vp.name,layout:'classic',group:expected,check:'shared-pivot-alignment',star:{x:center.x+center.width/2,y:center.y+center.height/2},assembly:{x:assemblyRect.x,y:assemblyRect.y}});console.error('SHARED PIVOT DIAGNOSTIC '+JSON.stringify(interactionFailures.at(-1)))}
    assert.equal(await page.locator('.v21-wheel-action:visible').count(),5,'five interactive buttons in visible group');
    const shape=await page.evaluate(()=>{const a=document.querySelector('.v21-star-assembly'),img=document.querySelector('.v21-wheel-art'),s=document.querySelector('.v21-star').getBoundingClientRect(),r=parseFloat(a.style.getPropertyValue('--wheel-radius'));const o=getComputedStyle(img).transformOrigin.split(' ').map(parseFloat);return{center:{x:s.left+s.width/2,y:s.top+s.height/2},radius:r,side:a.dataset.side,origin:o,art:{w:img.clientWidth,h:img.clientHeight}}});
    assert.ok(shape.radius>=80,'wheel retains enough scale for distinct touch targets');assert.ok(Math.abs(shape.origin[0]-shape.art.w*.2)<1&&Math.abs(shape.origin[1]-shape.art.h*.5)<1,'shell transform origin equals the supplied star pivot');
@@ -139,4 +139,39 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
  console.log('FOCUSED EVIDENCE PACKAGED; viewports='+viewports.length+'; screenshots='+shots.length+'; geometry_failures='+geometryFailures.length+'; ZIP='+zip+'; exact_commit='+sha);
  if(geometryFailures.length||interactionFailures.length){console.error('FOCUSED DIAGNOSTIC FAILURE: screenshots and measured evidence are in the ZIP');process.exitCode=1;}
  await browser.close();server.close();
-})().catch(async e=>{console.error(e.stack||e);try{await browser?.close()}catch{}try{server.close()}catch{}process.exitCode=1});
+})().catch(async e=>{
+ console.error(e.stack||e);
+ try{await browser?.close()}catch{}
+ try{
+  if(!fs.existsSync(out))fs.mkdirSync(out,{recursive:true});
+  const vd=path.join(out,'video-temp');
+  if(fs.existsSync(vd)){
+   const vids=fs.readdirSync(vd).filter(n=>n.endsWith('.webm')).sort();
+   for(let i=0;i<vids.length;i++){const to=path.join(out,i===0?'magic-star-open-close-group-switching-portrait.webm':'magic-star-open-close-group-switching-landscape.webm');if(!fs.existsSync(to))fs.renameSync(path.join(vd,vids[i]),to)}
+  }
+  for(const [src,name] of [[path.join(root,'tests/visual-fixtures/original-art-direction.jpg'),'original-art-direction-reference.jpg'],[path.join(root,'tests/visual-fixtures/rejected-portrait.jpg'),'owner-rejected-portrait.jpg'],[path.join(root,'tests/visual-fixtures/rejected-landscape.jpg'),'owner-rejected-landscape.jpg']])if(fs.existsSync(src))fs.copyFileSync(src,path.join(out,name));
+  const sha=process.env.APP_SOURCE_SHA||'unknown';
+  fs.writeFileSync(path.join(out,'geometry-measurements.json'),JSON.stringify(geometryMeasurements,null,2));
+  fs.writeFileSync(path.join(out,'failure-diagnostic.md'),'# Diagnostic evidence package\n\nExact commit: '+sha+'\n\nThe focused run stopped at an assertion after capturing '+shots.length+' running-app screenshots.\n\n```\n'+(e.stack||String(e))+'\n```\n\nGeometry failures recorded: '+geometryFailures.length+'. Interaction diagnostics: '+interactionFailures.length+'. Evidence is diagnostic and is not owner approval.\n');
+  const sheetHtml='<!doctype html><meta charset="utf-8"><title>Phase 1 diagnostic contact sheet</title><style>body{background:#130c25;color:white;font:16px system-ui}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.card{background:#251541;padding:8px;border:1px solid #f2d47c}.card img{width:100%;height:260px;object-fit:contain}</style><h1>Phase 1 diagnostic screenshots · '+sha+'</h1><div class="grid">'+shots.map(s=>'<div class="card"><b>'+s.label.replaceAll('&','&amp;').replaceAll('<','&lt;')+'</b><br><img src="'+pathToFileURL(s.file).href+'"><small>'+s.width+' × '+s.height+' Chromium emulation</small></div>').join('')+'</div>';
+  fs.writeFileSync(path.join(out,'contact-sheet.html'),sheetHtml);
+  if(shots.length){
+   const b=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
+   const p=await b.newPage({viewport:{width:1800,height:2600}});await p.goto(pathToFileURL(path.join(out,'contact-sheet.html')).href);await p.evaluate(()=>Promise.all([...document.images].map(i=>i.decode())));await p.screenshot({path:path.join(out,'contact-sheet.png'),fullPage:true});
+   const corrected=shots.find(s=>s.label.includes('music expanded'))||shots[0];
+   const cmp='<!doctype html><meta charset="utf-8"><title>Original/rejected/corrected diagnostic comparison</title><style>body{margin:0;padding:18px;background:#130c25;color:white;font:700 18px system-ui}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.card{padding:10px;background:#251541;border:1px solid #f2d47c}.card img{width:100%;height:560px;object-fit:contain;background:#0c0716}</style><h1>Original · owner-rejected · corrected running app</h1><section class="grid"><article class="card">Original supplied design<img src="'+pathToFileURL(path.join(out,'original-art-direction-reference.jpg')).href+'"></article><article class="card">Owner-rejected screenshot<img src="'+pathToFileURL(path.join(out,'owner-rejected-portrait.jpg')).href+'"></article><article class="card">Corrected running app · '+corrected.width+' × '+corrected.height+'<img src="'+pathToFileURL(corrected.file).href+'"></article></section>';
+   fs.writeFileSync(path.join(out,'original-rejected-corrected-comparison.html'),cmp);
+   const cp=await b.newPage({viewport:{width:1800,height:720}});await cp.goto(pathToFileURL(path.join(out,'original-rejected-corrected-comparison.html')).href);await cp.evaluate(()=>Promise.all([...document.images].map(i=>i.decode())));await cp.screenshot({path:path.join(out,'original-rejected-corrected-comparison.png'),fullPage:true});await b.close();
+  }
+  fs.writeFileSync(path.join(out,'SCREENSHOT_MANIFEST.md'),'# Screenshot manifest\n\nExact commit: `'+sha+'`\n\n'+shots.map(s=>'- `'+path.basename(s.file)+'` — '+s.width+' × '+s.height+' CSS px; Chromium viewport emulation.').join('\n')+'\n');
+  fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify({project:'Aaria’s Magical Piano Kingdom',phase:'Phase 1 — diagnostic',commit_sha:sha,physical_device_testing:false,screenshots:shots.map(s=>({file:path.basename(s.file),label:s.label,width:s.width,height:s.height})),geometry_failures:geometryFailures.map(x=>({viewport:x.viewport.name,layout:x.layout,group:x.group,intersections:x.intersections})),interaction_failures:interactionFailures,recordings:fs.readdirSync(out).filter(n=>n.endsWith('.webm')),test_error:e.stack||String(e)},null,2));
+  for(const name of ['MAGIC_STAR_PHASE1_ASSET_MAPPING.md','PHASE1_VISUAL_CORRECTIONS.md']){const src=path.join(root,'docs/v2.1',name);if(fs.existsSync(src))fs.copyFileSync(src,path.join(out,name))}
+  fs.writeFileSync(path.join(out,'PHASE1_TEST_RESULTS.md'),'# Phase 1 focused test results\n\nExact commit: '+sha+'\n\nDIAGNOSTIC RUN FAILED: '+(e.stack||String(e))+'\n\nActual running-app screenshots and measured geometry are included. Viewports are Chromium emulations, not physical devices. Owner approval is pending.\n');
+  fs.writeFileSync(path.join(out,'PHASE1_KNOWN_LIMITATIONS.md'),'# Known limitations\n\n- The focused run encountered the assertion recorded in failure-diagnostic.md.\n- Screenshots and measurements are diagnostic and require owner review.\n- No physical-device verification.\n- Secondary panels and unrelated Release 2 features were outside scope.\n');
+  const zip=path.join(process.cwd(),'AARIA_MAGIC_STAR_PHASE1_CORRECTED_OWNER_REVIEW.zip');
+  if(!fs.existsSync(zip))execFileSync('zip',['-qr',zip,path.basename(out)],{cwd:process.cwd()});
+  console.error('DIAGNOSTIC EVIDENCE ZIP CREATED '+zip+'; screenshots='+shots.length+'; commit='+sha);
+ }catch(packError){console.error('EVIDENCE PACKAGING ERROR '+(packError.stack||packError))}
+ try{server.close()}catch{}
+ process.exitCode=1;
+});
