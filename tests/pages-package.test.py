@@ -16,6 +16,8 @@ REQUIRED = (
     "assets/v2.1-magic-wheel/corrected/panel_loop.svg",
     "assets/v2.1-magic-wheel/corrected/panel_jump.svg",
     "assets/v2.1-magic-wheel/corrected/panel_practice.svg",
+    "assets/v2.1-ui/make-music-3d-with-text.png",
+    "assets/v2.1-ui/disco-star-3d.png",
     "assets/v2.1-magic-wheel/half_wheel_none.svg",
     "assets/v2.1-magic-wheel/half_wheel_measure.svg",
     "assets/v2.1-magic-wheel/half_wheel_loop.svg",
