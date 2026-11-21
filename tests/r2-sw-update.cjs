@@ -6,6 +6,7 @@ const path=require('node:path');
 const {chromium}=require('playwright');
 
 const root=path.resolve(__dirname,'..');
+const sharedCatalog=JSON.parse(fs.readFileSync(path.join(root,'shared-song-library.json'),'utf8'));
 const oldWorker=fs.readFileSync(path.join(__dirname,'fixtures/sw-v1.20.2.js'),'utf8');
 const oldShell=fs.readFileSync(path.join(__dirname,'fixtures/installed-shell-v1.20.2.html'),'utf8');
 const newWorker=fs.readFileSync(path.join(root,'sw.js'),'utf8');
@@ -21,9 +22,9 @@ for(const url of [
   './r2-image.js?v=aaria-piano-r2.2',
   './piano-hero-v2.css?v=aaria-piano-v1.14.0',
   './song-import.js?v=aaria-piano-r2.5',
-  './my-songs.js?v=aaria-piano-r2.5',
-  './v2.1-ui.js?v=aaria-piano-v2.1.8',
-  './v2.1-ui.css?v=aaria-piano-v2.1.8',
+  './my-songs.js?v=aaria-piano-r2.6',
+  './v2.1-ui.js?v=aaria-piano-v2.1.9',
+  './v2.1-ui.css?v=aaria-piano-v2.1.9',
   './shared-song-loader.js',
   './r2-install.js?v=aaria-piano-r2.7'
 ]){
@@ -118,7 +119,11 @@ const server=http.createServer((req,res)=>{
     await page.waitForFunction(()=>navigator.serviceWorker.controller&&navigator.serviceWorker.controller!==window.__oldServiceWorker,{timeout:10000});
     await page.close();
     const reopened=await context.newPage();
+    await context.setOffline(true);
     await reopened.goto(origin+'/',{waitUntil:'domcontentloaded'});
+    await reopened.waitForFunction(ids=>ids.every(id=>window.PianoKingdomLibrary?.songs[id]),sharedCatalog.songs.map(song=>song.id),{timeout:15000});
+    assert.ok(await reopened.evaluate(()=>navigator.serviceWorker.controller),'the updated worker serves the app shell offline');
+    await context.setOffline(false);
     await reopened.waitForFunction(()=>window.PianoKingdomLibrary?.saveSong,{timeout:15000});
     assert.equal(await reopened.locator('#release2InstallGate').count(),0,'reopening after upgrade shows no OMR installation gate');
     assert.equal(await reopened.locator('body').evaluate(el=>el.innerText.includes('Warning: truncated output')||el.innerText.includes('Total output lines: 196')),false,'reopening after upgrade shows no leaked source warning');
@@ -215,9 +220,9 @@ const server=http.createServer((req,res)=>{
       const shell=await caches.open(shellName);
       const script=await shell.match('./song-import.js?v=aaria-piano-r2.5');
       const updater=await shell.match('./pwa-update.js?v=aaria-pwa-update-1.2');
-      const libraryScript=await shell.match('./my-songs.js?v=aaria-piano-r2.5');
-      const v21Script=await shell.match('./v2.1-ui.js?v=aaria-piano-v2.1.8');
-      const v21Style=await shell.match('./v2.1-ui.css?v=aaria-piano-v2.1.8');
+      const libraryScript=await shell.match('./my-songs.js?v=aaria-piano-r2.6');
+      const v21Script=await shell.match('./v2.1-ui.js?v=aaria-piano-v2.1.9');
+      const v21Style=await shell.match('./v2.1-ui.css?v=aaria-piano-v2.1.9');
       const styles=await shell.match('./piano-hero-v2.css?v=aaria-piano-v1.14.0');
       const html=await shell.match('./index.html');
       return {
@@ -278,3 +283,4 @@ const server=http.createServer((req,res)=>{
     console.log('Fresh-install startup passed: Piano Hero is immediately interactive and OMR remains idle until Make Music.');
   }finally{await browser.close();server.close();}
 })().catch(error=>{console.error(error);server.close();process.exitCode=1});
+
