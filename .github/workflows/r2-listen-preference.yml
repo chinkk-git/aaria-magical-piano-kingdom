@@ -1,0 +1,41 @@
+name: Release 2 Listen Preference
+
+on:
+  pull_request:
+    branches: [main, hotfix/android-pwa-stale-shell-recovery]
+    paths:
+      - index.html
+      - sw.js
+      - tests/r2-listen-preference.cjs
+      - .github/workflows/r2-listen-preference.yml
+
+permissions:
+  contents: read
+
+jobs:
+  listen-preference:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check JavaScript syntax
+        run: |
+          node --check tests/r2-listen-preference.cjs
+          node --check sw.js
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install chromium
+      - name: Verify Listen preference and playback behavior
+        run: node tests/r2-listen-preference.cjs
+      - name: Upload actual Chromium screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2-listen-preference-${{ github.event.pull_request.head.sha }}
+          path: /tmp/r2-listen-preference/
+          retention-days: 14
+          if-no-files-found: error
