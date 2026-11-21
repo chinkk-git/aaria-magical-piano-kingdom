@@ -143,7 +143,7 @@ function hasPressedHighlight(filter){const match=/brightness\(([^)]+)\)/.exec(fi
    assert.equal(await page.evaluate(()=>window.AariaV21UI.getState().anchor.side),'left','saved star placement survives reload');
    await page.setViewportSize({width:915,height:412});await page.waitForTimeout(180);
    const rotated=await page.evaluate(()=>({side:window.AariaV21UI.getState().anchor.side,rect:document.querySelector('.v21-star').getBoundingClientRect().toJSON()}));
-   assert.equal(rotated.side,'left','saved star placement survives orientation change');assert.ok(rotated.rect.x>=0&&rotated.rect.right<=innerWidth&&rotated.rect.y>=0&&rotated.rect.bottom<=innerHeight,'saved placement remains visible after orientation change');
+   assert.equal(rotated.side,'left','saved star placement survives orientation change');assert.ok(rotated.rect.x>=0&&rotated.rect.right<=vp.width&&rotated.rect.y>=0&&rotated.rect.bottom<=vp.height,'saved placement remains visible after orientation change');
   }
   if(errors.length)throw Error('Runtime errors: '+errors.join(' | '));if(failedAssets.length)throw Error('Wheel asset errors: '+failedAssets.join(' | '));
   if(record){await context.close();const videoPath=await video.path();fs.renameSync(videoPath,path.join(out,i===0?'magic-star-open-close-group-switching-portrait.webm':'magic-star-open-close-group-switching-landscape.webm'))}else await context.close();
