@@ -46,7 +46,7 @@ $('v21Play').addEventListener('click',()=>{const s=playStatus();if(['countdown',
 $('v21Sound').addEventListener('click',()=>{engine.setSound(!engine.state().soundEnabled);updateDock()});let zoomLevel=12;$('v21Zoom').addEventListener('click',()=>{window.AariaZoomKeyboard?.();zoomLevel=zoomLevel===12?8:zoomLevel===8?16:12;$('v21Zoom').dataset.active=String(zoomLevel!==12);$('v21Zoom').setAttribute('aria-label','Zoom keyboard, '+zoomLevel+' keys in view');$('v21Zoom').title='Zoom keyboard · '+zoomLevel+' keys';updateDock()});
 function anchorPixels(){return{width:wheel.offsetWidth||Math.min(310,innerWidth*.76),height:wheel.offsetHeight||Math.min(310,innerWidth*.76),x:anchor.side==='left'?Math.max(0,parseFloat(getComputedStyle(star).left)||10):innerWidth-(parseFloat(getComputedStyle(star).right)||10)-star.offsetWidth,y:anchor.y*innerHeight}}
 function placeOverlay(){
- const vv=window.visualViewport,viewH=vv?.height||innerHeight,viewW=vv?.width||innerWidth,offsetTop=vv?.offsetTop||0,safeTop=Math.max(16,parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--v21-safe-top'))||0),sr=star.getBoundingClientRect(),dockRect=dock.getBoundingClientRect(),keyRect=$('keys')?.getBoundingClientRect();
+ const vv=window.visualViewport,viewH=vv?.height||innerHeight,viewW=vv?.width||innerWidth,offsetTop=vv?.offsetTop||0,safeTop=Math.max(16,parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--v21-safe-top'))||0),sr=star.getBoundingClientRect(),dockRect=dock.getBoundingClientRect(),keyRect=$('keys')?.getBoundingClientRect(),headerRect=document.querySelector('.compact-title')?.getBoundingClientRect();
  const safeLeft=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--v21-safe-left'))||0,safeRight=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--v21-safe-right'))||0;const usableBottom=Math.min(viewH+offsetTop-14,dockRect.top+offsetTop-12),top=offsetTop+safeTop;
  // A smaller responsive radius keeps the open menu to the playfield edge and
  // protects notes from a large opaque overlay on short/mobile screens.
@@ -54,13 +54,16 @@ function placeOverlay(){
  const upperBottom=Math.min(usableBottom,keyRect?keyRect.top+offsetTop-12:usableBottom),lowerTop=keyRect?keyRect.bottom+offsetTop+12:top;
  const upperRadius=Math.max(0,Math.min(maxByWidth,(upperBottom-top)/2));
  const lowerRadius=Math.max(0,Math.min(maxByWidth,(usableBottom-lowerTop)/2));
- const useBelowKeyboard=lowerRadius>=94&&(wheelOpen||anchor.y>.55||upperRadius<94);
+ const useBelowKeyboard=lowerRadius>=94&&(anchor.y>.55||upperRadius<94);
  const radius=useBelowKeyboard?lowerRadius:upperRadius;
+ const expanded=wheelOpen&&!wheel.hidden;
  const regionTop=useBelowKeyboard?lowerTop:top,regionBottom=useBelowKeyboard?usableBottom:upperBottom;
  const minCenter=regionTop+radius,maxCenter=regionBottom-radius;
  const preferredCenter=useBelowKeyboard?(minCenter+maxCenter)/2:offsetTop+anchor.y*viewH;
- const centerY=Math.max(minCenter,Math.min(maxCenter,preferredCenter));
- lastPlacement={viewH,viewW,offsetTop,usableBottom,top,upperBottom,lowerTop,upperRadius,lowerRadius,useBelowKeyboard,radius,regionTop,regionBottom,minCenter,maxCenter,preferredCenter,centerY};
+ const reservedTop=(headerRect?.bottom||safeTop)+offsetTop+8;
+ const centerY=expanded?reservedTop+radius:Math.max(minCenter,Math.min(maxCenter,preferredCenter));
+ const heroGame=document.querySelector('.hero-game');if(heroGame)heroGame.style.marginTop=expanded?(2*radius+16)+'px':'';
+ lastPlacement={viewH,viewW,offsetTop,usableBottom,top,upperBottom,lowerTop,upperRadius,lowerRadius,useBelowKeyboard,radius,regionTop,regionBottom,minCenter,maxCenter,preferredCenter,centerY,expanded,reservedTop};
  // Keep the resting anchor fixed while groups/actions animate around the hub.
  if(!wheelOpen)anchor.y=(centerY-offsetTop)/viewH;
  const starSize=Math.max(40,Math.min(58,radius*.52));
@@ -80,7 +83,7 @@ function starCenter(){const r=star.getBoundingClientRect();return{x:r.left+r.wid
 function saveAnchor(){try{localStorage.setItem('aaria-v21-star-anchor',JSON.stringify(anchor))}catch{}}
 function setMenuGroup(){buildWheel()}
 function openWheel(){wheelOpen=true;menuGroup='primary';activeAction=null;buildWheel();wheel.hidden=false;wheel.inert=false;wheel.dataset.motion='open';wheel.dataset.state='closed';star.setAttribute('aria-expanded','true');star.setAttribute('aria-label','Close Magic Star menu');wheel.querySelector('.v21-wheel-action')?.focus({preventScroll:true});resize();clearInterval(placementTimer);placementTimer=setInterval(()=>{if(wheelOpen)resize();else{clearInterval(placementTimer);placementTimer=null}},100);requestAnimationFrame(()=>requestAnimationFrame(()=>{if(wheelOpen){resize();wheel.dataset.state='open'}}))}
-function closeWheel(){if(!wheelOpen)return;wheelOpen=false;clearInterval(placementTimer);placementTimer=null;activePanel=null;panel.hidden=true;star.setAttribute('aria-expanded','false');star.setAttribute('aria-label','Open Magic Star menu');wheel.dataset.motion='close';wheel.dataset.state='closed';wheel.inert=true;const finish=()=>{if(!wheelOpen){wheel.hidden=true;menuGroup='primary';wheel.dataset.group='primary';buildWheel()}};wheel.addEventListener('transitionend',finish,{once:true});setTimeout(finish,360)}
+function closeWheel(){if(!wheelOpen)return;wheelOpen=false;resize();clearInterval(placementTimer);placementTimer=null;activePanel=null;panel.hidden=true;star.setAttribute('aria-expanded','false');star.setAttribute('aria-label','Open Magic Star menu');wheel.dataset.motion='close';wheel.dataset.state='closed';wheel.inert=true;const finish=()=>{if(!wheelOpen){wheel.hidden=true;menuGroup='primary';wheel.dataset.group='primary';buildWheel()}};wheel.addEventListener('transitionend',finish,{once:true});setTimeout(finish,360)}
 function toggleWheel(){if(!wheelOpen){openWheel();return}if(!panel.hidden){panel.hidden=true;activePanel=null;wheel.hidden=false;wheel.inert=false;wheel.dataset.state='open';placeOverlay();return}closeWheel()}
 function selectPanel(key){activePanel=key;buildWheel();renderPanel(key);wheel.hidden=true;wheel.inert=true;panel.hidden=false;placeOverlay();panel.querySelector('button, input')?.focus({preventScroll:true})}
 function activateWheelItem(key){if(['measure','loop','jump','practice'].includes(key)){selectPanel(key);return}if(key==='makeMusic'){activePanel=key;panel.hidden=true;setTimeout(()=>{closeWheel();window.AariaPianoNavigation?.openNewSong?.()},180)}}
