@@ -156,6 +156,8 @@ const PIXELS_PER_EIGHTH=27;
 // Canvas-only visual layer: it shares the measured PianoGeometry projection
 // used by the note lanes and reference keys. It never changes note timing.
 const PianoHeroVisual=(()=>{
+ const discoStarArtwork=new Image();discoStarArtwork.decoding='async';discoStarArtwork.src='./assets/v2.1-ui/disco-star-3d.png';
+ window.AariaPianoVisualAssetState={get discoStar(){return{src:discoStarArtwork.currentSrc||discoStarArtwork.src,complete:discoStarArtwork.complete,naturalWidth:discoStarArtwork.naturalWidth,naturalHeight:discoStarArtwork.naturalHeight}}};
  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
  const seeded=i=>{const x=Math.sin((i+17)*127.1)*43758.5453;return x-Math.floor(x)};
  const dust=Array.from({length:82},(_,i)=>({x:seeded(i*3+1),y:seeded(i*3+2),size:.45+seeded(i*3+3)*1.25,phase:seeded(i*7+4)*Math.PI*2,speed:.12+seeded(i*5+8)*.22,gold:i%3===0}));
@@ -169,27 +171,9 @@ const PianoHeroVisual=(()=>{
   bloom.addColorStop(.09,'#ffd56b'+Math.round(57*pulse).toString(16).padStart(2,'0'));
   bloom.addColorStop(.25,'#d982ff32');bloom.addColorStop(1,'#9c50ff00');
   ctx.fillStyle=bloom;ctx.fillRect(0,0,w,Math.min(hitY,hitY*.72));
-  // A bright starburst at the vanishing point with soft, tapered rays.
-  const sx=w*.5,sy=Math.max(8,hitY*.025),burstR=Math.min(w*.23,hitY*.42);
-  const burst=ctx.createRadialGradient(sx,sy,0,sx,sy,burstR);
-  burst.addColorStop(0,'#fffef1'+Math.round(240*pulse).toString(16).padStart(2,'0'));
-  burst.addColorStop(.035,'#fff3c9'+Math.round(185*pulse).toString(16).padStart(2,'0'));
-  burst.addColorStop(.16,'#ffd66b55');burst.addColorStop(1,'#f3adff00');
-  ctx.fillStyle=burst;ctx.fillRect(sx-burstR,sy-burstR,burstR*2,burstR*2);
-  for(let i=0;i<11;i++){
-   const spread=(i-5)/5,reach=hitY*(.24+((i*7)%4)*.045),tipX=sx+spread*Math.min(w*.31,reach*.66);
-   ctx.beginPath();ctx.moveTo(sx+(i%2?1:-1),sy+3);
-   ctx.quadraticCurveTo(sx+spread*reach*.18,sy+reach*.34,tipX,sy+reach);
-   ctx.strokeStyle=i%3===0?'#fff0b95c':'#f1d9ff35';ctx.lineWidth=i%3===0?2.1:1.1;
-   ctx.shadowColor=i%3===0?'#ffdf86':'#d992ff';ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;
-  }
-  // Bright four-point star with a gentle pulse; kept above the note lanes.
-  const starR=clamp(w*.018,5,12);
-  ctx.save();ctx.translate(sx,sy);ctx.scale(pulse,pulse);
-  const star=ctx.createRadialGradient(0,0,0,0,0,starR*2.8);
-  star.addColorStop(0,'#ffffff');star.addColorStop(.22,'#fff6d2');star.addColorStop(1,'#ffcf6500');
-  ctx.fillStyle=star;ctx.beginPath();ctx.arc(0,0,starR*2.8,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#fffdf0';ctx.beginPath();ctx.moveTo(0,-starR*2.2);ctx.quadraticCurveTo(starR*.18,-starR*.2,starR*2,0);ctx.quadraticCurveTo(starR*.18,starR*.2,0,starR*2.2);ctx.quadraticCurveTo(-starR*.18,starR*.2,-starR*2,0);ctx.quadraticCurveTo(-starR*.18,-starR*.2,0,-starR*2.2);ctx.fill();ctx.restore();
+  // Owner-approved combined golden star/disco ball artwork, drawn behind note lanes.
+  const sx=w*.5,sy=Math.max(8,hitY*.025),starSize=Math.min(w*.38,hitY*.34,208);
+  if(discoStarArtwork.complete&&discoStarArtwork.naturalWidth){ctx.save();ctx.globalAlpha=.98;ctx.drawImage(discoStarArtwork,sx-starSize/2,0,starSize,starSize);ctx.restore()}
   // Gold-lit perspective edges retain a bright core and soft reflected falloff.
   for(const side of [-1,1]){
    const edge=side<0?0:w,vanish=sx+(edge-sx)*.28;
@@ -249,26 +233,6 @@ const PianoHeroVisual=(()=>{
    ctx.globalAlpha=pulseStar*.72;ctx.fillStyle=s.gold?'#ffe39a':'#f0c2ff';ctx.beginPath();ctx.moveTo(x,y-r*2.3);ctx.quadraticCurveTo(x-r*.25,y-r*.2,x-r*2.2,y);ctx.quadraticCurveTo(x-r*.25,y+r*.2,x,y+r*2.3);ctx.quadraticCurveTo(x+r*.25,y+r*.2,x+r*2.2,y);ctx.quadraticCurveTo(x+r*.25,y-r*.2,x,y-r*2.3);ctx.fill();
   }
   ctx.globalAlpha=1;
-  // Keep the approved golden star/rays intact and add the requested mirrored
-  // orb immediately beneath them. Rotation is visual-only and pauses with playback.
-  const paused=mode==='stop'&&!!pausedMode,rotateOrb=!reduced&&document.visibilityState!=='hidden'&&!paused;
-  const orbRadius=clamp(w*.026,7,12),orbY=sy+starR*2.55+orbRadius;
-  discoBall(ctx,sx,orbY,orbRadius,rotateOrb?now*.000075:0,pulse);
- }
- function discoBall(ctx,x,y,r,angle,pulse){
-  ctx.save();ctx.globalAlpha=.78;
-  const cord=ctx.createLinearGradient(x,y-r*1.9,x,y-r);cord.addColorStop(0,'#fff3c8');cord.addColorStop(1,'#d6a64f');ctx.strokeStyle=cord;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,y-r*1.95);ctx.lineTo(x,y-r*.88);ctx.stroke();
-  const glow=ctx.createRadialGradient(x,y,r*.3,x,y,r*2.1);glow.addColorStop(0,'#f6d77a22');glow.addColorStop(1,'#d4a4ff00');ctx.fillStyle=glow;ctx.beginPath();ctx.arc(x,y,r*2.1,0,Math.PI*2);ctx.fill();
-  ctx.save();ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.clip();
-  const metal=ctx.createRadialGradient(x-r*.42,y-r*.48,1,x+r*.22,y+r*.25,r*1.65);metal.addColorStop(0,'#fffde8');metal.addColorStop(.18,'#d9d6ef');metal.addColorStop(.42,'#756a9a');metal.addColorStop(.68,'#30254d');metal.addColorStop(.86,'#f1d57e');metal.addColorStop(1,'#21193e');ctx.fillStyle=metal;ctx.fillRect(x-r,y-r,2*r,2*r);
-  const facetColors=['#fff0b8','#ad94e9','#77dff0','#f39bd8','#fff6db','#6f5a9e'],cellW=2*r/7,cellH=2*r/5;
-  for(let row=0;row<5;row++)for(let col=0;col<7;col++){
-   const x0=x-r+col*cellW,y0=y-r+row*cellH,shift=Math.sin(angle+row*.8+col*1.07)*r*.055;
-   ctx.beginPath();ctx.moveTo(x0+shift,y0);ctx.lineTo(x0+cellW+shift*.5,y0+cellH*.12);ctx.lineTo(x0+cellW-shift,y0+cellH);ctx.lineTo(x0-shift*.4,y0+cellH*.88);ctx.closePath();
-   const reflect=.22+.34*(.5+.5*Math.sin(angle*1.8+row*.72+col*1.24));ctx.globalAlpha=reflect;ctx.fillStyle=facetColors[(col+row*2+Math.floor(angle*1.4))%facetColors.length];ctx.fill();ctx.globalAlpha=.34;ctx.strokeStyle='#fff8dc';ctx.lineWidth=.38;ctx.stroke();
-  }
-  const highlight=ctx.createRadialGradient(x-r*.38,y-r*.48,0,x-r*.12,y-r*.2,r*.94);highlight.addColorStop(0,'#ffffffb8');highlight.addColorStop(.2,'#fff1c85c');highlight.addColorStop(1,'#fff1c800');ctx.globalAlpha=.7;ctx.fillStyle=highlight;ctx.fillRect(x-r,y-r,2*r,2*r);ctx.restore();
-  ctx.globalAlpha=.9;ctx.strokeStyle='#fff0ae';ctx.lineWidth=1.15;ctx.shadowColor='#ffdc83';ctx.shadowBlur=5*pulse;ctx.beginPath();ctx.arc(x,y,r-.3,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;ctx.restore();
  }
  function crystal(ctx,top,bottom,topY,bottomY,color,label,isPlaying,time,reduced,geometry,pitch,vanishX){
   const cyan=color.includes('67dafa')||color.includes('21d5ff'),gold=color.includes('ffcf70')||color.includes('ffd36f');

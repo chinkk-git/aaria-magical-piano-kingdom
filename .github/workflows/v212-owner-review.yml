@@ -8,6 +8,7 @@ on:
       - my-songs.js
       - v2.1-ui.js
       - v2.1-ui.css
+      - assets/v2.1-ui/**
       - tests/v212-acceptance.cjs
       - .github/workflows/v212-owner-review.yml
       - docs/V2.1.12-make-music-song-settings.md
