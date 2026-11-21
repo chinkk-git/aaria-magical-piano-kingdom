@@ -18,7 +18,7 @@ const viewports=[['Android portrait',390,844,2,true],['Android landscape',844,39
    window.addEventListener('piano-note-arrival',e=>window.__arrivals.push(e.detail));
    const native=CanvasRenderingContext2D.prototype.fillText;
    CanvasRenderingContext2D.prototype.fillText=function(text,x,y,...rest){
-    if(this.canvas?.id==='rain'&&/^[A-G]#?[0-9]$/.test(String(text))){const m=this.font.match(/([0-9.]+)px/);window.__labels.push({text:String(text),fontPx:m?Number(m[1]):0,x:Number(x),y:Number(y),width:this.measureText(String(text)).width,canvasWidth:this.canvas.clientWidth,canvasHeight:this.canvas.clientHeight})}
+    if(this.canvas?.id==='rain'&&/^[A-G]#?[0-9]$/.test(String(text))){const m=this.font.match(/([0-9.]+)px/),transform=this.getTransform(),pixelRatio=this.canvas.width/(this.canvas.clientWidth||1),cssScale=transform.a/pixelRatio;window.__labels.push({text:String(text),fontPx:m?Number(m[1]):0,x:transform.e/pixelRatio,y:transform.f/pixelRatio,width:this.measureText(String(text)).width*cssScale,canvasWidth:this.canvas.clientWidth,canvasHeight:this.canvas.clientHeight})}
     return native.call(this,text,x,y,...rest)
    };
   });
