@@ -76,7 +76,7 @@ jobs:
             for (let attempt = 0; attempt < 120; attempt++) {
               for (const [key, workflow_id] of Object.entries(targets)) {
                 if (found[key]?.status === 'completed') continue;
-                const response = await github.rest.actions.listWorkflowRunsForRepo({
+                const response = await github.rest.actions.listWorkflowRuns({
                   owner: context.repo.owner, repo: context.repo.repo, workflow_id, head_sha: sha, per_page: 20
                 });
                 const run = response.data.workflow_runs.find(item => item.head_sha === sha);
