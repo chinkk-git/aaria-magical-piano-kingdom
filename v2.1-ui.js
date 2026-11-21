@@ -12,14 +12,14 @@ const dock=document.createElement('section');dock.className='v21-dock';dock.setA
 document.body.append(dock);
 const assembly=document.createElement('div');assembly.className='v21-star-assembly';assembly.setAttribute('aria-label','Magic Star navigation');
 const star=document.createElement('button');star.className='v21-star';star.type='button';star.setAttribute('aria-label','Open Magic Star menu');star.setAttribute('aria-expanded','false');star.setAttribute('aria-controls','v21Wheel');
-const starArt=document.createElement('img');starArt.className='v21-star-art';starArt.src=wheelAsset('original/star_idle.svg');starArt.alt='';starArt.setAttribute('aria-hidden','true');star.append(starArt);
+const starArt=document.createElement('img');starArt.className='v21-star-art';starArt.src=wheelAsset('phase1/star-button-premium.svg');starArt.alt='';starArt.setAttribute('aria-hidden','true');star.append(starArt);
 const wheel=document.createElement('div');wheel.className='v21-wheel';wheel.id='v21Wheel';wheel.hidden=true;wheel.dataset.state='closed';wheel.dataset.side=anchor.side;wheel.setAttribute('role','group');wheel.setAttribute('aria-label','Magic Star controls');
-const shell=document.createElement('img');shell.className='v21-wheel-art';shell.src=wheelAsset('phase1/half-wheel-five-action-adapted.svg');shell.alt='';shell.setAttribute('aria-hidden','true');wheel.append(shell);
+const shell=document.createElement('img');shell.className='v21-wheel-art';shell.src=wheelAsset('phase1/half-wheel-premium.svg');shell.alt='';shell.setAttribute('aria-hidden','true');wheel.append(shell);
 const panel=document.createElement('section');panel.className='v21-practice-panel';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','false');panel.setAttribute('aria-labelledby','v21PanelTitle');
 assembly.append(wheel,star);document.body.append(assembly,panel);
 const menuGroups={primary:['measure','loop','jump','practice','makeMusic'],navigation:['songs','home','pianoMode','settings','updateApp']};
 const actionTitles={measure:'Measure',loop:'Loop',jump:'Jump',practice:'Practice',makeMusic:'Make Music',songs:'My Songs',home:'Home',pianoMode:'Piano Mode',settings:'Settings',updateApp:'Update App'};
-const actionArt={measure:'original/button_measure.svg',loop:'original/button_loop.svg',jump:'original/button_jump.svg',practice:'original/button_practice.svg'};
+const musicGlyphs={measure:'♫',loop:'↻',jump:'⇥',practice:'★',makeMusic:'♫+'};
 const navigationGlyphs={
  makeMusic:'<path d="M14 5v10.2a3 3 0 1 1-2-2.83V8l8-2v8.2a3 3 0 1 1-2-2.83V3z" fill="currentColor"/><path d="M21 16v6m-3-3h6" stroke="#fff6c9" stroke-width="2.2" stroke-linecap="round"/>',
  songs:'<path d="M15 4v11.3a3.1 3.1 0 1 1-2-2.93V7l9-2v9.3a3.1 3.1 0 1 1-2-2.93V3z" fill="currentColor"/><path d="M4 6h4M4 10h4M4 14h3" stroke="#fff4c7" stroke-width="1.7" stroke-linecap="round"/>',
@@ -30,12 +30,13 @@ const navigationGlyphs={
 };
 const groups={};
 function makeActionLayer(group){const layer=document.createElement('div');layer.className='v21-wheel-actions';layer.dataset.group=group;layer.setAttribute('role','group');layer.setAttribute('aria-label',group==='primary'?'Music actions':'Navigation actions');layer.hidden=group!=='primary';
- for(const key of menuGroups[group]){
-  const button=document.createElement('button');button.type='button';button.className='v21-wheel-action';button.dataset.key=key;button.setAttribute('aria-label',actionTitles[key]);button.setAttribute('aria-pressed','false');
-  if(actionArt[key]){const image=document.createElement('img');image.className='v21-action-art';image.src=wheelAsset(actionArt[key]);image.alt='';image.setAttribute('aria-hidden','true');image.loading='eager';button.append(image)}
-  else{const disc=document.createElement('span');disc.className='v21-adapted-action-art';disc.setAttribute('aria-hidden','true');disc.innerHTML='<img class="v21-adapted-base" src="'+wheelAsset('corrected/button_star.svg')+'" alt="" aria-hidden="true"><svg viewBox="0 0 24 24">'+navigationGlyphs[key]+'</svg>';button.append(disc)}
-  button.addEventListener('click',()=>{activeAction=key;syncSelectedAction();activateWheelItem(key)});layer.append(button);
-  const caption=document.createElement('span');caption.className='v21-action-label';caption.dataset.key=key;caption.setAttribute('aria-hidden','true');caption.textContent=actionTitles[key];layer.append(caption)
+ for(const [index,key] of menuGroups[group].entries()){
+  const button=document.createElement('button');button.type='button';button.className='v21-wheel-action';button.dataset.key=key;button.dataset.index=String(index);button.setAttribute('aria-label',actionTitles[key]);button.setAttribute('aria-pressed','false');
+  const glyph=document.createElement('span');glyph.className='v21-wheel-glyph';glyph.setAttribute('aria-hidden','true');
+  if(navigationGlyphs[key])glyph.innerHTML='<svg viewBox="0 0 24 24" focusable="false">'+navigationGlyphs[key]+'</svg>';
+  else glyph.textContent=musicGlyphs[key]||'✦';
+  const caption=document.createElement('span');caption.className='v21-action-label';caption.dataset.key=key;caption.setAttribute('aria-hidden','true');caption.textContent=actionTitles[key];
+  button.append(glyph,caption);button.addEventListener('click',()=>{activeAction=key;syncSelectedAction();activateWheelItem(key)});layer.append(button)
  }
  return layer
 }
@@ -59,7 +60,7 @@ function placeOverlay(){
  const upperBottom=Math.min(usableBottom,keyRect?.top-12??usableBottom),lowerTop=keyRect?keyRect.bottom+12:top;
  const upperRadius=Math.max(0,Math.min(maxByWidth,(upperBottom-top)/2));
  const lowerRadius=Math.max(0,Math.min(maxByWidth,(usableBottom-lowerTop)/2));
- const useBelowKeyboard=lowerRadius>=80;
+ const useBelowKeyboard=lowerRadius>=94;
  const radius=useBelowKeyboard?lowerRadius:upperRadius;
  const regionTop=useBelowKeyboard?lowerTop:top,regionBottom=useBelowKeyboard?usableBottom:upperBottom;
  const minCenter=regionTop+radius,maxCenter=regionBottom-radius;
@@ -71,12 +72,10 @@ function placeOverlay(){
  assembly.dataset.side=anchor.side;assembly.style.left=centerX+'px';assembly.style.top=centerY+'px';assembly.style.setProperty('--wheel-radius',radius+'px');assembly.style.setProperty('--star-size',starSize+'px');
  const scale=radius/250,shellWidth=600*scale,shellHeight=600*scale;
  shell.style.width=shellWidth+'px';shell.style.height=shellHeight+'px';shell.style.left=(-120*scale)+'px';shell.style.top=(-300*scale)+'px';shell.style.setProperty('--reveal-radius',(radius*1.04)+'px');
- const buttonRadius=radius*.76,labelRadius=radius*.94;
- const keys=menuGroups.primary;
+ const buttonRadius=radius*.765,buttonWidth=Math.max(44,Math.min(72,radius*.46));
  for(let index=0;index<5;index++){const theta=(-72+36*index)*Math.PI/180,sign=anchor.side==='left'?1:-1,dx=Math.cos(theta),dy=Math.sin(theta);
-  for(const group of ['primary','navigation']){const key=menuGroups[group][index],button=groups[group].querySelector('[data-key="'+key+'"]'),caption=groups[group].querySelector('.v21-action-label[data-key="'+key+'"]');
-   button.style.left=(sign*buttonRadius*dx)+'px';button.style.top=(buttonRadius*dy)+'px';button.style.setProperty('--icon-size',Math.max(28,Math.min(40,radius*.36))+'px');
-   caption.style.left=(sign*labelRadius*dx)+'px';caption.style.top=(labelRadius*dy)+'px'
+  for(const group of ['primary','navigation']){const key=menuGroups[group][index],button=groups[group].querySelector('[data-key="'+key+'"]');
+   button.style.left=(sign*buttonRadius*dx)+'px';button.style.top=(buttonRadius*dy)+'px';button.style.setProperty('--action-width',buttonWidth+'px');button.style.setProperty('--icon-size',Math.max(20,Math.min(30,radius*.25))+'px');button.style.setProperty('--action-delay',(45+index*24)+'ms')
   }
  }
  if(!panel.hidden){const low=Math.max(safeTop+8,Math.min(keyRect?.top||innerHeight-110,dockRect.top)-8),maxH=Math.max(120,low-safeTop-12);panel.style.setProperty('--v21-panel-max',maxH+'px');const pr=panel.getBoundingClientRect(),h=Math.min(panel.offsetHeight||280,maxH),panelTop=Math.max(safeTop+4,Math.min(anchor.y*innerHeight-h/2,low-h-4));panel.style.top=panelTop+'px';if(anchor.side==='left'){panel.style.left=Math.min(innerWidth-(pr.width||340)-6,Math.max(sr.right+6,Math.min(innerWidth*.18,sr.right+6)))+'px';panel.style.right='auto'}else{panel.style.right=Math.min(innerWidth-(sr.left-6),Math.max(6,innerWidth-sr.left+6))+'px';panel.style.left='auto'}}

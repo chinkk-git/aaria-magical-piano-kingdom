@@ -1,4 +1,4 @@
-name: Phase 1 — Magic Star wheel owner review
+name: Phase 1 — Premium Magic Star wheel owner review
 
 on:
   pull_request:
@@ -38,7 +38,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: AARIA_MAGIC_STAR_PHASE1_CORRECTED_OWNER_REVIEW
-          path: AARIA_MAGIC_STAR_PHASE1_CORRECTED_OWNER_REVIEW.zip
+          name: AARIA_MAGIC_STAR_PHASE1_PREMIUM_3D_OWNER_REVIEW
+          path: AARIA_MAGIC_STAR_PHASE1_PREMIUM_3D_OWNER_REVIEW.zip
           retention-days: 30
           if-no-files-found: error

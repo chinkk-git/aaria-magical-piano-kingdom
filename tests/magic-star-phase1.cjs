@@ -49,6 +49,7 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'no horizontal page overflow');
   const base=vp.name;
   async function capture(state){const mode=await page.locator('#pianoLayoutSelect').inputValue().catch(()=> 'classic'),file=path.join(out,base+'__'+mode+'__'+state+'.png');await page.screenshot({path:file,fullPage:false});shots.push({file,label:base+' · '+mode+' · '+state.replaceAll('-',' '),width:vp.width,height:vp.height,layout:mode})}
+  async function captureWheel(state){const mode=await page.locator('#pianoLayoutSelect').inputValue().catch(()=> 'classic'),s=await star.boundingBox(),r=parseFloat(await assembly.evaluate(e=>e.style.getPropertyValue('--wheel-radius')));const x=Math.max(0,s.x+s.width/2-8),y=Math.max(0,s.y+s.height/2-r-8),right=Math.min(vp.width,s.x+s.width/2+r+12),bottom=Math.min(vp.height,s.y+s.height/2+r+8),file=path.join(out,base+'__'+mode+'__'+state+'.png');await page.screenshot({path:file,clip:{x,y,width:right-x,height:bottom-y}});shots.push({file,label:base+' · '+mode+' · '+state.replaceAll('-',' '),width:right-x,height:bottom-y,layout:mode,kind:'wheel close-up'})}
   await page.waitForTimeout(420);await capture('01-closed');
   const sourceRoutes=fs.readFileSync(path.join(root,'v2.1-ui.js'),'utf8');
   for(const route of [/\['measure','loop','jump','practice'\]\.includes\(key\)/,/key==='makeMusic'[\s\S]*?openNewSong/,/key==='songs'[\s\S]*?openSongs/,/key==='home'/,/key==='pianoMode'/,/key==='settings'/,/key==='updateApp'[\s\S]*?checkAppUpdate/])assert.match(sourceRoutes,route,'preserved action route '+route);
@@ -68,7 +69,7 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
    keyBox=await keys.boundingBox();dockBox=await dock.boundingBox();
    const layout=await page.locator('#pianoLayoutSelect').inputValue().catch(()=> 'classic');
    const targets=await visible.evaluateAll(bs=>bs.map(b=>{const r=b.getBoundingClientRect();return{key:b.dataset.key,x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height}}));
-   const labels=await page.locator('.v21-wheel-actions:not([hidden]) .v21-action-label').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return{key:e.dataset.key,x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height,text:e.textContent.trim(),opacity:getComputedStyle(e).opacity}}));
+   const labels=await visible.locator('.v21-action-label').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect(),b=e.closest('button'),br=b.getBoundingClientRect();return{key:e.dataset.key,x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height,text:e.textContent.trim(),fontSize:parseFloat(getComputedStyle(e).fontSize),opacity:getComputedStyle(e).opacity,button:{x:br.x,y:br.y,right:br.right,bottom:br.bottom,width:br.width,height:br.height}}}));
    const regions=await page.evaluate(()=>Object.fromEntries(['.v21-wheel-art','#keys','#rain','#heroPlayfield','.v21-dock','.v21-star-assembly','.v21-star'].map(sel=>{const e=document.querySelector(sel),r=e?.getBoundingClientRect();return[sel,r?{x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height}:null]})));
    const wheelBounds={x:left,y:shape.center.y-shape.radius,right:right,bottom:shape.center.y+shape.radius,width:shape.radius,height:shape.radius*2};
    const intersects=(a,b)=>!!a&&!!b&&Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math.min(a.bottom,b.bottom)-Math.max(a.y,b.y)>1;
@@ -80,11 +81,11 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
 
    for(const t of targets){assert.ok(t.x>=0&&t.y>=0&&t.right<=vp.width+1&&t.bottom<=vp.height+1,'action is not clipped: '+t.key);assert.ok(t.width>=44&&t.height>=44,'action has 44px minimum target: '+t.key)}
    for(let a=0;a<targets.length;a++)for(let b=a+1;b<targets.length;b++){const dx=targets[a].x+targets[a].width/2-(targets[b].x+targets[b].width/2),dy=targets[a].y+targets[a].height/2-(targets[b].y+targets[b].height/2);assert.ok(Math.hypot(dx,dy)>=44,'circular touch targets do not intersect: '+targets[a].key+' / '+targets[b].key)}
-   for(const l of labels){assert.equal(l.text,titles[l.key],'label stays complete');assert.ok(l.x>=0&&l.y>=0&&l.right<=vp.width+1&&l.bottom<=vp.height+1,'label is within screen: '+l.key);assert.ok(Number(l.opacity)>.8,'label visible after transition: '+l.key)}
+   for(const l of labels){assert.equal(l.text,titles[l.key],'label stays complete');assert.ok(l.x>=l.button.x-1&&l.y>=l.button.y-1&&l.right<=l.button.right+1&&l.bottom<=l.button.bottom+1,'label is inside its raised segment action: '+l.key);assert.ok(l.fontSize>=10,'label remains readable at 10px or larger: '+l.key);assert.ok(l.x>=0&&l.y>=0&&l.right<=vp.width+1&&l.bottom<=vp.height+1,'label is within screen: '+l.key);assert.ok(Number(l.opacity)>.8,'label visible after transition: '+l.key)}
    for(let a=0;a<labels.length;a++)for(let b=a+1;b<labels.length;b++)assert.ok(!overlap(labels[a],labels[b]),'labels do not collide: '+labels[a].key+' / '+labels[b].key);
-   assert.ok(await page.locator('.v21-wheel-art').evaluate(e=>e.complete&&e.naturalWidth===600),'five-action adapted source-geometry wheel SVG loaded');
-   const images=await page.locator('.v21-star-art,.v21-action-art,.v21-adapted-base').evaluateAll(es=>es.map(e=>({src:e.getAttribute('src'),ok:e.complete&&e.naturalWidth>0})));
-   assert.ok(images.length>=7&&images.every(i=>i.ok),'original and adapted star/action art loaded');
+   assert.ok(await page.locator('.v21-wheel-art').evaluate(e=>e.complete&&e.naturalWidth===600),'premium source-geometry wheel SVG loaded');
+   const images=await page.locator('.v21-star-art').evaluateAll(es=>es.map(e=>({src:e.getAttribute('src'),ok:e.complete&&e.naturalWidth>0})));
+   assert.ok(images.length===1&&images.every(i=>i.ok),'matching premium star socket artwork loaded');
    if(failedAssets.length)throw Error('Wheel asset failures: '+failedAssets.join(' | '));
    return{center:shape.center,radius:shape.radius,side:shape.side,intersections:row.intersections};
   }
@@ -92,11 +93,11 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
   if(i===0){
    await star.click();await page.waitForTimeout(25);await capture('open-frame-025ms');await page.waitForTimeout(70);await capture('open-frame-095ms');await page.waitForTimeout(100);await capture('open-frame-195ms');await page.waitForTimeout(130);await capture('open-frame-325ms');await page.waitForTimeout(120);
   }else{await star.click();await page.waitForTimeout(430)}
-  await checkGroup('music');await capture('02-music-expanded');
+  await checkGroup('music');await capture('02-music-expanded');if(i===0)await captureWheel('music-icons-labels-close-up');
   const musicCenter=await star.boundingBox();
   const selectedMusic=page.locator('.v21-wheel-actions:not([hidden]) .v21-wheel-action[data-key="measure"]');
   await selectedMusic.hover();await page.mouse.down();await page.waitForTimeout(25);const musicFilter=await selectedMusic.evaluate(e=>getComputedStyle(e).filter);if(!/brightness\(1\.3\)/.test(musicFilter)){interactionFailures.push({viewport:vp.name,layout:'classic',action:'measure',expected:'brightness(1.3)',actual:musicFilter});console.error('PRESSED STATE DIAGNOSTIC '+JSON.stringify(interactionFailures.at(-1)))}await capture('04-music-action-pressed');await page.mouse.move(vp.width-2,vp.height-2);await page.mouse.up();
-  await star.click();await page.waitForTimeout(210);await checkGroup('navigation');await capture('03-navigation-expanded');
+  await star.click();await page.waitForTimeout(210);await checkGroup('navigation');await capture('03-navigation-expanded');if(i===0)await captureWheel('navigation-icons-labels-close-up');
   const selectedNav=page.locator('.v21-wheel-actions:not([hidden]) .v21-wheel-action[data-key="updateApp"]');
   await selectedNav.hover();await page.mouse.down();await page.waitForTimeout(25);const navFilter=await selectedNav.evaluate(e=>getComputedStyle(e).filter);if(!/brightness\(1\.3\)/.test(navFilter)){interactionFailures.push({viewport:vp.name,layout:'classic',action:'updateApp',expected:'brightness(1.3)',actual:navFilter});console.error('PRESSED STATE DIAGNOSTIC '+JSON.stringify(interactionFailures.at(-1)))}await capture('05-navigation-action-pressed');await page.mouse.move(vp.width-2,vp.height-2);await page.mouse.up();
   await star.click();await page.waitForTimeout(210);await checkGroup('music');
@@ -107,8 +108,8 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
   }else{await page.keyboard.press('Escape');await page.waitForTimeout(420);assert.equal(await page.locator('.v21-wheel').isVisible(),false,'wheel closes after group switching')}
   await page.locator('#pianoLayoutSelect').evaluate(el=>{el.value='hero';el.dispatchEvent(new Event('change',{bubbles:true}))});await page.waitForTimeout(300);
   await capture('hero-01-closed');
-  await star.click();await page.waitForTimeout(430);await checkGroup('music');await capture('hero-02-music-expanded');
-  await star.click();await page.waitForTimeout(210);await checkGroup('navigation');await capture('hero-03-navigation-expanded');
+  await star.click();await page.waitForTimeout(430);await checkGroup('music');await capture('hero-02-music-expanded');if(i===0)await captureWheel('hero-music-icons-labels-close-up');
+  await star.click();await page.waitForTimeout(210);await checkGroup('navigation');await capture('hero-03-navigation-expanded');if(i===0)await captureWheel('hero-navigation-icons-labels-close-up');
   await page.keyboard.press('Escape');await page.waitForTimeout(420);assert.equal(await page.locator('.v21-wheel').isVisible(),false,'Hero wheel closes after group switching');
   await page.locator('#pianoLayoutSelect').evaluate(el=>{el.value='classic';el.dispatchEvent(new Event('change',{bubbles:true}))});await page.waitForTimeout(300);
   assert.equal(await page.locator('.v21-practice-panel').isVisible(),false,'wheel-only test leaves secondary panels untouched');
@@ -135,7 +136,7 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
  for(const [name,pathName] of [['MAGIC_STAR_PHASE1_ASSET_MAPPING.md','MAGIC_STAR_PHASE1_ASSET_MAPPING.md'],['PHASE1_VISUAL_CORRECTIONS.md','PHASE1_VISUAL_CORRECTIONS.md']])fs.copyFileSync(path.join(root,'docs/v2.1',pathName),path.join(out,name));
  fs.writeFileSync(path.join(out,'PHASE1_TEST_RESULTS.md'),['# Phase 1 focused test results','','Exact commit: '+sha,'','- Seven emulated responsive viewports; both Classic and Hero layouts; closed, both groups and pressed-action states.','- Runtime geometry measurements include star center, assembly, wheel art, five action rects, keyboard, highway and fixed toolbar.','- Geometry failures recorded: '+geometryFailures.length+'.','- Shared anchor, 44px touch targets, target/label overlap, viewport, key and toolbar geometry.','- Interactions: open, close, Music ↔ Navigation; reduced-motion mode.','- Four fixed playback controls remain. Art assets load and the page reports no wheel-related errors.','','Interaction diagnostics: '+interactionFailures.length+'.','Focused Phase 1 only; no owner visual approval, physical-device testing, or Release 2 regression suite.'].join('\n'));
  fs.writeFileSync(path.join(out,'PHASE1_KNOWN_LIMITATIONS.md'),['# Phase 1 known limitations','','- Seven responsive sizes are Chromium emulations, not physical-device tests.','- Packages contain vector/raster artwork but no native 3D model or supplied five-action wheel.','- The fifth Music segment, Make Music icon, Navigation icons and group labels are documented adaptations.','- The adaptation follows the source artwork but is not an exact supplied five-action original.','- Secondary panels and unrelated features remain outside this visual approval iteration.','- Owner visual approval is pending; no merge or deployment occurred.'].join('\n'));
- const zip=path.join(process.cwd(),'AARIA_MAGIC_STAR_PHASE1_CORRECTED_OWNER_REVIEW.zip');execFileSync('zip',['-qr',zip,path.basename(out)],{cwd:process.cwd()});
+ const zip=path.join(process.cwd(),'AARIA_MAGIC_STAR_PHASE1_PREMIUM_3D_OWNER_REVIEW.zip');execFileSync('zip',['-qr',zip,path.basename(out)],{cwd:process.cwd()});
  console.log('FOCUSED EVIDENCE PACKAGED; viewports='+viewports.length+'; screenshots='+shots.length+'; geometry_failures='+geometryFailures.length+'; ZIP='+zip+'; exact_commit='+sha);
  if(geometryFailures.length||interactionFailures.length){console.error('FOCUSED DIAGNOSTIC FAILURE: screenshots and measured evidence are in the ZIP');process.exitCode=1;}
  await browser.close();server.close();
@@ -168,7 +169,7 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
   for(const name of ['MAGIC_STAR_PHASE1_ASSET_MAPPING.md','PHASE1_VISUAL_CORRECTIONS.md']){const src=path.join(root,'docs/v2.1',name);if(fs.existsSync(src))fs.copyFileSync(src,path.join(out,name))}
   fs.writeFileSync(path.join(out,'PHASE1_TEST_RESULTS.md'),'# Phase 1 focused test results\n\nExact commit: '+sha+'\n\nDIAGNOSTIC RUN FAILED: '+(e.stack||String(e))+'\n\nActual running-app screenshots and measured geometry are included. Viewports are Chromium emulations, not physical devices. Owner approval is pending.\n');
   fs.writeFileSync(path.join(out,'PHASE1_KNOWN_LIMITATIONS.md'),'# Known limitations\n\n- The focused run encountered the assertion recorded in failure-diagnostic.md.\n- Screenshots and measurements are diagnostic and require owner review.\n- No physical-device verification.\n- Secondary panels and unrelated Release 2 features were outside scope.\n');
-  const zip=path.join(process.cwd(),'AARIA_MAGIC_STAR_PHASE1_CORRECTED_OWNER_REVIEW.zip');
+  const zip=path.join(process.cwd(),'AARIA_MAGIC_STAR_PHASE1_PREMIUM_3D_OWNER_REVIEW.zip');
   if(!fs.existsSync(zip))execFileSync('zip',['-qr',zip,path.basename(out)],{cwd:process.cwd()});
   console.error('DIAGNOSTIC EVIDENCE ZIP CREATED '+zip+'; screenshots='+shots.length+'; commit='+sha);
  }catch(packError){console.error('EVIDENCE PACKAGING ERROR '+(packError.stack||packError))}
