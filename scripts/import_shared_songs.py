@@ -84,6 +84,10 @@ def musical_data(song: dict[str, Any]) -> dict[str, Any]:
     return {key: song.get(key, {} if key == "arrangements" else None) for key in MUSICAL_FIELDS}
 
 
+def musical_fingerprint(song: dict[str, Any]) -> str:
+    return json.dumps(musical_data(song), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
 def _load_catalog(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {"format": CATALOG_FORMAT, "version": 1, "songs": []}
@@ -102,29 +106,41 @@ def reconcile_songs(backup: dict[str, Any], catalog: dict[str, Any]) -> tuple[di
     def detect_duplicates(songs: list[dict[str, Any]], source: str) -> None:
         ids: dict[str, dict[str, Any]] = {}
         titles: dict[str, dict[str, Any]] = {}
+        fingerprints: dict[str, dict[str, Any]] = {}
         for song in songs:
             validate_song(song)
             title_key = normalize_title(song["title"])
+            fingerprint = musical_fingerprint(song)
             prior_id, prior_title = ids.get(song["id"]), titles.get(title_key)
+            prior_music = fingerprints.get(fingerprint)
             if prior_id:
                 report["conflicts"].append(f"{source}: duplicate id {song['id']} ({song['title']})")
             if prior_title and prior_title.get("id") != song["id"]:
                 report["conflicts"].append(f"{source}: duplicate title {song['title']} and {prior_title['title']}")
+            if prior_music and normalize_title(prior_music["title"]) != title_key:
+                report["conflicts"].append(f"{source}: identical musical data appears as both {song['title']} and {prior_music['title']}")
             ids[song["id"]] = song
             titles[title_key] = song
+            fingerprints[fingerprint] = song
 
     detect_duplicates(existing, "catalog")
     incoming: list[dict[str, Any]] = []
     incoming_ids: set[str] = set()
     incoming_titles: set[str] = set()
+    incoming_fingerprints: dict[str, dict[str, Any]] = {}
     for raw in backup["songs"]:
         validate_song(raw)
         song = project_song(raw)
         title_key = normalize_title(song["title"])
+        fingerprint = musical_fingerprint(song)
+        prior_music = incoming_fingerprints.get(fingerprint)
         if song["id"] in incoming_ids or title_key in incoming_titles:
             report["conflicts"].append(f"backup: duplicate id or title for {song['title']} ({song['id']})")
+        if prior_music and normalize_title(prior_music["title"]) != title_key:
+            report["conflicts"].append(f"backup: identical musical data appears as both {song['title']} and {prior_music['title']}")
         incoming_ids.add(song["id"])
         incoming_titles.add(title_key)
+        incoming_fingerprints[fingerprint] = song
         incoming.append(song)
 
     if report["conflicts"]:
@@ -135,8 +151,12 @@ def reconcile_songs(backup: dict[str, Any], catalog: dict[str, Any]) -> tuple[di
     for song in incoming:
         same_id = by_id.get(song["id"])
         same_title = by_title.get(normalize_title(song["title"]))
+        same_music = next((item for item in existing if musical_fingerprint(item) == musical_fingerprint(song)), None)
         if same_id and same_title and same_id is not same_title:
             report["conflicts"].append(f"{song['title']}: id and normalized title match different catalogue records")
+            continue
+        if not same_id and not same_title and same_music:
+            report["conflicts"].append(f"{song['title']}: identical musical data already exists as {same_music['title']}; existing entry preserved")
             continue
         match = same_id or same_title
         if match:
