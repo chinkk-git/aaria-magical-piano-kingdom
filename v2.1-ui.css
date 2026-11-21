@@ -396,3 +396,27 @@ html[data-v21-ui] .hero-zoom{display:none!important}.v21-speed input{height:40px
 @media(max-width:540px){.v21-dock{left:4px;right:4px;width:auto;max-width:calc(100vw - 8px);min-width:0;box-sizing:border-box;overflow:hidden}}
 .v21-dock{bottom:calc(var(--v21-safe-bottom) + var(--v21-visual-bottom-gap,0px))}
 @media(max-width:540px){.v21-star-assembly .v21-action-label{font-size:11px!important}}
+
+/* Compact four-control dock: keep the notes and keyboard visually dominant. */
+:root{--v21-dock-height:60px}
+html[data-v21-ui] .v21-dock{left:max(5px,env(safe-area-inset-left));right:max(5px,env(safe-area-inset-right));width:auto;min-width:0;min-height:56px;box-sizing:border-box;display:grid;grid-template-columns:minmax(92px,1.18fr) 44px minmax(92px,1.1fr) 44px;align-items:center;gap:5px;padding:4px 7px;border:1px solid #c39a59;border-radius:14px;background:linear-gradient(155deg,#26163eef,#171027f5 72%,#130d20f8);box-shadow:0 -2px 10px #05020e88,inset 0 1px #fff3;backdrop-filter:blur(8px);overflow:visible}
+html[data-v21-ui] .v21-dock button{box-sizing:border-box;min-width:44px;min-height:44px;height:44px;margin:0;padding:0 7px;border:1px solid #9d7b4f;border-radius:11px;background:#28183fe8;box-shadow:inset 0 1px #fff3;color:#fff5df;font:700 12px/1 system-ui;text-shadow:0 1px 2px #12091d;white-space:nowrap}
+html[data-v21-ui] .v21-dock #v21Play.v21-play-button{display:flex;align-items:center;justify-content:center;gap:5px;border-color:#c09b61;background:linear-gradient(180deg,#66479a,#422d69 58%,#2a1c45);box-shadow:inset 0 1px #fff4,0 2px 3px #08041277;color:#fff7e8}
+html[data-v21-ui] .v21-dock .v21-play-icon{width:17px;height:17px;flex:0 0 17px;fill:currentColor}
+html[data-v21-ui] .v21-dock .v21-icon-button{display:grid;place-items:center;width:44px;min-width:44px;height:44px;padding:0;border-color:#796246;background:#221831;color:#f7e8c5;box-shadow:inset 0 1px #fff2}
+html[data-v21-ui] .v21-dock .v21-icon-button svg{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+html[data-v21-ui] .v21-dock #v21Sound svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+html[data-v21-ui] .v21-dock #v21Sound[aria-pressed="true"]{border-color:#c79b54;background:#282038;color:#ffebbd;box-shadow:inset 0 1px #fff3}
+html[data-v21-ui] .v21-dock #v21Zoom[aria-pressed="true"]{border-color:#c79b54;color:#ffe1a1;box-shadow:inset 0 0 0 1px #d4aa6144}
+html[data-v21-ui] .v21-dock .v21-speed{box-sizing:border-box;position:relative;min-width:0;min-height:44px;display:grid;grid-template-columns:auto minmax(24px,1fr) auto;align-items:center;gap:4px;padding:0 2px;color:#ead9b8;font:700 10px/1 system-ui}
+html[data-v21-ui] .v21-dock .v21-speed-label{white-space:nowrap;color:#ead9b8}
+html[data-v21-ui] .v21-dock .v21-speed output{min-width:30px;text-align:right;color:#fff0c9;font-size:11px}
+html[data-v21-ui] .v21-dock .v21-speed input{box-sizing:border-box;display:block;width:100%;min-width:24px;height:44px;min-height:44px;margin:0;accent-color:#d4ad66;touch-action:pan-y}
+html[data-v21-ui] .v21-dock button:focus-visible,html[data-v21-ui] .v21-dock input:focus-visible{outline:2px solid #fff1bd;outline-offset:2px}
+html[data-v21-ui] .v21-dock button:active{transform:translateY(1px);filter:brightness(1.1)}
+@media(max-width:540px){html[data-v21-ui] .v21-dock{left:max(4px,env(safe-area-inset-left));right:max(4px,env(safe-area-inset-right));gap:4px;padding:4px 5px;overflow:visible;grid-template-columns:minmax(88px,1.12fr) 44px minmax(84px,1fr) 44px}html[data-v21-ui] .v21-dock button{font-size:11px}html[data-v21-ui] .v21-dock .v21-speed{grid-template-columns:auto minmax(20px,1fr) auto;gap:2px;font-size:9px}html[data-v21-ui] .v21-dock .v21-speed output{min-width:27px;font-size:10px}}
+@media(max-width:360px){html[data-v21-ui] .v21-dock{grid-template-columns:minmax(82px,1fr) 44px minmax(72px,.9fr) 44px;gap:3px;padding-inline:4px}html[data-v21-ui] .v21-dock .v21-speed-label{font-size:8px}html[data-v21-ui] .v21-dock .v21-speed output{min-width:24px;font-size:9px}}
+/* Open star softly warms into a steady, slow breathing gold; reduced motion stays still. */
+@keyframes v21-star-golden-breathe{0%,100%{filter:drop-shadow(0 0 7px #ffd55b99) drop-shadow(0 5px 7px #09031cbb)}50%{filter:drop-shadow(0 0 10px #ffdf78c9) drop-shadow(0 5px 7px #09031cbb)}}
+.v21-star-assembly .v21-star[aria-expanded="true"] .v21-star-art{animation:v21-star-golden-breathe 3.6s ease-in-out infinite;filter:drop-shadow(0 0 8px #ffdc70b8) drop-shadow(0 5px 7px #09031cbb);transition:filter 300ms ease}
+@media(prefers-reduced-motion:reduce){.v21-star-assembly .v21-star[aria-expanded="true"] .v21-star-art{animation:none;filter:drop-shadow(0 0 8px #ffdc70b8) drop-shadow(0 5px 7px #09031cbb)}}

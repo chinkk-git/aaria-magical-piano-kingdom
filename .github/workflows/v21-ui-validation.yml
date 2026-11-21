@@ -1,4 +1,4 @@
-name: Phase 1 — Premium Magic Star wheel owner review
+name: V2.1 — Magic Star polish + compact controls owner review
 
 on:
   pull_request:
@@ -29,16 +29,16 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright@1.62.1
           npx playwright install chromium
-      - name: Test wheel interactions and capture owner-review evidence
+      - name: Test wheel and playback controls; capture owner-review evidence
         env:
           APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
           RUNNER_TEMP: ${{ runner.temp }}
         run: node tests/magic-star-phase1.cjs
-      - name: Upload Phase 1 owner-review ZIP
+      - name: Upload V2.1 owner-review ZIP
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: AARIA_MAGIC_STAR_PHASE1_PREMIUM_3D_OWNER_REVIEW
-          path: AARIA_MAGIC_STAR_PHASE1_PREMIUM_3D_OWNER_REVIEW.zip
+          name: AARIA_MAGIC_STAR_3D_POLISH_COMPACT_CONTROLS_OWNER_REVIEW
+          path: AARIA_MAGIC_STAR_3D_POLISH_COMPACT_CONTROLS_OWNER_REVIEW.zip
           retention-days: 30
           if-no-files-found: error

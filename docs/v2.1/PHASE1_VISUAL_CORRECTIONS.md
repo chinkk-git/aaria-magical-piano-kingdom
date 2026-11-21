@@ -20,3 +20,14 @@
 The focused Chromium workflow captures the current rejected reference, corrected running app, Classic and Hero layouts, Music and Navigation groups, portrait and landscape sizes, close-up material/label screenshots, opening/closing frames, and transition recordings. It records geometry for the star, wheel, action buttons, highway, keyboard and fixed dock. Any test failure retains diagnostic screenshots in the ZIP.
 
 Only a successful exact-SHA run with its full evidence package establishes readiness for owner review. Viewport simulation is not physical-device verification. Owner approval remains pending; Phase 1 is not marked visually complete.
+
+
+## V2.1 targeted polish pass
+
+- The Jump interior ray was traced to the SVG path `M120 300H370`. It was removed from that path; the two legitimate star-to-rim segment seams remain.
+- Added per-facet clipped radial dome shading, curved oval lacquer reflections, specular bands and dark inner roll-off. These SVG layers provide a 2D illustrated depth treatment; they are not native 3D.
+- The star retains the shared wheel pivot and now brightens on open, breathes gently over 3.6 seconds while open, and closes back to its resting glow. Reduced-motion uses a steady glow.
+- Reworked the same fixed dock used in both layouts: labeled Play Along, icon-only Sound and Zoom, and the existing Speed slider/percentage. Icon controls have accessible names, pressed states, focus styles and 44px targets. Playback, sound preference, speed calculation and zoom function remain on their existing handlers.
+- Focused evidence captures the prior exact-SHA running-app screenshot and current app across Classic/Hero, phone/tablet/desktop portrait/landscape viewport emulations, both action groups, wheel close-ups, toolbar states and opening/group-switch/closing video.
+
+Owner visual approval is pending; automated evidence is not visual approval.
