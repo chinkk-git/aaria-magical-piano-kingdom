@@ -6,6 +6,10 @@ const path=require('node:path');
 const {chromium}=require('playwright');
 
 const root=path.resolve(__dirname,'..');
+const {APP_BUILD}=require('../pwa-update.js');
+const v21ScriptUrl=`./v2.1-ui.js?v=${APP_BUILD}`;
+const v21StyleUrl=`./v2.1-ui.css?v=${APP_BUILD}`;
+const updaterUrl='./pwa-update.js?v=aaria-pwa-update-1.3';
 const sharedCatalog=JSON.parse(fs.readFileSync(path.join(root,'shared-song-library.json'),'utf8'));
 const oldWorker=fs.readFileSync(path.join(__dirname,'fixtures/sw-v1.20.2.js'),'utf8');
 const oldShell=fs.readFileSync(path.join(__dirname,'fixtures/installed-shell-v1.20.2.html'),'utf8');
@@ -23,8 +27,8 @@ for(const url of [
   './piano-hero-v2.css?v=aaria-piano-v1.14.0',
   './song-import.js?v=aaria-piano-r2.5',
   './my-songs.js?v=aaria-piano-r2.6',
-  './v2.1-ui.js?v=aaria-piano-v2.1.13',
-  './v2.1-ui.css?v=aaria-piano-v2.1.13',
+  v21ScriptUrl,
+  v21StyleUrl,
   './shared-song-loader.js',
   './r2-install.js?v=aaria-piano-r2.7'
 ]){
@@ -219,10 +223,10 @@ const server=http.createServer((req,res)=>{
       const verified=await (await caches.open('aaria-piano-r2-install-v1')).match('./models/verified-fixture.onnx');
       const shell=await caches.open(shellName);
       const script=await shell.match('./song-import.js?v=aaria-piano-r2.5');
-      const updater=await shell.match('./pwa-update.js?v=aaria-pwa-update-1.2');
+      const updater=await shell.match(updaterUrl);
       const libraryScript=await shell.match('./my-songs.js?v=aaria-piano-r2.6');
-      const v21Script=await shell.match('./v2.1-ui.js?v=aaria-piano-v2.1.13');
-      const v21Style=await shell.match('./v2.1-ui.css?v=aaria-piano-v2.1.13');
+      const v21Script=await shell.match(v21ScriptUrl);
+      const v21Style=await shell.match(v21StyleUrl);
       const styles=await shell.match('./piano-hero-v2.css?v=aaria-piano-v1.14.0');
       const html=await shell.match('./index.html');
       return {
@@ -246,7 +250,7 @@ const server=http.createServer((req,res)=>{
     assert.match(result.html,/id="songPickerButton"/,'updated song selector HTML is cached');assert.ok(!result.html.includes('release2InstallGate'),'updated shell no longer has the startup gate');
     assert.match(result.v21Script,/id="v21Zoom"/,'fixed toolbar Zoom control is created by the updated app shell');
     assert.match(result.html,/id="appBuildInfo"[^>]*>Installed build: checking…/,'Settings resolves the installed build from its worker');
-    assert.match(result.html,/Speed/,'updated playback label is available');assert.match(result.html,/v2\.1-ui\.js\?v=aaria-piano-v2\.1\.13/,'unified controls script is in the updated shell');assert.match(result.v21Script,/id="v21Play"/,'unified Play Along control is in the V2.1 script');assert.match(result.v21Script,/id="v21Sound"/,'Sound preference control is in the V2.1 script');assert.match(result.html,/note-impact-style/,'note impact key glow styling is in the updated shell');assert.match(result.html,/spawnNoteExplosion/,'note impact implementation is in the updated shell');assert.match(result.html,/NOTE_FX_DURATION\*1000/,'note flash uses millisecond timing in the updated shell');
+    assert.match(result.html,/Speed/,'updated playback label is available');assert.ok(result.html.includes(v21ScriptUrl)'unified controls script is in the updated shell');assert.match(result.v21Script,/id="v21Play"/,'unified Play Along control is in the V2.1 script');assert.match(result.v21Script,/id="v21Sound"/,'Sound preference control is in the V2.1 script');assert.match(result.html,/note-impact-style/,'note impact key glow styling is in the updated shell');assert.match(result.html,/spawnNoteExplosion/,'note impact implementation is in the updated shell');assert.match(result.html,/NOTE_FX_DURATION\*1000/,'note flash uses millisecond timing in the updated shell');
     console.log('PWA update-and-reopen passed: prior v1.19.0 shell and warning/gate were replaced; current Piano Hero opened without OMR setup; localStorage/IndexedDB songs, favorites and verified OMR cache remained intact.');
 
     const futureWorker=newWorker.replace(`const CACHE='${shellName}'`,`const CACHE='${nextShellName}'`);
