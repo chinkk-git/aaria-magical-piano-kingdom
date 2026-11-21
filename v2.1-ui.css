@@ -396,3 +396,4 @@ html[data-v21-ui] .hero-zoom{display:none!important}.v21-speed input{height:40px
 @media(max-width:540px){.v21-dock{left:4px;right:4px;width:auto;max-width:calc(100vw - 8px);min-width:0;box-sizing:border-box;overflow:hidden}}
 .v21-dock{bottom:calc(var(--v21-safe-bottom) + var(--v21-visual-bottom-gap,0px))}
 @media(max-width:540px){.v21-star-assembly .v21-action-label{font-size:11px!important}}
+.v21-star-assembly .v21-star{transform:translate(-50%,-50%) translateY(2px)!important}
