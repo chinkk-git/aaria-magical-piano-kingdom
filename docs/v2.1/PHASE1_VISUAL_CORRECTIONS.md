@@ -9,6 +9,9 @@
 - Moved the ten action names into the same semantic action buttons as their icons. Labels use consistent ivory typography, gold-edged contrast shadows, 10px minimum type, and natural two-line wrapping for long names.
 - Replaced thumbnail button artwork with vector glyph compositions based on the supplied action symbols. Make Music and Navigation glyphs are clearly treated as adaptations.
 - Kept the shared wheel component for Classic and Hero. Its clip reveal grows from the star pivot; icons and labels fade and settle into place with coordinated timing and no bounce.
+- Reduced the responsive wheel radius and allowed the glossy SVG to transmit some highway light, so the five raised facets occupy less of the note field while remaining legible.
+- Increased the action composition height to 56px so long two-line labels remain inside their 44px-or-larger touch targets, including short landscape viewports.
+- Kept the stored star anchor fixed during open-group switching so the star and wheel do not drift apart while the radial group changes.
 - Tightened the fixed playback dock grid and enabled line wrapping to prevent clipping in narrow phone widths.
 - Bumped the shell cache version and precached the new wheel and star artwork.
 

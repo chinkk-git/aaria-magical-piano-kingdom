@@ -56,7 +56,9 @@ function anchorPixels(){return{width:wheel.offsetWidth||Math.min(310,innerWidth*
 function placeOverlay(){
  const vv=window.visualViewport,viewH=vv?.height||innerHeight,viewW=vv?.width||innerWidth,offsetTop=vv?.offsetTop||0,safeTop=Math.max(16,parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--v21-safe-top'))||0),sr=star.getBoundingClientRect(),dockRect=dock.getBoundingClientRect(),keyRect=$('keys')?.getBoundingClientRect();
  const safeLeft=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--v21-safe-left'))||0,safeRight=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--v21-safe-right'))||0;const usableBottom=Math.min(viewH+offsetTop-14,dockRect.top-12),top=offsetTop+safeTop;
- const maxByWidth=Math.max(0,Math.min(180,(viewW-22)/2.4));
+ // A smaller responsive radius keeps the open menu to the playfield edge and
+ // protects notes from a large opaque overlay on short/mobile screens.
+ const maxByWidth=Math.max(0,Math.min(148,Math.min(viewW,viewH)*.305,(viewW-22)/2.4));
  const upperBottom=Math.min(usableBottom,keyRect?.top-12??usableBottom),lowerTop=keyRect?keyRect.bottom+12:top;
  const upperRadius=Math.max(0,Math.min(maxByWidth,(upperBottom-top)/2));
  const lowerRadius=Math.max(0,Math.min(maxByWidth,(usableBottom-lowerTop)/2));
@@ -66,7 +68,8 @@ function placeOverlay(){
  const minCenter=regionTop+radius,maxCenter=regionBottom-radius;
  const preferredCenter=useBelowKeyboard?(minCenter+maxCenter)/2:offsetTop+anchor.y*viewH;
  const centerY=Math.max(minCenter,Math.min(maxCenter,preferredCenter));
- anchor.y=(centerY-offsetTop)/viewH;
+ // Keep the resting anchor fixed while groups/actions animate around the hub.
+ if(!wheelOpen)anchor.y=(centerY-offsetTop)/viewH;
  const starSize=Math.max(40,Math.min(58,radius*.52));
  const centerX=anchor.side==='left'?safeLeft+8+radius*.28:viewW-safeRight-8-radius*.28;
  assembly.dataset.side=anchor.side;assembly.style.left=centerX+'px';assembly.style.top=centerY+'px';assembly.style.setProperty('--wheel-radius',radius+'px');assembly.style.setProperty('--star-size',starSize+'px');
@@ -75,7 +78,7 @@ function placeOverlay(){
  const buttonRadius=radius*.77,buttonWidth=Math.max(44,Math.min(72,radius*.46));
  for(let index=0;index<5;index++){const theta=(-72+36*index)*Math.PI/180,sign=anchor.side==='left'?1:-1,dx=Math.cos(theta),dy=Math.sin(theta);
   for(const group of ['primary','navigation']){const key=menuGroups[group][index],button=groups[group].querySelector('[data-key="'+key+'"]');
-   button.style.left=(sign*buttonRadius*dx)+'px';button.style.top=(buttonRadius*dy)+'px';button.style.setProperty('--action-width',buttonWidth+'px');button.style.setProperty('--action-height','48px');button.style.setProperty('--icon-size',Math.max(20,Math.min(25,radius*.22))+'px');button.style.setProperty('--action-delay',(45+index*24)+'ms')
+   button.style.left=(sign*buttonRadius*dx)+'px';button.style.top=(buttonRadius*dy)+'px';button.style.setProperty('--action-width',buttonWidth+'px');button.style.setProperty('--action-height','56px');button.style.setProperty('--icon-size',Math.max(18,Math.min(23,radius*.19))+'px');button.style.setProperty('--action-delay',(45+index*24)+'ms')
   }
  }
  if(!panel.hidden){const low=Math.max(safeTop+8,Math.min(keyRect?.top||innerHeight-110,dockRect.top)-8),maxH=Math.max(120,low-safeTop-12);panel.style.setProperty('--v21-panel-max',maxH+'px');const pr=panel.getBoundingClientRect(),h=Math.min(panel.offsetHeight||280,maxH),panelTop=Math.max(safeTop+4,Math.min(anchor.y*innerHeight-h/2,low-h-4));panel.style.top=panelTop+'px';if(anchor.side==='left'){panel.style.left=Math.min(innerWidth-(pr.width||340)-6,Math.max(sr.right+6,Math.min(innerWidth*.18,sr.right+6)))+'px';panel.style.right='auto'}else{panel.style.right=Math.min(innerWidth-(sr.left-6),Math.max(6,innerWidth-sr.left+6))+'px';panel.style.left='auto'}}

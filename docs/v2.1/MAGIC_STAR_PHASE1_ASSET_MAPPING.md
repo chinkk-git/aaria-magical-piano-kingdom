@@ -15,9 +15,9 @@
 
 ## Rendering and motion
 
-The wheel uses a source-geometry SVG with independently layered segment faces. Offset dark shells, interior edge strokes and separate beveled rails create visible depth in the rendered SVG; this is not described as native 3D. The inline action compositions fade in with a small controlled scale as the radial clip reveals around the star. Closing uses a shorter deceleration. Classic and Hero layouts use the same wheel component.
+The wheel uses a source-geometry SVG with independently layered segment faces. Offset dark shells, interior edge strokes and separate beveled rails create visible depth in the rendered SVG; this is not described as native 3D. The SVG surface is rendered at 84% opacity to retain a view of the neon-note light underneath. Responsive radius is capped by viewport size. The inline action compositions fade in with a small controlled scale as the radial clip reveals around the star. Closing uses a shorter deceleration. Classic and Hero layouts use the same wheel component.
 
-The four fixed playback controls remain outside the wheel. `sw.js` caches the new artwork under shell version `aaria-piano-v2.1.2` so the PWA can render the revised wheel offline after installation/update.
+The four fixed playback controls remain outside the wheel. `sw.js` caches the new artwork under shell version `aaria-piano-v2.1.3` so the PWA can render the revised wheel offline after installation/update.
 
 ## Scope and evidence limits
 

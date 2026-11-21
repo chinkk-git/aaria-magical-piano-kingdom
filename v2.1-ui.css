@@ -389,3 +389,8 @@ html[data-v21-ui] .hero-zoom{display:none!important}.v21-speed input{height:40px
 .v21-dock{grid-template-columns:minmax(0,.9fr) minmax(0,.85fr) minmax(82px,1.5fr) minmax(0,.72fr);gap:5px;padding-inline:6px;overflow:visible}
 .v21-dock button{width:100%;min-width:0;padding-inline:2px;overflow:hidden;text-overflow:clip;white-space:normal;line-height:1.05;text-align:center}
 @media(max-width:540px){.v21-dock{grid-template-columns:minmax(0,.92fr) minmax(0,.82fr) minmax(76px,1.48fr) minmax(0,.72fr);gap:3px;padding-inline:4px}.v21-dock button{font-size:10px;padding-inline:1px}}
+
+/* Phase 1: let the neon note glow read through the raised menu and contain dock. */
+.v21-star-assembly .v21-wheel-art{opacity:.84}
+@media(max-height:500px){.v21-star-assembly .v21-wheel button.v21-wheel-action{height:56px!important}}
+@media(max-width:540px){.v21-dock{left:4px;right:4px;width:auto;max-width:calc(100vw - 8px);min-width:0;box-sizing:border-box;overflow:hidden}}
