@@ -1,0 +1,51 @@
+name: V2.1.12 owner review acceptance
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - index.html
+      - my-songs.js
+      - v2.1-ui.js
+      - v2.1-ui.css
+      - tests/v212-acceptance.cjs
+      - .github/workflows/v212-owner-review.yml
+      - docs/V2.1.12-make-music-song-settings.md
+
+permissions:
+  contents: read
+
+jobs:
+  v212-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install pinned Playwright and Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Run integrated V2.1.12 browser acceptance and capture evidence
+        env:
+          APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+          EVIDENCE_DIR: ${{ runner.temp }}/AARIA_V2_1_12_OWNER_REVIEW/evidence
+        run: node tests/v212-acceptance.cjs
+      - name: Verify downloadable review archive
+        run: |
+          test -s AARIA_V2_1_12_MAKE_MUSIC_SONG_SETTINGS_OWNER_REVIEW.zip
+          unzip -t AARIA_V2_1_12_MAKE_MUSIC_SONG_SETTINGS_OWNER_REVIEW.zip
+          unzip -Z1 AARIA_V2_1_12_MAKE_MUSIC_SONG_SETTINGS_OWNER_REVIEW.zip | grep -q 'TEST_RESULTS.md'
+          unzip -Z1 AARIA_V2_1_12_MAKE_MUSIC_SONG_SETTINGS_OWNER_REVIEW.zip | grep -q 'recordings/make-music-song-settings-interaction.webm'
+          unzip -Z1 AARIA_V2_1_12_MAKE_MUSIC_SONG_SETTINGS_OWNER_REVIEW.zip | grep -q 'screenshots/11-five-action-wheel-desktop.png'
+      - name: Upload exact-head owner review ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: AARIA_V2_1_12_OWNER_REVIEW_${{ github.event.pull_request.head.sha }}
+          path: AARIA_V2_1_12_MAKE_MUSIC_SONG_SETTINGS_OWNER_REVIEW.zip
+          retention-days: 30
+          if-no-files-found: error
