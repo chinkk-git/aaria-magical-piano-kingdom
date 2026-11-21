@@ -4,6 +4,7 @@ const http=require('node:http');
 const path=require('node:path');
 const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'..');
+const sharedCatalog=JSON.parse(fs.readFileSync(path.join(root,'shared-song-library.json'),'utf8'));
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
 const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);const file=path.resolve(root,'.'+pathname);if(!file.startsWith(root+path.sep)&&file!==root){res.writeHead(403).end();return}fs.readFile(file,(err,data)=>{if(err){res.writeHead(404).end('not found');return}res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'}).end(data)})});
 (async()=>{
@@ -29,6 +30,30 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   const builtIn=page.locator('.library-card').filter({hasText:'Cradle Song'});await builtIn.waitFor();
   await builtIn.getByRole('button',{name:'▶ Play'}).click();await page.waitForFunction(()=>document.querySelector('#songSelect')?.value==='cradle');
   assert.equal(await dlg.evaluate(el=>el.open),false,'built-in song selection closes the Library');
+  await page.waitForFunction(ids=>ids.every(id=>window.PianoKingdomLibrary?.songs[id]),sharedCatalog.songs.map(song=>song.id));
+  for(const song of sharedCatalog.songs){
+    const state=await page.evaluate(id=>{
+      const selected=window.PianoKingdomLibrary.songs[id];
+      window.PianoKingdomLibrary.selectSong(id);
+      return {
+        selected:document.querySelector('#songSelect').value,
+        sourceEventsMatch:JSON.stringify(EVENTS)===JSON.stringify(selected.events),
+        total:selected.total,
+        eventCount:selected.events.length,
+        hasPlaybackControls:['primaryModeButton','listenToggle','speed','bar','loopRange'].every(control=>!!document.getElementById(control)),
+      };
+    },song.id);
+    assert.equal(state.selected,song.id,song.title+' selects from the shared library');
+    assert.equal(state.sourceEventsMatch,true,song.title+' retains the catalogue events on selection');
+    assert.equal(state.total,song.total,song.title+' retains its measure count');
+    assert.equal(state.eventCount,song.events.length,song.title+' retains its event count');
+    assert.equal(state.hasPlaybackControls,true,song.title+' uses the shared playback controls');
+    await page.locator('#primaryModeButton').click();
+    await page.waitForFunction(()=>mode==='follow',{timeout:7000});
+    await page.waitForTimeout(200);
+    assert.equal(await page.evaluate(()=>mode==='follow'&&EVENTS.length>0),true,song.title+' initializes Play Along note scheduling');
+  }
+  await page.evaluate(()=>window.PianoKingdomLibrary.selectSong('cradle'));
   await page.locator('#openMySongs').click();
   const card=page.locator('.library-card').filter({hasText:'Release 2 Browser Check'});await card.waitFor();
   assert.deepEqual(await card.locator('select option').evaluateAll(opts=>opts.map(o=>o.value)),['original','basic','medium']);
