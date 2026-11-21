@@ -22,18 +22,18 @@ const viewports=[
  {name:'desktop-1440x900',width:1440,height:900,mobile:false}
 ],groups={music:['measure','loop','jump','practice','makeMusic'],navigation:['songs','home','pianoMode','settings','updateApp']},
 titles={measure:'Measure',loop:'Loop',jump:'Jump',practice:'Practice',makeMusic:'Make Music',songs:'My Songs',home:'Home',pianoMode:'Piano Mode',settings:'Settings',updateApp:'Update App'};
-const shots=[],geometryMeasurements=[],geometryFailures=[],interactionFailures=[];let browser;
+const shots=[],geometryMeasurements=[],geometryFailures=[],interactionFailures=[];let browser,lastPage=null;
 function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math.min(a.bottom,b.bottom)-Math.max(a.y,b.y)>1}
 (async()=>{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
- browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
+ browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox','--disable-dev-shm-usage']});
  const origin='http://127.0.0.1:'+server.address().port;
  for(let i=0;i<viewports.length;i++){
   const vp=viewports[i],record=i===0||i===1,videoDir=path.join(out,'video-temp');fs.mkdirSync(videoDir,{recursive:true});
   const context=await browser.newContext({viewport:{width:vp.width,height:vp.height},deviceScaleFactor:1,isMobile:vp.mobile,hasTouch:vp.mobile,reducedMotion:'no-preference',serviceWorkers:'block',...(record?{recordVideo:{dir:videoDir,size:{width:vp.width,height:vp.height}}}:{})});
   await context.addInitScript(side=>{localStorage.setItem('aaria-piano-custom-songs-v1',JSON.stringify([{id:'phase1-fixture',title:'Owner review fixture',events:[{bar:1,at:0,dur:2,midi:60}],total:1,barLengths:[8],bpm:80,imported:true}]));localStorage.setItem('aaria-v21-star-anchor',JSON.stringify({side,y:.32}))},i%2?'right':'left');
-  const page=await context.newPage(),errors=[],failedAssets=[];
-  page.on('pageerror',e=>errors.push(e.message));
+  const page=await context.newPage(),errors=[],failedAssets=[];lastPage=page;
+  page.on('pageerror',e=>{errors.push(e.message);console.error('PAGE ERROR '+e.stack)});page.on('console',m=>{if(m.type()==='error')console.error('BROWSER CONSOLE '+m.text())});
   page.on('requestfailed',r=>{if(/v2\.1-magic-wheel/.test(r.url()))failedAssets.push(r.url())});
   page.on('response',r=>{if(/v2\.1-magic-wheel/.test(r.url())&&r.status()>=400)failedAssets.push(r.url()+' ['+r.status()+']')});
   await page.route('**/omr-worker.js',route=>route.fulfill({status:200,contentType:'text/javascript',body:'/* Magic Star visual acceptance fixture */'}));
@@ -167,6 +167,7 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
  await browser.close();server.close();
 })().catch(async e=>{
  console.error(e.stack||e);
+ try{if(lastPage){const state=await lastPage.evaluate(()=>({title:document.title,readyState:document.readyState,compatMode:document.compatMode,globals:{engine:!!window.AariaV21Engine,library:!!window.PianoKingdomLibrary,music:!!window.AariaR2Music,image:!!window.AariaR2Image},scripts:[...document.scripts].map(s=>({src:s.src||'inline',loaded:!!s.src&&performance.getEntriesByName(s.src).length>0})),text:document.body.innerText.slice(0,800)}));console.error('STARTUP DIAGNOSTIC '+JSON.stringify(state));await lastPage.screenshot({path:path.join(out,'startup-diagnostic.png'),fullPage:false})}}catch(error){console.error('STARTUP DIAGNOSTIC ERROR '+String(error))}
  try{await browser?.close()}catch{}
  try{
   if(!fs.existsSync(out))fs.mkdirSync(out,{recursive:true});
