@@ -1,4 +1,4 @@
-name: V2.1 — Magic Star polish + compact controls owner review
+name: V2.1 — Android UI correction acceptance
 
 on:
   pull_request:
@@ -8,6 +8,12 @@ on:
       - v2.1-ui.css
       - assets/v2.1-magic-wheel/**
       - tests/magic-star-phase1.cjs
+      - tests/android-v2111-ui.cjs
+      - tests/v2111-final-corrections.cjs
+      - index.html
+      - my-songs.js
+      - sw.js
+      - pwa-update.js
       - tests/visual-fixtures/**
       - docs/v2.1/**
       - scripts/package-v21-release2-final.py
@@ -33,26 +39,29 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright@1.62.1
           npx playwright install chromium
-      - name: Test wheel and playback controls; capture owner-review evidence
+      - name: Test Android UI corrections, title editing, and magical lights
         id: v21-test
         env:
           APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
-          RUNNER_TEMP: ${{ runner.temp }}
-        run: node tests/magic-star-phase1.cjs
+          EVIDENCE_DIR: ${{ runner.temp }}/AARIA_V2_1_ANDROID_UI_CORRECTIONS/screenshots
+          FINAL_EVIDENCE_DIR: ${{ runner.temp }}/AARIA_V2_1_11_FINAL_CORRECTIONS
+        run: |
+          node tests/android-v2111-ui.cjs
+          node tests/v2111-final-corrections.cjs
       - name: Verify final review archive contents
         if: always()
         run: |
-          test -s AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW.zip
-          unzip -l AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW.zip
-          unzip -Z1 AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW.zip | grep -q 'manifest.json'
-          unzip -Z1 AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW.zip | grep -q 'FUNCTIONAL_RESULTS.md'
-          unzip -Z1 AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW.zip | grep -q 'magic-star-measure-loop-jump-practice.webm'
+          test -s AARIA_V2_1_11_FINAL_CORRECTIONS_OWNER_REVIEW.zip
+          unzip -l AARIA_V2_1_11_FINAL_CORRECTIONS_OWNER_REVIEW.zip
+          unzip -Z1 AARIA_V2_1_11_FINAL_CORRECTIONS_OWNER_REVIEW.zip | grep -q 'final-manifest.json'
+          unzip -Z1 AARIA_V2_1_11_FINAL_CORRECTIONS_OWNER_REVIEW.zip | grep -q 'FUNCTIONAL_RESULTS_V2111_FINAL.md'
+          unzip -Z1 AARIA_V2_1_11_FINAL_CORRECTIONS_OWNER_REVIEW.zip | grep -q 'rename-and-magical-lights-interaction.webm'
       - name: Upload V2.1 owner-review ZIP
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW
-          path: AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW.zip
+          name: AARIA_V2_1_11_FINAL_CORRECTIONS_OWNER_REVIEW
+          path: AARIA_V2_1_11_FINAL_CORRECTIONS_OWNER_REVIEW.zip
           retention-days: 30
           if-no-files-found: error
 
@@ -95,7 +104,7 @@ jobs:
       - name: Download exact-SHA Magic Star evidence
         uses: actions/download-artifact@v4
         with:
-          name: AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW
+          name: AARIA_V2_1_11_FINAL_CORRECTIONS_OWNER_REVIEW
           path: evidence-source/v21
           run-id: ${{ github.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -109,6 +118,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Verify single owner-review archive
         run: |
-          test -s evidence-source/v21/AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW.zip
-          unzip -t evidence-source/v21/AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW.zip
-          unzip -Z1 evidence-source/v21/AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW.zip
+          test -s evidence-source/v21/AARIA_V2_1_11_FINAL_CORRECTIONS_OWNER_REVIEW.zip
+          unzip -t evidence-source/v21/AARIA_V2_1_11_FINAL_CORRECTIONS_OWNER_REVIEW.zip
+          unzip -Z1 evidence-source/v21/AARIA_V2_1_11_FINAL_CORRECTIONS_OWNER_REVIEW.zip
