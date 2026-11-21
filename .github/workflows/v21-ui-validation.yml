@@ -34,11 +34,19 @@ jobs:
           APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
           RUNNER_TEMP: ${{ runner.temp }}
         run: node tests/magic-star-phase1.cjs
+      - name: Verify final review archive contents
+        if: always()
+        run: |
+          test -s AARIA_V2_1_MAGIC_STAR_COMPACT_CONTROLS_FINAL_OWNER_REVIEW.zip
+          unzip -l AARIA_V2_1_MAGIC_STAR_COMPACT_CONTROLS_FINAL_OWNER_REVIEW.zip
+          unzip -Z1 AARIA_V2_1_MAGIC_STAR_COMPACT_CONTROLS_FINAL_OWNER_REVIEW.zip | grep -q 'magic-star-phase1-evidence/manifest.json'
+          unzip -Z1 AARIA_V2_1_MAGIC_STAR_COMPACT_CONTROLS_FINAL_OWNER_REVIEW.zip | grep -q 'magic-star-phase1-evidence/PHASE1_TEST_RESULTS.md'
+          unzip -Z1 AARIA_V2_1_MAGIC_STAR_COMPACT_CONTROLS_FINAL_OWNER_REVIEW.zip | grep -q 'magic-star-phase1-evidence/magic-star-open-close-group-switching-portrait.webm'
       - name: Upload V2.1 owner-review ZIP
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: AARIA_MAGIC_STAR_3D_POLISH_COMPACT_CONTROLS_OWNER_REVIEW
-          path: AARIA_MAGIC_STAR_3D_POLISH_COMPACT_CONTROLS_OWNER_REVIEW.zip
+          name: AARIA_V2_1_MAGIC_STAR_COMPACT_CONTROLS_FINAL_OWNER_REVIEW
+          path: AARIA_V2_1_MAGIC_STAR_COMPACT_CONTROLS_FINAL_OWNER_REVIEW.zip
           retention-days: 30
           if-no-files-found: error
