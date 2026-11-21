@@ -15,14 +15,32 @@ const star=document.createElement('button');star.className='v21-star';star.type=
 const starArt=document.createElement('img');starArt.className='v21-star-art';starArt.src=wheelAsset('phase1/star-button-premium.svg');starArt.alt='';starArt.setAttribute('aria-hidden','true');star.append(starArt);
 const makeMusic=document.createElement('button');makeMusic.type='button';makeMusic.className='v21-make-music';makeMusic.setAttribute('aria-label','Make Music');makeMusic.innerHTML='<img class="v21-make-music-art" src="./assets/v2.1-ui/make-music-3d-with-text.png" alt="">';document.body.append(makeMusic);makeMusic.addEventListener('click',()=>window.AariaPianoNavigation?.openNewSong?.());
 const wheel=document.createElement('div');wheel.className='v21-wheel';wheel.id='v21Wheel';wheel.hidden=true;wheel.dataset.state='closed';wheel.dataset.side=anchor.side;wheel.setAttribute('role','group');wheel.setAttribute('aria-label','Magic Star controls');
-const shell=document.createElement('img');shell.className='v21-wheel-art';shell.src=wheelAsset('phase1/half-wheel-premium.svg');shell.alt='';shell.setAttribute('aria-hidden','true');wheel.append(shell);
+const wheelVisual=document.createElement('div');wheelVisual.className='v21-wheel-visual';
+const shell=document.createElement('img');shell.className='v21-wheel-art';shell.src='./assets/v2.1-ui/magic-star-3d-jewel-wheel.png';shell.alt='';shell.setAttribute('aria-hidden','true');
+const hitOverlay=document.createElementNS('http://www.w3.org/2000/svg','svg');hitOverlay.classList.add('v21-star-hit-overlay');hitOverlay.setAttribute('viewBox','0 0 1536 1024');hitOverlay.setAttribute('preserveAspectRatio','none');hitOverlay.setAttribute('role','group');hitOverlay.setAttribute('aria-label','Magic Star actions');
+const hitGeometry={
+ measure:'M 1098 42 C 1003 39 900 66 817 117 C 790 134 765 153 748 174 L 918 365 C 925 372 934 369 943 363 C 984 339 1038 329 1090 336 C 1102 338 1112 331 1112 319 L 1112 56 C 1112 47 1107 42 1098 42 Z',
+ loop:'M 748 174 L 918 365 C 901 389 887 417 876 444 C 873 452 866 454 856 451 L 592 390 C 578 387 572 376 578 362 C 614 291 663 220 748 174 Z',
+ jump:'M 592 390 L 856 451 C 866 453 871 462 869 473 C 863 503 863 539 870 568 C 873 579 867 585 856 587 L 575 606 C 563 607 555 600 552 589 C 539 536 539 475 551 418 C 555 398 573 386 592 390 Z',
+ practice:'M 575 606 L 856 587 C 867 586 873 594 868 605 L 756 849 C 750 861 737 864 722 859 C 646 832 587 758 561 665 C 555 645 553 625 557 615 C 560 609 567 607 575 606 Z',
+ songSettings:'M 756 849 L 868 605 C 874 592 885 584 900 586 C 958 598 1018 589 1076 584 C 1096 582 1112 591 1112 611 L 1112 943 C 1112 954 1104 959 1090 956 C 975 944 858 907 760 865 C 751 861 749 856 756 849 Z',
+ centerStar:'M 1036 345 C 1119 345 1179 403 1187 482 C 1196 563 1155 628 1087 644 C 1014 661 944 635 902 592 C 878 567 868 536 869 505 C 867 466 879 428 902 397 C 930 362 982 345 1036 345 Z'
+};
+const hitLabels={measure:'Measure',loop:'Loop',jump:'Jump',practice:'Practice',songSettings:'Song Settings',centerStar:'Open Magic Star menu'};
+const hitPaths={};
+for(const key of ['measure','loop','jump','practice','songSettings','centerStar']){
+ const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.classList.add('v21-wheel-hit');path.dataset.key=key;path.setAttribute('d',hitGeometry[key]);path.setAttribute('fill','transparent');path.setAttribute('pointer-events','all');path.setAttribute('tabindex','0');path.setAttribute('role','button');path.setAttribute('aria-label',hitLabels[key]);if(key==='centerStar')path.setAttribute('aria-expanded','false');hitOverlay.append(path);hitPaths[key]=path;
+ const activate=event=>{event?.preventDefault?.();event?.stopPropagation?.();if(key==='centerStar'){toggleWheel();return}groups.primary.querySelector('[data-key="'+key+'"]')?.click()};
+ path.addEventListener('click',activate);path.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();activate()}})
+}
+wheelVisual.append(shell,hitOverlay);wheel.append(wheelVisual);
 const panel=document.createElement('section');panel.className='v21-practice-panel';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','false');panel.setAttribute('aria-labelledby','v21PanelTitle');
 assembly.append(wheel,star);document.body.append(assembly,panel);
 const menuGroups={primary:['measure','loop','jump','practice','songSettings']};
 const actionTitles={measure:'Measure',loop:'Loop',jump:'Jump',practice:'Practice',songSettings:'Song Settings'};
 const musicGlyphs={measure:'♫',loop:'↻',jump:'⇥',practice:'★',songSettings:'✎'};
 const groups={};
-function makeActionLayer(group){const layer=document.createElement('div');layer.className='v21-wheel-actions';layer.dataset.group=group;layer.setAttribute('role','group');layer.setAttribute('aria-label',group==='primary'?'Music actions':'Navigation actions');layer.hidden=group!=='primary';
+function makeActionLayer(group){const layer=document.createElement('div');layer.className='v21-wheel-actions';layer.dataset.group=group;layer.setAttribute('role','group');layer.setAttribute('aria-label',group==='primary'?'Music actions':'Navigation actions');layer.hidden=true;layer.setAttribute('aria-hidden','true');
  for(const [index,key] of menuGroups[group].entries()){
   const button=document.createElement('button');button.type='button';button.className='v21-wheel-action';button.dataset.key=key;button.dataset.index=String(index);button.setAttribute('aria-label',actionTitles[key]);button.setAttribute('aria-pressed','false');
   const glyph=document.createElement('span');glyph.className='v21-wheel-glyph';glyph.setAttribute('aria-hidden','true');
@@ -36,7 +54,7 @@ groups.primary=makeActionLayer('primary');wheel.append(groups.primary);
 let activeAction=null;
 function syncSelectedAction(){wheel.querySelectorAll('.v21-wheel-action').forEach(button=>{const on=button.dataset.key===activeAction;button.setAttribute('aria-pressed',String(on));button.classList.toggle('is-selected',on)})}
 
-function buildWheel(){wheel.dataset.side=anchor.side;wheel.dataset.group='primary';wheel.setAttribute('aria-label','Five Magic Star music actions');groups.primary.hidden=false;syncSelectedAction()}
+function buildWheel(){wheel.dataset.side=anchor.side;wheel.dataset.group='primary';wheel.setAttribute('aria-label','Five Magic Star music actions');groups.primary.hidden=true;syncSelectedAction();hitPaths.centerStar.setAttribute('aria-label',star.getAttribute('aria-label')||'Open Magic Star menu');hitPaths.centerStar.setAttribute('aria-expanded',star.getAttribute('aria-expanded')||'false')}
 function measureCount(){return Math.max(1,Number(engine.state().total)||1)}
 function clamp(n,min,max){return Math.max(min,Math.min(max,Math.round(Number(n)||min)))}
 function playStatus(){return engine.state()}
@@ -69,8 +87,7 @@ function placeOverlay(){
  const starSize=Math.max(40,Math.min(58,radius*.52));
  const centerX=anchor.side==='left'?safeLeft+8+radius*.28:viewW-safeRight-8-radius*.28;
  assembly.dataset.side=anchor.side;assembly.style.left=centerX+'px';assembly.style.top=centerY+'px';assembly.style.setProperty('--wheel-radius',radius+'px');assembly.style.setProperty('--star-size',starSize+'px');
- const scale=radius/250,shellWidth=600*scale,shellHeight=600*scale;
- shell.style.width=shellWidth+'px';shell.style.height=shellHeight+'px';shell.style.left=(-120*scale)+'px';shell.style.top=(-300*scale)+'px';shell.style.setProperty('--reveal-radius',(radius*1.04)+'px');
+ const scale=radius/512;wheelVisual.style.width=(1536*scale)+'px';wheelVisual.style.height=(1024*scale)+'px';wheelVisual.style.left=(-1036*scale)+'px';wheelVisual.style.top=(-510*scale)+'px';wheelVisual.style.setProperty('--reveal-radius',(radius*1.04)+'px');
  const buttonRadius=radius*.77,buttonWidth=Math.max(44,Math.min(72,radius*.46));
  for(let index=0;index<5;index++){const theta=(-72+36*index)*Math.PI/180,sign=anchor.side==='left'?1:-1,dx=Math.cos(theta),dy=Math.sin(theta);
   for(const group of ['primary']){const key=menuGroups[group][index],button=groups[group].querySelector('[data-key="'+key+'"]');
@@ -83,8 +100,8 @@ function placeMakeMusic(){const vv=window.visualViewport,viewTop=vv?.offsetTop||
 function starCenter(){const r=star.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2}}
 function saveAnchor(){try{localStorage.setItem('aaria-v21-star-anchor',JSON.stringify(anchor))}catch{}}
 function setMenuGroup(){buildWheel()}
-function openWheel(){wheelOpen=true;menuGroup='primary';activeAction=null;buildWheel();wheel.hidden=false;wheel.inert=false;wheel.dataset.motion='open';wheel.dataset.state='closed';star.setAttribute('aria-expanded','true');star.setAttribute('aria-label','Close Magic Star menu');wheel.querySelector('.v21-wheel-action')?.focus({preventScroll:true});resize();clearInterval(placementTimer);placementTimer=setInterval(()=>{if(wheelOpen)resize();else{clearInterval(placementTimer);placementTimer=null}},100);requestAnimationFrame(()=>requestAnimationFrame(()=>{if(wheelOpen){resize();wheel.dataset.state='open'}}))}
-function closeWheel(){if(!wheelOpen)return;wheelOpen=false;resize();clearInterval(placementTimer);placementTimer=null;activePanel=null;panel.hidden=true;star.setAttribute('aria-expanded','false');star.setAttribute('aria-label','Open Magic Star menu');wheel.dataset.motion='close';wheel.dataset.state='closed';wheel.inert=true;const finish=()=>{if(!wheelOpen){wheel.hidden=true;menuGroup='primary';wheel.dataset.group='primary';buildWheel()}};wheel.addEventListener('transitionend',finish,{once:true});setTimeout(finish,360)}
+function openWheel(){wheelOpen=true;menuGroup='primary';activeAction=null;buildWheel();wheel.hidden=false;wheel.inert=false;wheel.dataset.motion='open';wheel.dataset.state='closed';star.setAttribute('aria-expanded','true');star.setAttribute('aria-label','Close Magic Star menu');hitPaths.measure.focus({preventScroll:true});star.setAttribute('aria-hidden','true');star.tabIndex=-1;hitPaths.centerStar.setAttribute('aria-label','Close Magic Star menu');hitPaths.centerStar.setAttribute('aria-expanded','true');resize();clearInterval(placementTimer);placementTimer=setInterval(()=>{if(wheelOpen)resize();else{clearInterval(placementTimer);placementTimer=null}},100);requestAnimationFrame(()=>requestAnimationFrame(()=>{if(wheelOpen){resize();wheel.dataset.state='open'}}))}
+function closeWheel(){if(!wheelOpen)return;wheelOpen=false;resize();clearInterval(placementTimer);placementTimer=null;activePanel=null;panel.hidden=true;star.setAttribute('aria-expanded','false');star.setAttribute('aria-label','Open Magic Star menu');star.removeAttribute('aria-hidden');star.removeAttribute('tabindex');hitPaths.centerStar.setAttribute('aria-label','Open Magic Star menu');hitPaths.centerStar.setAttribute('aria-expanded','false');wheel.dataset.motion='close';wheel.dataset.state='closed';wheel.inert=true;const finish=()=>{if(!wheelOpen){wheel.hidden=true;menuGroup='primary';wheel.dataset.group='primary';buildWheel()}};wheel.addEventListener('transitionend',finish,{once:true});setTimeout(finish,360)}
 function toggleWheel(){if(!wheelOpen){openWheel();return}if(!panel.hidden){panel.hidden=true;activePanel=null;wheel.hidden=false;wheel.inert=false;wheel.dataset.state='open';placeOverlay();return}closeWheel()}
 function selectPanel(key){activePanel=key;buildWheel();renderPanel(key);wheel.hidden=true;wheel.inert=true;panel.hidden=false;placeOverlay();panel.querySelector('button, input')?.focus({preventScroll:true})}
 function activateWheelItem(key){if(['measure','loop','jump','practice','songSettings'].includes(key)){selectPanel(key);return}}

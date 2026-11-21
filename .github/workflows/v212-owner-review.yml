@@ -43,7 +43,7 @@ jobs:
           unzip -t AARIA_V2_1_14_OWNER_REVIEW.zip
           unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'TEST_RESULTS.md'
           unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'recordings/make-music-song-settings-interaction.webm'
-          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/11-five-action-wheel-desktop.png'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/11-five-action-wheel-desktop.png'\n          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/magic-star-390x844-collapsed.png'\n          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/magic-star-390x844-expanded.png'\n          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'recordings/magic-star-six-region-interaction.webm'\n          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'MAGIC_STAR_HIT_MAP.md'
           unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'ASSET_TRACEABILITY.md'
           unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'PRODUCTION_DIAGNOSIS.md'
           unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'BEFORE_AFTER.md'
