@@ -1,6 +1,6 @@
 (function(root){
   'use strict';
-  const APP_BUILD='aaria-piano-v2.1.8';
+  const APP_BUILD='aaria-piano-v2.1.9';
   const EXPECTED_KEY='aaria-pwa-expected-build';
   const CHANNEL_NAME='aaria-pwa-update-check';
   function parseBuildId(source){const match=String(source||'').match(/const\s+CACHE\s*=\s*['"]([^'"]+)['"]/);return match?.[1]||null}
@@ -29,3 +29,4 @@
   verifyAfterReload().catch(()=>{});
   installedBuild().then(build=>{if(build)info.textContent='Installed build: '+build;else info.textContent='Installed build: not verified yet'});
 })(typeof window!=='undefined'?window:globalThis);
+
