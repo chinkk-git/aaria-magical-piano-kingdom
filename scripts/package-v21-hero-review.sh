@@ -3,14 +3,15 @@ set -euo pipefail
 
 source_dir="${GITHUB_WORKSPACE}/source-artifact"
 outer_zip="${source_dir}/AARIA_V2_1_MAGIC_STAR_COMPACT_CONTROLS_FINAL_OWNER_REVIEW.zip"
-inner_zip="${RUNNER_TEMP}/v21-source-evidence.zip"
+inner_zip="$outer_zip"
 out_dir="${GITHUB_WORKSPACE}/hero-review-package"
 archive="${GITHUB_WORKSPACE}/AARIA_V2_1_HERO_PORTRAIT_LANDSCAPE_REVIEW.zip"
 source_root="magic-star-phase1-evidence"
 
 rm -rf "$out_dir" "$archive"
 mkdir -p "$out_dir"
-unzip -p "$outer_zip" AARIA_V2_1_MAGIC_STAR_COMPACT_CONTROLS_FINAL_OWNER_REVIEW.zip > "$inner_zip"
+test -s "$inner_zip"
+unzip -t "$inner_zip" >/dev/null
 
 extract_capture() {
   local source="$1" target="$2"
