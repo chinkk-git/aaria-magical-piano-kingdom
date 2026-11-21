@@ -18,7 +18,7 @@ const viewports=[['Android portrait',390,844,2,true],['Android landscape',844,39
    window.addEventListener('piano-note-arrival',e=>window.__arrivals.push(e.detail));
    const native=CanvasRenderingContext2D.prototype.fillText;
    CanvasRenderingContext2D.prototype.fillText=function(text,x,y,...rest){
-    if(this.canvas?.id==='rain'&&/^[A-G]#?[0-9]$/.test(String(text))){const m=this.font.match(/([0-9.]+)px/);window.__labels.push({text:String(text),fontPx:m?Number(m[1]):0,x:Number(x),y:Number(y),width:this.measureText(String(text)).width,canvasWidth:this.canvas.clientWidth,canvasHeight:this.canvas.clientHeight})}
+    if(this.canvas?.id==='rain'&&/^[A-G]#?[0-9]$/.test(String(text))){const m=this.font.match(/([0-9.]+)px/),transform=this.getTransform(),pixelRatio=this.canvas.width/(this.canvas.clientWidth||1),cssScale=transform.a/pixelRatio;window.__labels.push({text:String(text),fontPx:m?Number(m[1]):0,x:transform.e/pixelRatio,y:transform.f/pixelRatio,width:this.measureText(String(text)).width*cssScale,canvasWidth:this.canvas.clientWidth,canvasHeight:this.canvas.clientHeight})}
     return native.call(this,text,x,y,...rest)
    };
   });
@@ -34,15 +34,17 @@ const viewports=[['Android portrait',390,844,2,true],['Android landscape',844,39
   const impact=await page.evaluate(()=>{
    const first=window.__arrivals[0],key=first&&document.querySelector('#keys [data-pitch="'+first.pitch+'"]'),style=key?getComputedStyle(key):null,pseudo=key?getComputedStyle(key,'::after'):null;
    const chord=window.__arrivals.filter(e=>e.bar===first?.bar&&e.at===first?.at),nearLabels=window.__labels.filter(x=>x.y>x.canvasHeight*.45);
-   return{first,chordCount:chord.length,chordPitches:[...new Set(chord.map(e=>e.pitch))],nearLabels:nearLabels.slice(-40),impactClass:key?.classList.contains('impact-lit'),keyAnimation:pseudo?.animationName,keyBoxShadow:style?.boxShadow};
+   const expectedPitches=[...new Set(EVENTS.filter(n=>n.bar===first?.bar&&n.at===first?.at).map(n=>n.midi))];return{first,chordCount:chord.length,chordPitches:[...new Set(chord.map(e=>e.pitch))],expectedPitches,nearLabels:nearLabels.slice(-40),impactClass:key?.classList.contains('impact-lit'),keyAnimation:pseudo?.animationName,keyBoxShadow:style?.boxShadow};
   });
+  console.log('Measure-start impact evidence',JSON.stringify({first:impact.first,chordCount:impact.chordCount,chordPitches:impact.chordPitches,arrivals:await page.evaluate(()=>window.__arrivals.slice(0,12))}));
   assert(impact.first?.visualOnly===true,'a real note-arrival event did not fire');
-  assert(impact.chordCount===3&&impact.chordPitches.length===3,'measure-start chord impacts were duplicated or not coordinated');
+  assert(impact.chordCount===impact.expectedPitches.length&&impact.chordPitches.length===impact.expectedPitches.length&&impact.expectedPitches.every(pitch=>impact.chordPitches.includes(pitch)),'measure-start impacts do not match the source chord or include duplicate notes: '+JSON.stringify({expected:impact.expectedPitches,arrived:impact.chordPitches,count:impact.chordCount,arrivals:await page.evaluate(()=>window.__arrivals.slice(0,12))}));
   assert(impact.first.particlesGenerated>=8,'impact event fired but no visible spark particles were generated');
   assert(impact.first.flashDurationMs===360,'normal impact flash duration changed from 360 ms');
   assert(impact.first.effectY<impact.first.keyTop&&impact.first.keyTop-impact.first.effectY>=8,'impact effect remains clipped on the keyboard/canvas boundary');
   assert(impact.impactClass&&impact.keyAnimation==='piano-hero-impact-flash','Hero key impact halo is not visibly rendered over the key');
-  assert(impact.nearLabels.length>0&&Math.max(...impact.nearLabels.map(x=>x.fontPx))>=11,'note-code labels were not drawn at a readable near-keyboard size');
+  const nearLabelSizes=impact.nearLabels.map(x=>({text:x.text,fontPx:x.fontPx,y:x.y,canvasHeight:x.canvasHeight}));
+  assert(impact.nearLabels.length>0&&Math.max(...impact.nearLabels.map(x=>x.fontPx))>=11,'note-code labels were not drawn at a readable near-keyboard size: '+JSON.stringify(nearLabelSizes));
   assert(impact.nearLabels.every(x=>x.x-x.width/2>=0&&x.x+x.width/2<=x.canvasWidth),'near-keyboard note label text is clipped');
   await page.screenshot({path:path.join(out,'01-android-portrait-note-impact-390x844.png')});
   const beatBefore=await page.evaluate(()=>beat);await wait(1000);const beatAfter=await page.evaluate(()=>beat),beatAdvance=beatAfter-beatBefore;
@@ -62,7 +64,7 @@ const viewports=[['Android portrait',390,844,2,true],['Android landscape',844,39
   fs.writeFileSync(path.join(out,'impact-and-responsive-results.json'),JSON.stringify({sourceSha:sha,normalImpact:{bar:impact.first.bar,at:impact.first.at,pitch:impact.first.pitch,chordImpactCount:impact.chordCount,distinctPitches:impact.chordPitches,particlesGenerated:impact.first.particlesGenerated,flashDurationMs:impact.first.flashDurationMs,effectAboveKeyPx:+(impact.first.keyTop-impact.first.effectY).toFixed(2),heroKeyAnimation:impact.keyAnimation,nearKeyLabels:impact.nearLabels},playbackBeatAdvance:beatAdvance,reducedMotion:{particlesGenerated:reduced.latest.particlesGenerated,flashDurationMs:reduced.latest.flashDurationMs},responsive:results},null,2)+'\n');
   if(errors.length)throw Error('Browser errors: '+errors.join(' | '));
   await page.close();const video=await page.video().path();fs.copyFileSync(video,path.join(out,'neon-labels-and-magical-impacts-live.webm'));await context.close();
-  fs.writeFileSync(path.join(out,'README.md'),'# Neon key-code labels and Magical Note Explosion evidence\n\nReal application rendering captured in Chromium at source SHA `'+sha+'`. Includes an impact-frame screenshot from live playback, the live Android portrait view, landscape and tablet screenshots, desktop, and reduced-motion evidence. The playback test verifies a three-note measure-start chord, 360 ms normal impact, generated colored particles, the Hero key halo layer, and the 120 ms particle-free reduced-motion impact. Screenshots use viewport and mode names. The WebM records actual running app playback with browser audio muted for CI. Chromium mobile/touch emulation is not a physical Android PWA install; the supplied Android screenshot remains the device baseline. The install gate is unlocked only in the isolated test harness.\n');
+  fs.writeFileSync(path.join(out,'README.md'),'# Neon key-code labels and Magical Note Explosion evidence\n\nReal application rendering captured in Chromium at source SHA `'+sha+'`. Includes an impact-frame screenshot from live playback, the live Android portrait view, landscape and tablet screenshots, desktop, and reduced-motion evidence. The playback test verifies every source note in the measure-start chord arrives exactly once, a 360 ms normal impact, generated colored particles, the Hero key halo layer, and the 120 ms particle-free reduced-motion impact. Screenshots use viewport and mode names. The WebM records actual running app playback with browser audio muted for CI. Chromium mobile/touch emulation is not a physical Android PWA install; the supplied Android screenshot remains the device baseline. The install gate is unlocked only in the isolated test harness.\n');
   const zip=path.join(process.env.GITHUB_WORKSPACE||process.cwd(),'neon-label-impact-evidence.zip');execFileSync('python3',['-m','zipfile','-c',zip,out]);console.log('Neon labels and real note-impact checks passed at '+sha+'; evidence ZIP: '+zip);
  }finally{await browser.close();await new Promise(r=>server.close(r))}
 })().catch(e=>{console.error(e);process.exitCode=1});
