@@ -454,7 +454,7 @@ main[data-piano-layout="hero"] .song-picker-chevron{flex:none;margin-left:auto}
 .rename-song-dialog [role="status"]{margin:0;color:#ffe2a4}
 main[data-magic-lights]{isolation:isolate}
 main[data-magic-lights]::before{content:"";position:fixed;inset:0;z-index:2;pointer-events:none;mix-blend-mode:screen;opacity:.17;background:radial-gradient(ellipse at 12% 35%,#9a55ff24,transparent 36%),radial-gradient(ellipse at 86% 62%,#8c4aff20,transparent 38%),linear-gradient(116deg,transparent 16%,#8b50ff0d 25%,transparent 36%,transparent 61%,#8b50ff10 72%,transparent 84%),radial-gradient(circle at 34% 27%,#fff0b812 0 1px,transparent 2px),radial-gradient(circle at 77% 44%,#7de8ff13 0 1px,transparent 2px),radial-gradient(circle at 62% 79%,#ff96d812 0 1px,transparent 2px);background-size:100% 100%,100% 100%,220% 180%,100% 100%,100% 100%,100% 100%;background-position:center}
-main[data-magic-lights="playing"]::before{opacity:.27;animation:aaria-light-drift 24s ease-in-out infinite alternate}
+main[data-magic-lights="playing"]::before,main[data-magic-lights="paused"]::before{opacity:.27;animation:aaria-light-drift 24s ease-in-out infinite alternate}
 main[data-magic-lights="paused"]::before{animation-play-state:paused}
 @keyframes aaria-light-drift{from{background-position:center,center,0% 45%,center,center,center;opacity:.2}to{background-position:center,center,100% 55%,center,center,center;opacity:.28}}
 @media(prefers-reduced-motion:reduce){main[data-magic-lights]::before{animation:none!important;opacity:.15!important}}
