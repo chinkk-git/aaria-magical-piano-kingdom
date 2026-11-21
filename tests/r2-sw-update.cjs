@@ -15,6 +15,7 @@ const oldWorker=fs.readFileSync(path.join(__dirname,'fixtures/sw-v1.20.2.js'),'u
 const oldShell=fs.readFileSync(path.join(__dirname,'fixtures/installed-shell-v1.20.2.html'),'utf8');
 const newWorker=fs.readFileSync(path.join(root,'sw.js'),'utf8');
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const updaterSource=fs.readFileSync(path.join(root,'pwa-update.js'),'utf8');
 const installer=fs.readFileSync(path.join(root,'r2-install.js'),'utf8');
 const currentBuild=newWorker.match(/const CACHE='(aaria-piano-v\d+\.\d+\.\d+)'/);
 assert.ok(currentBuild,'service worker declares a versioned app-shell build');
@@ -50,6 +51,7 @@ assert.match(fs.readFileSync(path.join(root,'pwa-update.js'),'utf8'),/busy=true;
 
 let servedWorker=oldWorker;
 let serveNewShell=false;
+let futureShellHtml=null,futureUpdaterSource=null;
 let versionCheckRequests=0,versionCheckStatus=200,versionCheckWorker=null;
 const contentTypes={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.json':'application/json'};
 const server=http.createServer((req,res)=>{
@@ -63,6 +65,12 @@ const server=http.createServer((req,res)=>{
   }
   if((pathname==='/'||pathname==='/index.html')&&!serveNewShell){
     res.writeHead(200,{'content-type':contentTypes['.html']});res.end(oldShell);return;
+  }
+  if((pathname==='/'||pathname==='/index.html')&&futureShellHtml){
+    res.writeHead(200,{'content-type':contentTypes['.html']});res.end(futureShellHtml);return;
+  }
+  if(pathname==='/pwa-update.js'&&futureUpdaterSource){
+    res.writeHead(200,{'content-type':contentTypes['.js']});res.end(futureUpdaterSource);return;
   }
 
   const file=pathname==='/'?path.join(root,'index.html'):path.resolve(root,'.'+pathname);
@@ -254,8 +262,18 @@ const server=http.createServer((req,res)=>{
     assert.match(result.html,/Speed/,'updated playback label is available');assert.ok(result.html.includes(v21ScriptUrl),'unified controls script is in the updated shell');assert.match(result.v21Script,/id="v21Play"/,'unified Play Along control is in the V2.1 script');assert.match(result.v21Script,/id="v21Sound"/,'Sound preference control is in the V2.1 script');assert.match(result.html,/note-impact-style/,'note impact key glow styling is in the updated shell');assert.match(result.html,/spawnNoteExplosion/,'note impact implementation is in the updated shell');assert.match(result.html,/NOTE_FX_DURATION\*1000/,'note flash uses millisecond timing in the updated shell');
     console.log('PWA update-and-reopen passed: prior v1.19.0 shell and warning/gate were replaced; current Piano Hero opened without OMR setup; localStorage/IndexedDB songs, favorites and verified OMR cache remained intact.');
 
-    const futureWorker=newWorker.replace(`const CACHE='${shellName}'`,`const CACHE='${nextShellName}'`);
+    // A future release must advance the page, updater, UI URLs, and worker together.
+    // Changing only CACHE creates an impossible deployment and correctly makes the updater refuse verification.
+    const futureUiScriptUrl=`./v2.1-ui.js?v=${nextShellName}`;
+    const futureUiStyleUrl=`./v2.1-ui.css?v=${nextShellName}`;
+    const futureShellHtml=index.replaceAll(v21ScriptUrl,futureUiScriptUrl).replaceAll(v21StyleUrl,futureUiStyleUrl);
+    const futureUpdaterSource=updaterSource.replace(`const APP_BUILD='${shellName}'`,`const APP_BUILD='${nextShellName}'`);
+    const futureWorker=newWorker.replaceAll(shellName,nextShellName);
     assert.notEqual(futureWorker,newWorker,'future worker fixture advances the authoritative build identifier');
+    assert.ok(futureShellHtml.includes(futureUiScriptUrl)&&futureShellHtml.includes(futureUiStyleUrl),'future HTML references UI assets matching its build');
+    assert.ok(futureUpdaterSource.includes(`const APP_BUILD='${nextShellName}'`),'future updater declares the new build');
+    assert.ok(futureWorker.includes(futureUiScriptUrl)&&futureWorker.includes(futureUiStyleUrl),'future worker precaches the matching UI assets');
+    this.futureShellHtml=futureShellHtml;this.futureUpdaterSource=futureUpdaterSource;
     versionCheckWorker=futureWorker;servedWorker=futureWorker;
     await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
