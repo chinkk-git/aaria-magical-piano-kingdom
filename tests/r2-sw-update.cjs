@@ -6,6 +6,7 @@ const path=require('node:path');
 const {chromium}=require('playwright');
 
 const root=path.resolve(__dirname,'..');
+const sharedCatalog=JSON.parse(fs.readFileSync(path.join(root,'shared-song-library.json'),'utf8'));
 const oldWorker=fs.readFileSync(path.join(__dirname,'fixtures/sw-v1.20.2.js'),'utf8');
 const oldShell=fs.readFileSync(path.join(__dirname,'fixtures/installed-shell-v1.20.2.html'),'utf8');
 const newWorker=fs.readFileSync(path.join(root,'sw.js'),'utf8');
@@ -116,7 +117,11 @@ const server=http.createServer((req,res)=>{
     await page.waitForFunction(()=>navigator.serviceWorker.controller&&navigator.serviceWorker.controller!==window.__oldServiceWorker,{timeout:10000});
     await page.close();
     const reopened=await context.newPage();
+    await context.setOffline(true);
     await reopened.goto(origin+'/',{waitUntil:'domcontentloaded'});
+    await reopened.waitForFunction(ids=>ids.every(id=>window.PianoKingdomLibrary?.songs[id]),sharedCatalog.songs.map(song=>song.id),{timeout:15000});
+    assert.ok(await reopened.evaluate(()=>navigator.serviceWorker.controller),'the updated worker serves the app shell offline');
+    await context.setOffline(false);
     await reopened.waitForFunction(()=>window.PianoKingdomLibrary?.saveSong,{timeout:15000});
     assert.equal(await reopened.locator('#release2InstallGate').count(),0,'reopening after upgrade shows no OMR installation gate');
     assert.equal(await reopened.locator('body').evaluate(el=>el.innerText.includes('Warning: truncated output')||el.innerText.includes('Total output lines: 196')),false,'reopening after upgrade shows no leaked source warning');
