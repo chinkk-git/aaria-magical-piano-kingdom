@@ -129,6 +129,7 @@ const server=http.createServer((req,res)=>{
     await reopened.evaluate(()=>window.AariaOpenSettings());
     await reopened.locator('#appBuildInfo').waitFor({state:'visible'});
     await reopened.waitForFunction(build=>document.querySelector('#appBuildInfo')?.textContent.includes(build),shellName);
+    await reopened.locator('#closeKeyboardSetup').click();
     await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes("You're up to date"),{timeout:15000});
