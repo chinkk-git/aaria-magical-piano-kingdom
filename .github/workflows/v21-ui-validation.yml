@@ -42,17 +42,17 @@ jobs:
       - name: Verify final review archive contents
         if: always()
         run: |
-          test -s AARIA_V2_1_MAGIC_STAR_COMPACT_CONTROLS_FINAL_OWNER_REVIEW.zip
-          unzip -l AARIA_V2_1_MAGIC_STAR_COMPACT_CONTROLS_FINAL_OWNER_REVIEW.zip
-          unzip -Z1 AARIA_V2_1_MAGIC_STAR_COMPACT_CONTROLS_FINAL_OWNER_REVIEW.zip | grep -q 'magic-star-phase1-evidence/manifest.json'
-          unzip -Z1 AARIA_V2_1_MAGIC_STAR_COMPACT_CONTROLS_FINAL_OWNER_REVIEW.zip | grep -q 'magic-star-phase1-evidence/PHASE1_TEST_RESULTS.md'
-          unzip -Z1 AARIA_V2_1_MAGIC_STAR_COMPACT_CONTROLS_FINAL_OWNER_REVIEW.zip | grep -q 'magic-star-phase1-evidence/magic-star-open-close-group-switching-portrait.webm'
+          test -s AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW.zip
+          unzip -l AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW.zip
+          unzip -Z1 AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW.zip | grep -q 'manifest.json'
+          unzip -Z1 AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW.zip | grep -q 'FUNCTIONAL_RESULTS.md'
+          unzip -Z1 AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW.zip | grep -q 'magic-star-measure-loop-jump-practice.webm'
       - name: Upload V2.1 owner-review ZIP
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: AARIA_V2_1_MAGIC_STAR_COMPACT_CONTROLS_FINAL_OWNER_REVIEW
-          path: AARIA_V2_1_MAGIC_STAR_COMPACT_CONTROLS_FINAL_OWNER_REVIEW.zip
+          name: AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW
+          path: AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW.zip
           retention-days: 30
           if-no-files-found: error
 
@@ -95,7 +95,7 @@ jobs:
       - name: Download exact-SHA Magic Star evidence
         uses: actions/download-artifact@v4
         with:
-          name: AARIA_V2_1_MAGIC_STAR_COMPACT_CONTROLS_FINAL_OWNER_REVIEW
+          name: AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW
           path: evidence-source/v21
           run-id: ${{ github.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -107,23 +107,8 @@ jobs:
           path: evidence-source/r2
           run-id: ${{ fromJSON(steps.source-runs.outputs.runs).r2.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Assemble consolidated owner evidence
-        env:
-          APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
-          SOURCE_RUNS: ${{ steps.source-runs.outputs.runs }}
-          V21_RUN_ID: ${{ github.run_id }}
-          V21_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          V21_CONCLUSION: ${{ needs.phase1-magic-star.outputs.test_result }}
-        run: python3 scripts/package-v21-release2-final.py
-      - name: Verify ZIP integrity and contents
+      - name: Verify single owner-review archive
         run: |
-          test -s AARIA_V2_1_RELEASE2_COMPLETE_FINAL_ACCEPTANCE.zip
-          unzip -t AARIA_V2_1_RELEASE2_COMPLETE_FINAL_ACCEPTANCE.zip
-          unzip -Z1 AARIA_V2_1_RELEASE2_COMPLETE_FINAL_ACCEPTANCE.zip
-      - name: Upload consolidated owner-review artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: AARIA_V2_1_RELEASE2_COMPLETE_FINAL_ACCEPTANCE
-          path: AARIA_V2_1_RELEASE2_COMPLETE_FINAL_ACCEPTANCE.zip
-          retention-days: 30
-          if-no-files-found: error
+          test -s evidence-source/v21/AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW.zip
+          unzip -t evidence-source/v21/AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW.zip
+          unzip -Z1 evidence-source/v21/AARIA_V2_1_SINGLE_STAR_3D_PANELS_OWNER_REVIEW.zip
