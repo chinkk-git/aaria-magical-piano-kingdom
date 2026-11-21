@@ -72,10 +72,10 @@ function placeOverlay(){
  assembly.dataset.side=anchor.side;assembly.style.left=centerX+'px';assembly.style.top=centerY+'px';assembly.style.setProperty('--wheel-radius',radius+'px');assembly.style.setProperty('--star-size',starSize+'px');
  const scale=radius/250,shellWidth=600*scale,shellHeight=600*scale;
  shell.style.width=shellWidth+'px';shell.style.height=shellHeight+'px';shell.style.left=(-120*scale)+'px';shell.style.top=(-300*scale)+'px';shell.style.setProperty('--reveal-radius',(radius*1.04)+'px');
- const buttonRadius=radius*.765,buttonWidth=Math.max(44,Math.min(72,radius*.46));
+ const buttonRadius=radius*.77,buttonWidth=Math.max(44,Math.min(72,radius*.46));
  for(let index=0;index<5;index++){const theta=(-72+36*index)*Math.PI/180,sign=anchor.side==='left'?1:-1,dx=Math.cos(theta),dy=Math.sin(theta);
   for(const group of ['primary','navigation']){const key=menuGroups[group][index],button=groups[group].querySelector('[data-key="'+key+'"]');
-   button.style.left=(sign*buttonRadius*dx)+'px';button.style.top=(buttonRadius*dy)+'px';button.style.setProperty('--action-width',buttonWidth+'px');button.style.setProperty('--icon-size',Math.max(20,Math.min(30,radius*.25))+'px');button.style.setProperty('--action-delay',(45+index*24)+'ms')
+   button.style.left=(sign*buttonRadius*dx)+'px';button.style.top=(buttonRadius*dy)+'px';button.style.setProperty('--action-width',buttonWidth+'px');button.style.setProperty('--action-height','48px');button.style.setProperty('--icon-size',Math.max(20,Math.min(25,radius*.22))+'px');button.style.setProperty('--action-delay',(45+index*24)+'ms')
   }
  }
  if(!panel.hidden){const low=Math.max(safeTop+8,Math.min(keyRect?.top||innerHeight-110,dockRect.top)-8),maxH=Math.max(120,low-safeTop-12);panel.style.setProperty('--v21-panel-max',maxH+'px');const pr=panel.getBoundingClientRect(),h=Math.min(panel.offsetHeight||280,maxH),panelTop=Math.max(safeTop+4,Math.min(anchor.y*innerHeight-h/2,low-h-4));panel.style.top=panelTop+'px';if(anchor.side==='left'){panel.style.left=Math.min(innerWidth-(pr.width||340)-6,Math.max(sr.right+6,Math.min(innerWidth*.18,sr.right+6)))+'px';panel.style.right='auto'}else{panel.style.right=Math.min(innerWidth-(sr.left-6),Math.max(6,innerWidth-sr.left+6))+'px';panel.style.left='auto'}}
