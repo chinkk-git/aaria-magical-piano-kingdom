@@ -35,8 +35,8 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   await page.goto(`http://127.0.0.1:${server.address().port}/index.html`,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.PianoKingdomLibrary?.saveSong);
   assert.equal(await page.locator('#release2InstallGate').count(),0,'first launch has no mandatory OMR gate');
-  await page.locator('#setupKeyboard').click();await page.locator('#pianoLayoutSelect').selectOption('hero');await page.locator('.keyboard-settings-details summary').click();await page.locator('#saveKeyboardSetup').click();
-  await page.locator('#openMySongs').click();await page.locator('#makeNewSong').click();
+  await page.evaluate(()=>window.AariaOpenSettings());await page.locator('#pianoLayoutSelect').selectOption('hero');await page.locator('.keyboard-settings-details summary').click();await page.locator('#saveKeyboardSetup').click();
+  await page.evaluate(()=>window.AariaPianoNavigation.openSongs());await page.locator('#makeNewSong').click();
   const wizard=page.locator('#localSongWizard');await wizard.waitFor({state:'visible'});
   await page.locator('#scoreSongTitle').fill('Automatic Workshop Song');
   const svg='<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700"><rect width="1200" height="700" fill="white"/><g stroke="black" stroke-width="5">'+[170,190,210,230,250].map(y=>`<path d="M100 ${y}H1100"/>`).join('')+'</g><g fill="black">'+[220,420,620,820,220,420,620,820].map((x,i)=>`<ellipse cx="${x}" cy="${190+(i%4)*10+(i>3?0:0)}" rx="13" ry="9"/>`).join('')+'</g></svg>';
@@ -44,6 +44,8 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   assert.match(await page.locator('#localSongWizardTitle').textContent(),/Add New Song/);
   assert.match(await page.locator('#makeSong').textContent(),/Make Music/);
   await page.locator('#scorePhotos').setInputFiles({name:'known-score.png',mimeType:'image/png',buffer:Buffer.from(png64,'base64')});
+  // Isolate the manual failure/retry path; automatic page recovery has its own test below.
+  await page.evaluate(()=>{const choose=window.AariaR2Image.chooseRecovery;window.AariaR2Image.chooseRecovery=(details)=>details.failureClass==='OMR_OUTPUT_INVALID'?{retry:false,reason:null}:choose(details)});
   await page.locator('#makeSong').click();
   await page.waitForFunction(()=>document.querySelector('#makeSong')?.textContent.includes('Try again'),{timeout:30000});
   assert.equal(await page.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).some(song=>song?.title==='Automatic Workshop Song')),false,'recognition failure does not create a library record');
@@ -52,12 +54,12 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   await page.locator('#keepPlaying').waitFor({state:'visible'});
   await page.locator('#keepPlaying').click();
   await page.locator('.magic-song-bubble').waitFor({state:'visible'});
-  const bubbleBox=await page.locator('.magic-song-bubble').boundingBox(),keyBox=await page.locator('#keys').boundingBox(),playbackBox=await page.locator('#player').boundingBox(),bubbleStyle=await page.locator('.magic-song-bubble').evaluate(e=>({position:getComputedStyle(e).position,top:getComputedStyle(e).top,parent:e.parentElement.id,playfield:e.parentElement.getBoundingClientRect().toJSON()}));console.log('minimized overlay geometry',JSON.stringify({bubbleBox,keyBox,playbackBox,bubbleStyle}));await page.screenshot({path:`/tmp/issue25-minimized-processing-390x844-${process.env.APP_SOURCE_SHA||'local'}.png`});
+  const bubbleBox=await page.locator('.magic-song-bubble').boundingBox(),keyBox=await page.locator('#keys').boundingBox(),playbackBox=await page.locator('.v21-dock').boundingBox(),bubbleStyle=await page.locator('.magic-song-bubble').evaluate(e=>({position:getComputedStyle(e).position,top:getComputedStyle(e).top,parent:e.parentElement.id,playfield:e.parentElement.getBoundingClientRect().toJSON()}));console.log('minimized overlay geometry',JSON.stringify({bubbleBox,keyBox,playbackBox,bubbleStyle}));await page.screenshot({path:`/tmp/issue25-minimized-processing-390x844-${process.env.APP_SOURCE_SHA||'local'}.png`});
   assert.ok(bubbleBox.x+bubbleBox.width<=keyBox.x+keyBox.width&&bubbleBox.y+bubbleBox.height<=keyBox.y,'minimized button stays above the reference keyboard');
   assert.ok(bubbleBox.y+bubbleBox.height<=playbackBox.y,'minimized button stays clear of playback controls');
   const sha=process.env.APP_SOURCE_SHA||'local';await page.screenshot({path:`/tmp/issue25-minimized-processing-390x844-${sha}.png`});
   await page.locator('.magic-song-bubble').click();await page.locator('#localSongWizard').waitFor({state:'visible'});
-  await page.waitForTimeout(5000);
+  await page.waitForFunction(()=>/needs help saving/i.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:30000});
   const saveFailureState=await page.evaluate(()=>({status:document.querySelector('#scoreImportStatus')?.textContent,stage:document.querySelector('#workshopStage')?.textContent,pages:document.querySelector('#workshopProgressPages')?.textContent,eta:document.querySelector('#workshopProgressEta')?.textContent,retry:document.querySelector('#retrySongSave')?.hidden,busy:window.AariaSongImportIsBusy?.()}));console.log('save failure state',JSON.stringify({saveFailureState,errors}));
   assert.match(saveFailureState.status,/needs help saving/i,'simulated Library save failure is reported clearly');
   assert.equal(await page.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).some(song=>song?.title==='Automatic Workshop Song')),false,'storage failure does not claim a saved song');
@@ -74,36 +76,35 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   await page.locator('#playMySong').click();
   await page.locator('#localSongWizard').waitFor({state:'hidden'});
   await page.waitForFunction(expected=>document.querySelector('#songSelect')?.value===expected&&mode==='listen',id);
-  await page.locator('#songPickerButton').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});
-  await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).locator('select').selectOption('basic');
+  await page.evaluate(()=>window.AariaPianoNavigation.openSongs());await page.locator('#mySongsDialog').waitFor({state:'visible'});
+  await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).locator('.v21-song-details').evaluate(el=>{el.open=true});await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).locator('select').selectOption('basic');
   await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).getByRole('button',{name:'Choose'}).click();
   await page.waitForFunction(expected=>document.querySelector('#songSelect')?.value===expected,id);
   const playback=await page.evaluate(expected=>({id:document.querySelector('#songSelect').value,engineEvents:EVENTS.map(n=>[n.bar,n.at,n.dur,n.midi]),savedEvents:window.PianoKingdomLibrary.songs[expected].arrangements.basic.events.map(n=>[n.bar,n.at,n.dur,n.midi])}),id);
   assert.equal(playback.id,id);assert.deepEqual(playback.engineEvents,playback.savedEvents,'selected Basic note data reaches the shared playback engine');
   assert.equal(await page.locator('#songSelect').isVisible(),false,'old native selector stays disabled');
-  await page.locator('#songPickerButton').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});
-  await page.locator('.library-card').filter({hasText:'Cradle Song'}).getByRole('button',{name:'▶ Play'}).click();
+  await page.evaluate(()=>window.AariaPianoNavigation.openSongs());await page.locator('#mySongsDialog').waitFor({state:'visible'});
+  await page.locator('.library-card').filter({hasText:'Cradle Song'}).locator('.v21-song-details').evaluate(el=>{el.open=true});await page.locator('.library-card').filter({hasText:'Cradle Song'}).getByRole('button',{name:'▶ Play'}).click();
   await page.waitForFunction(()=>document.querySelector('#songSelect')?.value==='cradle'&&mode==='listen');
   assert.equal(await page.locator('#songPickerButton').textContent().then(t=>t.includes('Dalmatian Cradle Song')),true,'built-in song selection updates the visible selector');
-  await page.locator('#songPickerButton').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});
-  await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).locator('select').selectOption('basic');
+  await page.evaluate(()=>window.AariaPianoNavigation.openSongs());await page.locator('#mySongsDialog').waitFor({state:'visible'});
+  await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).locator('.v21-song-details').evaluate(el=>{el.open=true});await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).locator('select').selectOption('basic');
   await page.locator('.library-card').filter({hasText:'Automatic Workshop Song'}).getByRole('button',{name:'▶ Play'}).click();
   await page.waitForFunction(expected=>document.querySelector('#songSelect')?.value===expected&&mode==='listen',id);
   assert.deepEqual(await page.evaluate(()=>EVENTS.map(n=>[n.bar,n.at,n.dur,n.midi])),playback.savedEvents,'saved song opens in playback with its selected arrangement');
-  await page.locator('#openMySongs').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.locator('#closeMySongs').click();
+  await page.evaluate(()=>window.AariaPianoNavigation.openSongs());await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.locator('#closeMySongs').click();
   assert.match(await page.locator('#songPickerButton').textContent(),/Automatic Workshop Song/,'song selector reflects selection');
-  await page.locator('#openMySongs').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.locator('#makeNewSong').click();await page.locator('#localSongWizard').waitFor({state:'visible'});
+  await page.evaluate(()=>window.AariaPianoNavigation.openSongs());await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.locator('#makeNewSong').click();await page.locator('#localSongWizard').waitFor({state:'visible'});
   await page.locator('#editSavedSong').click();await page.locator('#scoreReview').waitFor({state:'visible'});await page.locator('#cancelReview').click();
   assert.equal(await page.evaluate(expected=>window.PianoKingdomLibrary.songs[expected]?.title,id),'Automatic Workshop Song','optional edit can be canceled while keeping the saved song');
   await page.locator('#closeSongWizard').click();await page.locator('#localSongWizard').waitFor({state:'hidden'});
-  const zoom=await page.locator('#keys .white').count();await page.locator('#zoomKeys').click();assert.equal(await page.locator('#keys .white').count(),8,'Zoom Keys changes the visible white key count');await page.locator('#zoomKeys').click();await page.locator('#zoomKeys').click();assert.equal(await page.locator('#keys .white').count(),zoom,'Zoom Keys cycles through its key ranges');
+  const zoom=await page.locator('#keys .white').count();await page.locator('#v21Zoom').click();assert.equal(await page.locator('#keys .white').count(),8,'fixed toolbar Zoom changes the visible white key count');await page.locator('#v21Zoom').click();await page.locator('#v21Zoom').click();assert.equal(await page.locator('#keys .white').count(),zoom,'fixed toolbar Zoom cycles through its key ranges');
   assert.match(await page.locator('#speed').evaluate(e=>e.parentElement.textContent),/Speed/,'the playback slider uses the Speed label');
-  await page.locator('#songPickerButton').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.screenshot({path:`/tmp/issue25-song-selector-390x844-${sha}.png`});await page.screenshot({path:'/tmp/android-song-selector-open.png'});
+  await page.evaluate(()=>window.AariaPianoNavigation.openSongs());await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.screenshot({path:`/tmp/issue25-song-selector-390x844-${sha}.png`});await page.screenshot({path:'/tmp/android-song-selector-open.png'});
   for(const viewport of [{width:390,height:844},{width:844,height:390},{width:834,height:1194},{width:1194,height:834},{width:1440,height:900}]){
    await page.setViewportSize(viewport);
-   const layout=await page.evaluate(()=>{const rect=selector=>document.querySelector(selector).getBoundingClientRect(),home=rect('#openMySongs'),picker=rect('#songPickerButton'),settings=rect('#setupKeyboard'),install=rect('#installHelp'),controls=['#favoriteCurrent','#zoomKeys','#setupKeyboard','#addSongOpen','#openMySongs'].map(rect);return{homeNextToSettings:home.right<=settings.left&&settings.left-home.right<20,homeBounds:{left:home.left,right:home.right,top:home.top,bottom:home.bottom},settingsBounds:{left:settings.left,right:settings.right,top:settings.top,bottom:settings.bottom},grid:{columns:getComputedStyle(document.querySelector('main[data-piano-layout=hero] .compact-title')).gridTemplateColumns,gap:getComputedStyle(document.querySelector('main[data-piano-layout=hero] .compact-title')).columnGap},separate:home.right<=picker.left||picker.right<=home.left||home.bottom<=picker.top||picker.bottom<=home.top,controlsClear:controls.every(c=>install.right<=c.left||c.right<=install.left||install.bottom<=c.top||c.bottom<=install.top),dialogVisible:document.querySelector('#mySongsDialog').getBoundingClientRect().width>0}});
-   console.log('responsive toolbar geometry',`${viewport.width}x${viewport.height}`,JSON.stringify(layout));assert.equal(layout.separate,true,`Home and selector do not overlap at ${viewport.width}x${viewport.height}`);assert.equal(layout.homeNextToSettings,true,`Home is next to Settings at ${viewport.width}x${viewport.height}`);
-   assert.equal(layout.controlsClear,true,`selector does not overlap header controls at ${viewport.width}x${viewport.height}`);
+   const layout=await page.evaluate(()=>({legacyNavigationRemoved:['#openMySongs','#setupKeyboard','#addSongOpen'].every(s=>!document.querySelector(s)),toolbarControls:['#v21Play','#v21Sound','#speed','#v21Zoom'].every(s=>{const e=document.querySelector(s);return e&&e.getBoundingClientRect().width>0}),dialogVisible:document.querySelector('#mySongsDialog').getBoundingClientRect().width>0}));
+   console.log('unified navigation geometry',`${viewport.width}x${viewport.height}`,JSON.stringify(layout));assert.equal(layout.legacyNavigationRemoved,true,`standalone navigation is removed at ${viewport.width}x${viewport.height}`);assert.equal(layout.toolbarControls,true,`four fixed playback controls remain visible at ${viewport.width}x${viewport.height}`);
    assert.equal(layout.dialogVisible,true,`custom selector dialog remains visible at ${viewport.width}x${viewport.height}`);await page.screenshot({path:`/tmp/issue25-song-selector-${viewport.width}x${viewport.height}-${sha}.png`});
   }
 
@@ -113,7 +114,7 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   await cancelPage.route('**/r2-install.js*',route=>route.fulfill({status:200,contentType:'text/javascript',body:"(()=>{window.AariaR2Installer={state:'ready',ensureReady:async()=>true}})()"}));
   await cancelPage.goto(`http://127.0.0.1:${server.address().port}/index.html`,{waitUntil:'domcontentloaded'});
   await cancelPage.waitForFunction(()=>window.PianoKingdomLibrary?.saveSong);
-  await cancelPage.locator('#openMySongs').click();await cancelPage.locator('#makeNewSong').click();
+  await cancelPage.evaluate(()=>window.AariaPianoNavigation.openSongs());await cancelPage.locator('#makeNewSong').click();
   await cancelPage.locator('#scorePhotos').setInputFiles({name:'cancel-score.png',mimeType:'image/png',buffer:Buffer.from(png64,'base64')});
   const dismissed=async dialog=>{assert.match(dialog.message(),/Your pictures and completed pages will stay saved/);await dialog.dismiss()};
   cancelPage.on('dialog',dismissed);
@@ -138,14 +139,14 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   assert.equal(await cancelPage.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).filter(song=>song?.title==='My song').length),0,'terminated worker cannot complete late or create a duplicate partial song');
   assert.deepEqual(cancelErrors,[],'cancel flow has no uncaught browser errors');
   await cancelPage.waitForTimeout(1200);
-  await cancelPage.reload();await cancelPage.waitForFunction(()=>window.PianoKingdomLibrary?.saveSong);await cancelPage.locator('#openMySongs').click();await cancelPage.locator('#makeNewSong').click();await cancelPage.locator('#recoveredJob').waitFor({state:'visible'});
+  await cancelPage.reload();await cancelPage.waitForFunction(()=>window.PianoKingdomLibrary?.saveSong);await cancelPage.evaluate(()=>window.AariaPianoNavigation.openSongs());await cancelPage.locator('#makeNewSong').click();await cancelPage.locator('#recoveredJob').waitFor({state:'visible'});
   assert.match(await cancelPage.locator('#recoveredJobInfo').textContent(),/0 of 1 page finished/,'the paused page count recovers from the existing IndexedDB job record');
   assert.equal(await cancelPage.locator('#workshopProgressPages').textContent(),'0 of 1 pages finished','the progress meter restores the saved completed-page count');
   await cancelPage.close();
 
   await page.setViewportSize({width:390,height:844});await page.locator('#closeMySongs').click();
   const importPageCount=async(count,title)=>{
-   await page.locator('#openMySongs').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.locator('#makeNewSong').click();await page.locator('#localSongWizard').waitFor({state:'visible'});
+   await page.evaluate(()=>window.AariaPianoNavigation.openSongs());await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.locator('#makeNewSong').click();await page.locator('#localSongWizard').waitFor({state:'visible'});
    await page.locator('#scoreSongTitle').fill(title);
    const files=Array.from({length:count},(_,i)=>({name:`page-${i+1}.png`,mimeType:'image/png',buffer:Buffer.from(png64,'base64')}));
    await page.locator('#scorePhotos').setInputFiles(files);
@@ -159,7 +160,7 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   assert.equal(await page.locator('#workshopProgressEta').isHidden(),true,'ETA is omitted when the completed import has no remaining page work');
   await page.locator('#closeSongWizard').click();await page.locator('#localSongWizard').waitFor({state:'hidden'});
   await context.setOffline(true);
-  await page.locator('#openMySongs').click();await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.locator('#makeNewSong').click();await page.locator('#localSongWizard').waitFor({state:'visible'});
+  await page.evaluate(()=>window.AariaPianoNavigation.openSongs());await page.locator('#mySongsDialog').waitFor({state:'visible'});await page.locator('#makeNewSong').click();await page.locator('#localSongWizard').waitFor({state:'visible'});
   await page.locator('#scoreSongTitle').fill('Twenty Page Progress Song');
   await page.locator('#scorePhotos').setInputFiles(Array.from({length:20},(_,i)=>({name:`large-${i+1}.png`,mimeType:'image/png',buffer:Buffer.from(png64,'base64')})));
   await page.evaluate(()=>{window.__progressSamples=[];const el=document.querySelector('#workshopProgressBar');new MutationObserver(()=>window.__progressSamples.push(Number(el.getAttribute('aria-valuenow')))).observe(el,{attributes:true,attributeFilter:['aria-valuenow']})});

@@ -21,41 +21,78 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   assert.deepEqual(appReady,{library:true,omr:true,quality:true});
   await page.waitForFunction(()=>window.PianoKingdomLibrary.songs['custom-legacy-preserved']);
   await page.evaluate(async()=>{const events=[];for(let beat=0;beat<4;beat++){events.push({bar:1,at:beat*2,dur:2,midi:60+beat*2,hand:'right',part:'piano-rh'},{bar:1,at:beat*2,dur:2,midi:48+beat*2,hand:'left',part:'piano-lh'},{bar:1,at:beat*2,dur:2,midi:55+beat*2,hand:'left',part:'piano-lh'})}const score={events,total:1,barLengths:[8],bpm:90};const generated=window.AariaR2Music.generateArrangements(score,{scoreVerified:true});const song={id:'custom-r2-browser-smoke',title:'Release 2 Browser Check',...score,imported:true,difficulty:window.AariaR2Music.metrics(score),arrangements:generated.versions};await window.PianoKingdomLibrary.saveSong(song);window.PianoKingdomLibrary.addSong(song,{select:false})});
-  await page.locator('#openMySongs').click();
+  await page.evaluate(()=>window.AariaPianoNavigation.openSongs());
   const dlg=page.locator('#mySongsDialog');await dlg.waitFor({state:'visible'});
-  const legacy=page.locator('.library-card').filter({hasText:'Legacy Saved Song'});await legacy.waitFor();
+  const legacy=page.locator('.library-card').filter({hasText:'Legacy Saved Song'});await legacy.waitFor();await legacy.locator('.v21-song-details summary').click();
   await legacy.getByRole('button',{name:'▶ Play'}).click();await page.waitForFunction(()=>document.querySelector('#songSelect')?.value==='custom-legacy-preserved');
   assert.equal(await dlg.evaluate(el=>el.open),false,'legacy saved song migrated and plays in this visit');
-  await page.locator('#openMySongs').click();
-  const builtIn=page.locator('.library-card').filter({hasText:'Cradle Song'});await builtIn.waitFor();
+  await page.evaluate(()=>window.AariaPianoNavigation.openSongs());
+  const builtIn=page.locator('.library-card').filter({hasText:'Cradle Song'});await builtIn.waitFor();await builtIn.locator('.v21-song-details summary').click();
   await builtIn.getByRole('button',{name:'▶ Play'}).click();await page.waitForFunction(()=>document.querySelector('#songSelect')?.value==='cradle');
   assert.equal(await dlg.evaluate(el=>el.open),false,'built-in song selection closes the Library');
   await page.waitForFunction(ids=>ids.every(id=>window.PianoKingdomLibrary?.songs[id]),sharedCatalog.songs.map(song=>song.id));
+  await page.waitForFunction(()=>window.AariaV21Engine&&document.querySelector('.v21-dock')&&window.AariaPianoNavigation?.openSongs);
+  await page.evaluate(()=>window.AariaPianoNavigation.openSongs());
   for(const song of sharedCatalog.songs){
+    const card=page.locator('.library-card').filter({hasText:song.title});
+    const cardCount=await card.count();
+    if(cardCount!==1){
+      const diagnostic=await page.evaluate(()=>({
+        dialogOpen:document.querySelector('#mySongsDialog')?.open,
+        dialogText:document.querySelector('#mySongsDialog')?.textContent?.slice(0,700),
+        cards:[...document.querySelectorAll('#mySongsDialog .library-card')].slice(0,12).map(x=>x.querySelector('.library-title')?.textContent),
+        sharedSongs:Object.values(window.PianoKingdomLibrary?.songs||{}).filter(x=>x?.sharedCatalog).map(x=>({id:x.id,title:x.title})).slice(0,12)
+      }));
+      assert.equal(cardCount,1,song.title+' appears once in the shared song library; runtime='+JSON.stringify(diagnostic));
+    }
+    assert.match(await card.locator('.library-meta').textContent(),/Built-in/,song.title+' has the same built-in library status as bundled songs');
+    await card.locator('.v21-song-details summary').click();
+    const actualVersions=await card.locator('.library-version option').evaluateAll(options=>options.map(option=>option.value));
+    const expectedVersions=['original',...['basic','medium','advanced'].filter(level=>song.arrangements?.[level]?.events?.length)];
+    assert.deepEqual(actualVersions,expectedVersions,song.title+' exposes its bundled arrangements');
+  }
+  await page.locator('#closeMySongs').click();
+  for(const song of sharedCatalog.songs){
+    await page.locator('#songPickerButton').click();
+    await page.locator('#v21SongMenu').getByRole('option',{name:song.title,exact:true}).click();
     const state=await page.evaluate(id=>{
       const selected=window.PianoKingdomLibrary.songs[id];
-      window.PianoKingdomLibrary.selectSong(id);
       return {
         selected:document.querySelector('#songSelect').value,
+        activeId:window.AariaV21Engine.state().songId,
         sourceEventsMatch:JSON.stringify(EVENTS)===JSON.stringify(selected.events),
         total:selected.total,
         eventCount:selected.events.length,
-        hasPlaybackControls:['primaryModeButton','listenToggle','speed','bar','loopRange'].every(control=>!!document.getElementById(control)),
+        hasPlaybackControls:!!document.getElementById('v21Play')&&!!document.getElementById('v21Sound')&&!!document.getElementById('speed')&&!!document.getElementById('v21Zoom'),
       };
     },song.id);
-    assert.equal(state.selected,song.id,song.title+' selects from the shared library');
-    assert.equal(state.sourceEventsMatch,true,song.title+' retains the catalogue events on selection');
+    assert.equal(state.selected,song.id,song.title+' selects from the visible V2.1 song picker');
+    assert.equal(state.activeId,song.id,song.title+' opens in the V2.1 playback engine');
+    assert.equal(state.sourceEventsMatch,true,song.title+' retains the catalogue event data on selection');
     assert.equal(state.total,song.total,song.title+' retains its measure count');
     assert.equal(state.eventCount,song.events.length,song.title+' retains its event count');
-    assert.equal(state.hasPlaybackControls,true,song.title+' uses the shared playback controls');
-    await page.locator('#primaryModeButton').click();
+    assert.equal(state.hasPlaybackControls,true,song.title+' uses the V2.1 playback controls');
+    await page.evaluate(()=>AariaV21Engine.setMeasure(2));
+    assert.equal((await page.evaluate(()=>AariaV21Engine.state().currentMeasure)),2,song.title+' supports measure navigation');
+    await page.locator('#v21Sound').click();
+    assert.equal(await page.locator('#v21Sound').getAttribute('aria-pressed'),'false',song.title+' supports Sound Off');
+    await page.locator('#v21Sound').click();
+    assert.equal(await page.locator('#v21Sound').getAttribute('aria-pressed'),'true',song.title+' supports Sound On');
+    await page.locator('#speed').evaluate(el=>{el.value='100';el.dispatchEvent(new Event('input',{bubbles:true}))});
+    await page.locator('#v21Play').click();
+    await page.waitForFunction(()=>mode==='countdown');
     await page.waitForFunction(()=>mode==='follow',{timeout:7000});
     await page.waitForTimeout(200);
-    assert.equal(await page.evaluate(()=>mode==='follow'&&EVENTS.length>0),true,song.title+' initializes Play Along note scheduling');
+    assert.equal(await page.evaluate(()=>mode==='follow'&&EVENTS.length>0),true,song.title+' initializes Play Along with its notes');
+    await page.evaluate(()=>AariaV21Engine.setLoop(2,2,true));
+    assert.equal(await page.evaluate(()=>AariaV21Engine.state().loopEnabled),true,song.title+' can loop a selected measure');
+    await page.evaluate(()=>AariaV21Engine.setLoop(1,1,false));
+    await page.locator('#v21Play').click();
+    await page.waitForFunction(()=>mode==='stop'&&pausedMode==='follow');
   }
   await page.evaluate(()=>window.PianoKingdomLibrary.selectSong('cradle'));
-  await page.locator('#openMySongs').click();
-  const card=page.locator('.library-card').filter({hasText:'Release 2 Browser Check'});await card.waitFor();
+  await page.evaluate(()=>window.AariaPianoNavigation.openSongs());
+  const card=page.locator('.library-card').filter({hasText:'Release 2 Browser Check'});await card.waitFor();await card.locator('.v21-song-details summary').click();
   assert.deepEqual(await card.locator('select option').evaluateAll(opts=>opts.map(o=>o.value)),['original','basic','medium']);
   await card.locator('select').selectOption('medium');await card.getByRole('button',{name:'▶ Play'}).click();
   await page.waitForFunction(()=>document.querySelector('#songSelect')?.value==='custom-r2-browser-smoke');
@@ -64,34 +101,34 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
     const song={id:'custom-play-again-state',title:'Play Again State Fixture',events:[{bar:1,at:0,dur:2,midi:60,hand:'right'},{bar:2,at:0,dur:2,midi:62,hand:'right'}],total:2,barLengths:[8,8],bpm:240,imported:true,difficulty:{level:'easy',reasons:[]},arrangements:{}};
     await window.PianoKingdomLibrary.saveSong(song);window.PianoKingdomLibrary.addSong(song,{select:false});window.PianoKingdomLibrary.selectSong(song.id);
   });
-  assert.equal(await page.locator('#pause').isDisabled(),true,'READY cannot display a misleading Resume action');
+  assert.equal(await page.locator('#v21Play').isDisabled(),false,'READY exposes the available Play Along action');
   await page.locator('#speed').evaluate(el=>{el.value='120';el.dispatchEvent(new Event('input',{bubbles:true}))});
-  await page.locator('#listenToggle').click();assert.equal(await page.locator('#listenToggle').getAttribute('aria-pressed'),'false','Listen Off mutes sound without disabling visual playback');
-  await page.locator('#listenToggle').click();assert.equal(await page.locator('#listenToggle').getAttribute('aria-pressed'),'true','Listen On restores the sound preference');
-  await page.locator('#bar').selectOption('2');assert.match(await page.locator('#position').textContent(),/Measure 2 of 2/,'passage selection updates the displayed measure');
-  await page.locator('#loopRange').selectOption('1');
-  await page.locator('#secondaryModeButton').click();await page.waitForFunction(()=>mode==='listen');
-  await page.locator('#pause').click();await page.waitForFunction(()=>mode==='stop'&&pausedMode==='listen');assert.match(await page.locator('#pause').textContent(),/Resume/,'PLAYING to PAUSED displays Resume');
-  await page.locator('#pause').click();await page.waitForFunction(()=>mode==='listen');assert.match(await page.locator('#pause').textContent(),/Pause/,'PAUSED to PLAYING displays Pause');
-  await page.waitForTimeout(1900);assert.equal(await page.evaluate(()=>mode==='listen'&&bar===2),true,'loop mode repeats the selected measure instead of completing');
-  await page.locator('#loopRange').selectOption('0');await page.waitForFunction(()=>mode==='completed',{timeout:10000});
+  await page.locator('#v21Sound').click();assert.equal(await page.locator('#v21Sound').getAttribute('aria-pressed'),'false','Sound Off mutes sound without disabling visual playback');
+  await page.locator('#v21Sound').click();assert.equal(await page.locator('#v21Sound').getAttribute('aria-pressed'),'true','Sound On restores the sound preference');
+  await page.evaluate(()=>AariaV21Engine.setMeasure(2));assert.match(await page.locator('#position').textContent(),/Measure 2 of 2/,'Measure control updates the displayed measure');
+  await page.evaluate(()=>AariaV21Engine.setLoop(2,2,true));
+  await page.evaluate(()=>applyPianoLayout('hero',false));await page.locator('#v21Play').click();await page.waitForFunction(()=>mode==='countdown');await page.waitForFunction(()=>mode==='follow');
+  await page.locator('#v21Play').click();await page.waitForFunction(()=>mode==='stop'&&pausedMode==='follow');assert.match(await page.locator('#v21Play').textContent(),/Resume/,'PLAYING to PAUSED displays Resume');
+  await page.locator('#v21Play').click();await page.waitForFunction(()=>mode==='follow');assert.match(await page.locator('#v21Play').textContent(),/Pause/,'PAUSED to PLAYING displays Pause');
+  await page.waitForTimeout(1900);assert.equal(await page.evaluate(()=>mode==='follow'&&bar===2),true,'loop mode repeats the selected measure instead of completing');
+  await page.evaluate(()=>AariaV21Engine.setLoop(2,2,false));await page.waitForFunction(()=>mode==='completed',{timeout:10000});
   assert.match(await page.locator('#pause').textContent(),/Play Again/,'COMPLETED exposes the Play Again action');
   assert.match(await page.locator('#status').textContent(),/Song complete.*Play Again/,'completion status announces the available restart action');
   await page.screenshot({path:`/tmp/piano-playback-state-390x844-${process.env.APP_SOURCE_SHA||'local'}.png`});
-  await page.locator('#pause').click();await page.waitForFunction(()=>mode==='listen'&&bar===1&&beat<1,{timeout:5000});
-  assert.equal(await page.locator('#pause').isDisabled(),false,'restarted playback is active at the first measure');
+  await page.locator('#v21Play').click();await page.waitForFunction(()=>mode==='follow'&&bar===1&&beat<1,{timeout:5000});
+  assert.equal(await page.locator('#v21Play').isDisabled(),false,'restarted playback is active at the first measure');
   assert.equal(await page.locator('#bar').inputValue(),'1','Play Again updates the selected measure control to measure 1');
   await page.screenshot({path:`/tmp/piano-playback-restart-390x844-${process.env.APP_SOURCE_SHA||'local'}.png`});
-  await page.setViewportSize({width:844,height:390});await page.locator('#pause').click();await page.waitForFunction(()=>mode==='stop'&&pausedMode==='listen');assert.match(await page.locator('#pause').textContent(),/Resume/,'playback can be paused before switching layouts');
-  await page.evaluate(()=>applyPianoLayout('classic',false));
-  assert.equal(await page.locator('#primaryModeButton').textContent(), '✨ Learn','Classic Piano keeps its Learn action');
-  await page.locator('#secondaryModeButton').click();await page.waitForFunction(()=>mode==='listen');
-  await page.waitForFunction(()=>mode==='completed',{timeout:10000});
-  assert.match(await page.locator('#pause').textContent(),/Play Again/,'Classic playback reaches the same completed state');
+  await page.setViewportSize({width:844,height:390});await page.locator('#v21Play').click();await page.waitForFunction(()=>mode==='stop'&&pausedMode==='follow');assert.match(await page.locator('#v21Play').textContent(),/Resume/,'playback can be paused before switching layouts');
+  await page.evaluate(()=>applyPianoLayout('hero',false));
+  assert.equal(await page.locator('#primaryModeButton').textContent(), '▶ Play Along','Hero remains the only exposed gameplay layout');
+  assert.equal(await page.locator('#pianoLayoutSelect option[value=classic]').evaluate(el=>el.disabled),true,'Classic is unavailable while its stored preference is preserved');
+  assert.equal(await page.evaluate(()=>AariaV21Engine.state().layout),'hero','the shared engine remains in Hero after the temporary layout gate');
+  await page.locator('#v21Play').click();await page.waitForFunction(()=>mode==='follow',{timeout:5000});
   await page.setViewportSize({width:844,height:390});await page.screenshot({path:`/tmp/piano-playback-state-844x390-${process.env.APP_SOURCE_SHA||'local'}.png`});
 
-  const bounds=await page.locator('#openMySongs').boundingBox();assert.ok(bounds.height>=42,'song library control has a touch target');
-  await page.locator('#openMySongs').click();await page.locator('#makeNewSong').click();
+  const bounds=await page.locator('.v21-star').boundingBox();assert.ok(bounds&&bounds.width>=44&&bounds.height>=44,'Magic Star has a visible touch target');
+  await page.evaluate(()=>window.AariaPianoNavigation.openSongs());await page.locator('#makeNewSong').click();
   const wizard=page.locator('#localSongWizard');await wizard.waitFor({state:'visible'});
   assert.match(await page.locator('#localSongWizardTitle').textContent(),/Add New Song/);
   assert.match(await page.locator('#makeSong').textContent(),/Make Music/);
@@ -105,7 +142,7 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   await page.locator('#makeSong').click();
   await page.waitForFunction(()=>document.querySelector('#scoreImportStatus')?.getAttribute('aria-busy')==='true');
   await page.locator('#keepPlaying').click();assert.equal(await wizard.evaluate(el=>el.open),false,'Magic Bubble minimizes the workshop');
-  const bubble=page.locator('.magic-song-bubble');await bubble.waitFor({state:'visible'});await bubble.click();assert.equal(await wizard.evaluate(el=>el.open),true,'Magic Bubble restores the workshop');
+  const bubble=page.locator('.magic-song-bubble');await bubble.waitFor({state:'visible'});await page.screenshot({path:`/tmp/r2-bubble-minimized-390x844-${process.env.APP_SOURCE_SHA||'local'}.png`});await bubble.click();assert.equal(await wizard.evaluate(el=>el.open),true,'Magic Bubble restores the workshop');
   page.once('dialog',dialog=>dialog.accept());await page.locator('#cancelSongJob').click();await page.waitForFunction(()=>document.querySelector('#makeSong')?.textContent.includes('Continue reading'));
   const saved=await page.evaluate(async()=>new Promise((resolve,reject)=>{const req=indexedDB.open('aaria-piano-workshop',1);req.onerror=()=>reject(req.error);req.onsuccess=()=>{const tx=req.result.transaction('jobs'),get=tx.objectStore('jobs').get('active');get.onsuccess=()=>resolve(get.result)}}));
   assert.equal(saved.photos.length,1);assert.ok(saved.completedPages.length===0||saved.completedPages.every(Boolean));
@@ -115,3 +152,4 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   console.log('R2 browser smoke passed: Library selection/playback, single-screen photo import without manual adjustment, minimization, cancel and reload recovery. OMR recognition itself is not exercised by the test worker.');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(err=>{console.error(err);process.exitCode=1});
+

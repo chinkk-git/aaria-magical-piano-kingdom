@@ -27,9 +27,9 @@ const viewports=[['Android portrait',390,844,2,true],['Android landscape',844,39
   // The install gate is bypassed only in this isolated test browser; the app renderer remains live.
   await page.evaluate(()=>{const gate=document.querySelector('#release2InstallGate'),app=document.querySelector('#pianoApp');if(gate)gate.hidden=true;if(app){app.inert=false;app.removeAttribute('aria-hidden')}document.body.classList.remove('r2-installing')});
   await page.waitForFunction(()=>document.querySelector('#rain')?.width>0&&document.querySelector('#keys [data-pitch]'),null,{timeout:20000});
-  assert((await page.locator('#secondaryModeButton').innerText()).includes('♫ Play Song'),'Hero Play Song label is missing');
-  assert(await page.locator('#listenToggle').getAttribute('aria-pressed')==='true','new profile should start with Listen ON');
-  await page.locator('#secondaryModeButton').click();
+  assert((await page.locator('#v21Play').innerText()).includes('Play Along'),'Unified Play Along control is missing');
+  assert(await page.locator('#v21Sound').getAttribute('aria-pressed')==='true','new profile should start with Sound On');
+  await page.locator('#v21Play').click();
   await page.waitForFunction(()=>window.__arrivals.length>=3,null,{timeout:12000});await wait(45);
   const impact=await page.evaluate(()=>{
    const first=window.__arrivals[0],key=first&&document.querySelector('#keys [data-pitch="'+first.pitch+'"]'),style=key?getComputedStyle(key):null,pseudo=key?getComputedStyle(key,'::after'):null;
@@ -55,7 +55,7 @@ const viewports=[['Android portrait',390,844,2,true],['Android landscape',844,39
    await page.screenshot({path:path.join(out,String(results.length+3).padStart(2,'0')+'-'+label.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+w+'x'+h+'.png')});
    results.push({label,width:w,height:h,deviceScaleFactor:scale,touch,noteLabelsSeen:state.labels,largestNearKeyLabelFontPx:state.largestNearLabel,clipped:state.clipped,keyBoundaryErrorPx:+state.keyBoundary.toFixed(2)});
   }
-  await page.emulateMedia({reducedMotion:'reduce'});const beforeReduce=await page.evaluate(()=>window.__arrivals.length);await page.locator('#bar').selectOption('2');await page.waitForFunction(n=>window.__arrivals.length>n,beforeReduce,{timeout:5000});
+  await page.emulateMedia({reducedMotion:'reduce'});const beforeReduce=await page.evaluate(()=>window.__arrivals.length);await page.evaluate(()=>window.AariaV21Engine.setMeasure(2));await page.waitForFunction(n=>window.__arrivals.length>n,beforeReduce,{timeout:5000});
   const reduced=await page.evaluate(()=>{const latest=window.__arrivals.at(-1),key=latest&&document.querySelector('#keys [data-pitch="'+latest.pitch+'"]');return{latest,animation:key?getComputedStyle(key,'::after').animationName:null,media:matchMedia('(prefers-reduced-motion: reduce)').matches}});
   assert(reduced.media&&reduced.latest?.flashDurationMs===120&&reduced.latest?.particlesGenerated===0,'reduced-motion did not use the 120 ms, particle-free impact');
   await page.screenshot({path:path.join(out,'08-reduced-motion-impact.png')});

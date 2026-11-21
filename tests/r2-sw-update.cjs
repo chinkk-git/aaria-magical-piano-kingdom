@@ -22,7 +22,9 @@ for(const url of [
   './r2-image.js?v=aaria-piano-r2.2',
   './piano-hero-v2.css?v=aaria-piano-v1.14.0',
   './song-import.js?v=aaria-piano-r2.5',
-  './my-songs.js?v=aaria-piano-r2.4',
+  './my-songs.js?v=aaria-piano-r2.6',
+  './v2.1-ui.js?v=aaria-piano-v2.1.9',
+  './v2.1-ui.css?v=aaria-piano-v2.1.9',
   './shared-song-loader.js',
   './r2-install.js?v=aaria-piano-r2.7'
 ]){
@@ -126,11 +128,14 @@ const server=http.createServer((req,res)=>{
     assert.equal(await reopened.locator('#release2InstallGate').count(),0,'reopening after upgrade shows no OMR installation gate');
     assert.equal(await reopened.locator('body').evaluate(el=>el.innerText.includes('Warning: truncated output')||el.innerText.includes('Total output lines: 196')),false,'reopening after upgrade shows no leaked source warning');
     assert.equal(await reopened.locator('#pianoApp').getAttribute('inert'),null,'the piano is interactive after reopening');
-    assert.equal((await reopened.locator('#secondaryModeButton').innerText()).trim(),'♫ Play Song','the updated song-play action replaces the old Listen label');
-    assert.equal(await reopened.locator('#playbackModeControls button.listen-toggle').count(),1,'one Listen preference toggle remains after upgrade');
-    await reopened.locator('#setupKeyboard').click();
+    const playAlong=reopened.locator('#v21Play');assert.equal(await playAlong.innerText(),'Play Along','the updated shell keeps the current visible Play Along label');assert.equal(await playAlong.getAttribute('aria-label'),'Play Along','the updated Play Along action has its accessible name');assert.equal(await reopened.evaluate(()=>window.AariaV21Engine.state().playbackStatus),'stop','the upgraded player starts from its idle playback state');
+    assert.equal(await reopened.locator('#v21Sound').getAttribute('aria-pressed'),'true','Sound defaults on after upgrade');
+    assert.equal(await reopened.locator('#playbackModeControls button.listen-toggle').count(),1,'one hidden legacy sound toggle remains as the playback engine preference');
+    await reopened.evaluate(()=>window.AariaOpenSettings());
     await reopened.locator('#appBuildInfo').waitFor({state:'visible'});
     await reopened.waitForFunction(build=>document.querySelector('#appBuildInfo')?.textContent.includes(build),shellName);
+    await reopened.locator('#closeKeyboardSetup').click();
+    await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes("You're up to date"),{timeout:15000});
     await reopened.evaluate(()=>{
@@ -164,6 +169,7 @@ const server=http.createServer((req,res)=>{
     assert.ok(!diagnosticText.includes('token=secret')&&!diagnosticText.includes('1000078649.png'),'diagnostics exclude URL tokens and photo filenames');
     await reopened.screenshot({path:'/tmp/pwa-update-settings.png'});
     await context.setOffline(true);
+    await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent==='Offline');
     await context.setOffline(false);
@@ -173,6 +179,7 @@ const server=http.createServer((req,res)=>{
     await busyTab.goto(origin+'/',{waitUntil:'domcontentloaded'});
     await busyTab.waitForFunction(()=>!!window.AariaPwaUpdateCore);
     await busyTab.evaluate(()=>{window.AariaPianoPlaybackIsBusy=()=>true});
+    await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('Pause playback and finish'),{timeout:5000});
     assert.equal(versionCheckRequests,beforeMultiTab,'an active second tab prevents the network version request');
@@ -180,6 +187,7 @@ const server=http.createServer((req,res)=>{
 
     await reopened.evaluate(()=>{window.AariaSongImportIsBusy=()=>true});
     const beforeImportBusy=versionCheckRequests;
+    await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('Pause playback and finish'),{timeout:5000});
     assert.equal(versionCheckRequests,beforeImportBusy,'an active import prevents the network version request');
@@ -191,11 +199,13 @@ const server=http.createServer((req,res)=>{
     assert.equal(versionCheckRequests-beforeRapidClicks,1,'rapid duplicate clicks issue exactly one version request');
 
     versionCheckWorker=oldWorker;
+    await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('published build is older'),{timeout:10000});
     versionCheckWorker=null;
 
     versionCheckStatus=503;
+    await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('version could not be checked'),{timeout:10000});
     versionCheckStatus=200;
@@ -210,7 +220,9 @@ const server=http.createServer((req,res)=>{
       const shell=await caches.open(shellName);
       const script=await shell.match('./song-import.js?v=aaria-piano-r2.5');
       const updater=await shell.match('./pwa-update.js?v=aaria-pwa-update-1.2');
-      const libraryScript=await shell.match('./my-songs.js?v=aaria-piano-r2.4');
+      const libraryScript=await shell.match('./my-songs.js?v=aaria-piano-r2.6');
+      const v21Script=await shell.match('./v2.1-ui.js?v=aaria-piano-v2.1.9');
+      const v21Style=await shell.match('./v2.1-ui.css?v=aaria-piano-v2.1.9');
       const styles=await shell.match('./piano-hero-v2.css?v=aaria-piano-v1.14.0');
       const html=await shell.match('./index.html');
       return {
@@ -219,7 +231,7 @@ const server=http.createServer((req,res)=>{
         favorite:JSON.parse(localStorage.getItem('aaria-piano-favorites-v1')||'[]').includes('kept-song'),
         idbSong:library,
         verifiedModel:await verified?.text(),
-        script:await script?.text(),updater:await updater?.text(),libraryScript:await libraryScript?.text(),styles:await styles?.text(),html:await html?.text()
+        script:await script?.text(),updater:await updater?.text(),libraryScript:await libraryScript?.text(),v21Script:await v21Script?.text(),v21Style:await v21Style?.text(),styles:await styles?.text(),html:await html?.text()
       };
     },shellName);
     assert.ok(!result.keys.includes('aaria-piano-v1.20.2'),`old app-shell cache is retired; caches remaining: ${result.keys.join(', ')}`);
@@ -228,17 +240,19 @@ const server=http.createServer((req,res)=>{
     assert.equal(result.song?.title,'Saved fixture');assert.equal(result.idbSong?.title,'Saved fixture');
     assert.equal(result.favorite,true);assert.equal(result.verifiedModel,'verified-model-marker');
     assert.match(result.script,/await lib\.saveSong\(draftSong\)/,'updated automatic save code is cached');assert.match(result.script,/Add New Song/,'new workshop flow is cached');
-    assert.match(result.libraryScript,/songPickerButton/,'updated custom song selector code is cached');assert.match(result.libraryScript,/Add New Song/,'library entry is renamed in the cached app');assert.match(result.libraryScript,/Delete Song/,'custom songs remain deletable in the updated shell');
+    assert.match(result.libraryScript,/AariaPianoNavigation/,'My Songs registers the Magic Star navigation API');assert.match(result.libraryScript,/openNewSong/,'Make Music opens the existing Add New Song workflow');assert.match(result.libraryScript,/Add New Song/,'library entry is renamed in the cached app');assert.match(result.libraryScript,/Delete Song/,'custom songs remain deletable in the updated shell');
+    assert.match(result.v21Script,/AariaV21UI/,'the V2.1 playback UI is cached');assert.match(result.v21Style,/v21-dock/,'the V2.1 playback styling is cached');
     assert.match(result.styles,/app-build-info/,'updated stylesheet is cached');
     assert.match(result.html,/id="songPickerButton"/,'updated song selector HTML is cached');assert.ok(!result.html.includes('release2InstallGate'),'updated shell no longer has the startup gate');
-    assert.match(result.html,/id="zoomKeys"/,'Zoom Keys control remains available');
+    assert.match(result.v21Script,/id="v21Zoom"/,'fixed toolbar Zoom control is created by the updated app shell');
     assert.match(result.html,/id="appBuildInfo"[^>]*>Installed build: checking…/,'Settings resolves the installed build from its worker');
-    assert.match(result.html,/Speed/,'updated playback label is available');assert.match(result.html,/id="listenToggle"/,'Listen preference control is in the updated shell');assert.match(result.html,/note-impact-style/,'note impact key glow styling is in the updated shell');assert.match(result.html,/spawnNoteExplosion/,'note impact implementation is in the updated shell');assert.match(result.html,/NOTE_FX_DURATION\*1000/,'note flash uses millisecond timing in the updated shell');
+    assert.match(result.html,/Speed/,'updated playback label is available');assert.match(result.html,/v2\.1-ui\.js\?v=aaria-piano-v2\.1\.9/,'unified controls script is in the updated shell');assert.match(result.v21Script,/id="v21Play"/,'unified Play Along control is in the V2.1 script');assert.match(result.v21Script,/id="v21Sound"/,'Sound preference control is in the V2.1 script');assert.match(result.html,/note-impact-style/,'note impact key glow styling is in the updated shell');assert.match(result.html,/spawnNoteExplosion/,'note impact implementation is in the updated shell');assert.match(result.html,/NOTE_FX_DURATION\*1000/,'note flash uses millisecond timing in the updated shell');
     console.log('PWA update-and-reopen passed: prior v1.19.0 shell and warning/gate were replaced; current Piano Hero opened without OMR setup; localStorage/IndexedDB songs, favorites and verified OMR cache remained intact.');
 
     const futureWorker=newWorker.replace(`const CACHE='${shellName}'`,`const CACHE='${nextShellName}'`);
     assert.notEqual(futureWorker,newWorker,'future worker fixture advances the authoritative build identifier');
     versionCheckWorker=futureWorker;servedWorker=futureWorker;
+    await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('Update ready. Restart App when you are ready.'),null,{timeout:15000});
     assert.equal(await reopened.locator('#restartAppUpdate').isVisible(),true,'a waiting worker exposes the explicit Restart App action');
@@ -269,3 +283,4 @@ const server=http.createServer((req,res)=>{
     console.log('Fresh-install startup passed: Piano Hero is immediately interactive and OMR remains idle until Make Music.');
   }finally{await browser.close();server.close();}
 })().catch(error=>{console.error(error);server.close();process.exitCode=1});
+

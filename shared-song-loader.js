@@ -15,10 +15,22 @@
       if(!song||typeof song.id!=='string'||typeof song.title!=='string'||!Array.isArray(song.events)){
         throw new Error('A shared song record is invalid.');
       }
-      if(library.songs[song.id])continue;
-      library.addSong(song,{select:false});
+      const existing=library.songs[song.id];
+      if(existing){
+        existing.sharedCatalog=true;
+        if(existing.title!==song.title){
+          existing.title=song.title;
+          if(typeof document!=='undefined'&&typeof CSS!=='undefined'){
+            const option=document.querySelector('#songSelect option[value="'+CSS.escape(song.id)+'"]');
+            if(option)option.textContent=song.title;
+          }
+        }
+        continue;
+      }
+      library.addSong({...song,sharedCatalog:true},{select:false});
       added++;
     }
+    library.onChange?.();
     window.dispatchEvent(new CustomEvent('piano-shared-songs-loaded',{detail:{added,total:catalog.songs.length}}));
   }).catch(error=>console.error('[shared song library]',error));
 })();

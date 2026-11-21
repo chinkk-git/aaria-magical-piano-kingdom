@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="Gold Magic Star on polished amethyst">
+<defs>
+ <radialGradient id="amethyst" cx="34%" cy="23%"><stop stop-color="#b183ee"/><stop offset=".28" stop-color="#8157bd"/><stop offset=".68" stop-color="#4e2d78"/><stop offset="1" stop-color="#241437"/></radialGradient>
+ <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff4c5"/><stop offset=".22" stop-color="#e7c47a"/><stop offset=".45" stop-color="#9a6b38"/><stop offset=".63" stop-color="#ffebb0"/><stop offset="1" stop-color="#7b4b22"/></linearGradient>
+ <linearGradient id="starGold" x1=".15" y1="0" x2=".8" y2="1"><stop stop-color="#fff5be"/><stop offset=".38" stop-color="#f3cd70"/><stop offset=".72" stop-color="#c38b3c"/><stop offset="1" stop-color="#785025"/></linearGradient>
+ <filter id="contact" x="-35%" y="-40%" width="170%" height="190%"><feGaussianBlur in="SourceAlpha" stdDeviation="5" result="blur"/><feOffset in="blur" dy="6" result="drop"/><feComponentTransfer in="drop"><feFuncA type="linear" slope=".7"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <filter id="starShadow" x="-30%" y="-35%" width="160%" height="180%"><feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur"/><feOffset in="blur" dy="3" result="drop"/><feMerge><feMergeNode in="drop"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<circle cx="128" cy="134" r="106" fill="#10071c" opacity=".58" filter="url(#contact)"/>
+<circle cx="128" cy="128" r="101" fill="url(#gold)" stroke="#fff1c1" stroke-width="2" filter="url(#contact)"/>
+<circle cx="128" cy="128" r="92" fill="url(#amethyst)" stroke="#563378" stroke-width="3"/>
+<circle cx="128" cy="128" r="83" fill="none" stroke="#f7e9ff" stroke-opacity=".46" stroke-width="2"/>
+<ellipse cx="102" cy="84" rx="37" ry="16" transform="rotate(-31 102 84)" fill="#fff" opacity=".17"/>
+<polygon points="128,54 145,96 190,101 156,132 166,177 128,154 90,177 100,132 66,101 111,96" fill="url(#starGold)" stroke="#fff2c1" stroke-width="3.5" stroke-linejoin="round" filter="url(#starShadow)"/>
+</svg>
