@@ -59,7 +59,7 @@ function placeOverlay(){
  const safeLeft=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--v21-safe-left'))||0,safeRight=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--v21-safe-right'))||0;const usableBottom=Math.min(viewH+offsetTop-14,dockRect.top+offsetTop-12),top=offsetTop+safeTop;
  // A smaller responsive radius keeps the open menu to the playfield edge and
  // protects notes from a large opaque overlay on short/mobile screens.
- const maxByWidth=Math.max(0,Math.min(148,Math.min(viewW,viewH)*.205,(viewW-22)/2.4));
+ const maxByWidth=Math.max(0,Math.min(148,Math.min(viewW,viewH)*.245,(viewW-22)/2.4));
  const upperBottom=Math.min(usableBottom,keyRect?keyRect.top+offsetTop-12:usableBottom),lowerTop=keyRect?keyRect.bottom+offsetTop+12:top;
  const upperRadius=Math.max(0,Math.min(maxByWidth,(upperBottom-top)/2));
  const lowerRadius=Math.max(0,Math.min(maxByWidth,(usableBottom-lowerTop)/2));
