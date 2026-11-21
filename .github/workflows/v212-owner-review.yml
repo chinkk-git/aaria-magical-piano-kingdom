@@ -14,6 +14,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   v212-acceptance:
@@ -47,5 +48,110 @@ jobs:
         with:
           name: AARIA_V2_1_12_OWNER_REVIEW_${{ github.event.pull_request.head.sha }}
           path: AARIA_V2_1_12_MAKE_MUSIC_SONG_SETTINGS_OWNER_REVIEW.zip
+          retention-days: 30
+          if-no-files-found: error
+
+  final-owner-acceptance:
+    needs: [v212-acceptance]
+    if: needs.v212-acceptance.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Wait for exact-head Release 2 and regression workflows
+        id: source-runs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.payload.pull_request.head.sha;
+            const targets = {r2:423032827, listen:424047526, explosion:424002114};
+            const found = {};
+            for (let attempt = 0; attempt < 120; attempt++) {
+              for (const [key, workflow_id] of Object.entries(targets)) {
+                if (found[key]?.status === 'completed') continue;
+                const response = await github.rest.actions.listWorkflowRuns({
+                  owner: context.repo.owner, repo: context.repo.repo, workflow_id, head_sha: sha, per_page: 20
+                });
+                const run = response.data.workflow_runs.find(item => item.head_sha === sha);
+                if (run) found[key] = run;
+              }
+              if (Object.keys(targets).every(key => found[key]?.status === 'completed')) break;
+              await new Promise(resolve => setTimeout(resolve, 15000));
+            }
+            const output = {};
+            for (const key of Object.keys(targets)) {
+              const run = found[key];
+              output[key] = run ? {id: run.id, conclusion: run.conclusion, url: run.html_url} : null;
+              core.info(`${key}: ${run ? `${run.status} / ${run.conclusion} / ${run.html_url}` : 'not found within wait limit'}`);
+              if (!run || run.status !== 'completed' || run.conclusion !== 'success') {
+                core.setFailed(`Exact-head ${key} workflow did not pass.`);
+              }
+            }
+            core.setOutput('runs', JSON.stringify(output));
+      - name: Download exact-head V2.1.12 feature evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: AARIA_V2_1_12_OWNER_REVIEW_${{ github.event.pull_request.head.sha }}
+          path: evidence-source/v212
+          run-id: ${{ github.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download exact-head Release 2 visual evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: neon-label-impact-evidence-${{ github.event.pull_request.head.sha }}
+          path: evidence-source/r2-neon
+          run-id: ${{ fromJSON(steps.source-runs.outputs.runs).r2.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download exact-head crystal renderer evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: piano-hero-crystal-visual-evidence-${{ github.event.pull_request.head.sha }}
+          path: evidence-source/r2-crystal
+          run-id: ${{ fromJSON(steps.source-runs.outputs.runs).r2.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download exact-head Magical Note Explosion evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: r2-magical-note-explosion-${{ github.event.pull_request.head.sha }}
+          path: evidence-source/note-explosion
+          run-id: ${{ fromJSON(steps.source-runs.outputs.runs).explosion.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Assemble and verify the consolidated owner-review ZIP
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+          SOURCE_RUNS: ${{ steps.source-runs.outputs.runs }}
+        run: |
+          mkdir -p evidence/v2.1.12 evidence/release2/neon-label-impact evidence/release2/crystal-renderer evidence/release2/magical-note-explosion
+          unzip -q evidence-source/v212/AARIA_V2_1_12_MAKE_MUSIC_SONG_SETTINGS_OWNER_REVIEW.zip -d evidence/v2.1.12
+          unzip -q evidence-source/r2-neon/neon-label-impact-evidence.zip -d evidence/release2/neon-label-impact
+          unzip -q evidence-source/r2-crystal/piano-hero-crystal-visual-evidence.zip -d evidence/release2/crystal-renderer
+          cp -R evidence-source/note-explosion/. evidence/release2/magical-note-explosion/
+          python3 - <<'PY'
+          import json, os
+          runs=json.loads(os.environ['SOURCE_RUNS'])
+          sha=os.environ['SOURCE_SHA']
+          owner=os.environ['GITHUB_REPOSITORY']
+          with open('evidence/FINAL_ACCEPTANCE.md','w',encoding='utf-8') as f:
+              f.write(f'''# V2.1.12 final owner acceptance evidence\n\n- Exact source commit: `{sha}`\n- V2.1.12 browser acceptance: PASS (same commit; Chromium/Playwright emulation).\n- Release 2 integrated visual gallery and core validation: PASS. [Workflow]({runs['r2']['url']})\n- Listen Preference: PASS. [Workflow]({runs['listen']['url']})\n- Magical Note Explosion: PASS. [Workflow]({runs['explosion']['url']})\n- Android UI acceptance: PASS (same commit; browser emulation).\n- Pages build: PASS; deployment step skipped. No production deployment.\n- Physical-device tests: not performed. Viewport results are Chromium emulation.\n- Local Playwright browser: unavailable in the worker environment because the browser download endpoint returned HTTP 403; hosted Chromium workflows provide the executed browser evidence.\n- No merge, deploy or publish was performed. Owner visual approval remains pending.\n''')
+          PY
+          test -s evidence/v2.1.12/TEST_RESULTS.md
+          test -s evidence/v2.1.12/GEOMETRY.md
+          test -s evidence/v2.1.12/recordings/make-music-song-settings-interaction.webm
+          test -s evidence/release2/neon-label-impact/01-android-portrait-note-impact-390x844.png
+          test -s evidence/release2/neon-label-impact/neon-labels-and-magical-impacts-live.webm
+          test -s evidence/release2/crystal-renderer/piano-hero-crystal-evidence/02-android-note-impact-frame-390x844.png
+          test -s evidence/release2/magical-note-explosion/magical-note-explosion-390x844.webm
+          zip -qr AARIA_V2_1_12_FINAL_OWNER_ACCEPTANCE.zip evidence
+          unzip -t AARIA_V2_1_12_FINAL_OWNER_ACCEPTANCE.zip
+      - name: Upload exact-head consolidated owner-review ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: AARIA_V2_1_12_FINAL_OWNER_ACCEPTANCE_${{ github.event.pull_request.head.sha }}
+          path: AARIA_V2_1_12_FINAL_OWNER_ACCEPTANCE.zip
           retention-days: 30
           if-no-files-found: error
