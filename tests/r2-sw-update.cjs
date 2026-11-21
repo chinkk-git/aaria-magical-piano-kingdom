@@ -224,7 +224,7 @@ const server=http.createServer((req,res)=>{
       const verified=await (await caches.open('aaria-piano-r2-install-v1')).match('./models/verified-fixture.onnx');
       const shell=await caches.open(shellName);
       const script=await shell.match('./song-import.js?v=aaria-piano-r2.5');
-      const updater=await shell.match(updaterUrl);
+      const updater=await shell.match('./pwa-update.js?v=aaria-pwa-update-1.3');
       const libraryScript=await shell.match('./my-songs.js?v=aaria-piano-r2.6');
       const v21Script=await shell.match(v21ScriptUrl);
       const v21Style=await shell.match(v21StyleUrl);
