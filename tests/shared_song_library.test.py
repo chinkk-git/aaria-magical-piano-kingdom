@@ -81,6 +81,13 @@ class SharedSongLibraryTests(unittest.TestCase):
         self.assertIn("existing musical data differs in events", report["conflicts"][0])
         self.assertEqual(json.dumps(merged, sort_keys=True), original)
 
+    def test_identical_music_with_different_id_and_title_is_detected_as_duplicate(self):
+        existing = score("original-id", "Practice Song")
+        duplicate = score("new-id", "Completely Different Title")
+        merged, report = IMPORTER.reconcile_songs(backup(duplicate), catalog(existing))
+        self.assertEqual(len(merged["songs"]), 1)
+        self.assertIn("identical musical data already exists as Practice Song", report["conflicts"][0])
+
     def test_backup_duplicates_and_invalid_scores_are_rejected(self):
         repeated = score()
         _, report = IMPORTER.reconcile_songs(backup(repeated, score("other-id", "PRACTICE---SONG")), catalog())
