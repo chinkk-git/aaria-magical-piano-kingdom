@@ -4,6 +4,7 @@ const http=require('node:http');
 const path=require('node:path');
 const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'..');
+const sharedCatalog=JSON.parse(fs.readFileSync(path.join(root,'shared-song-library.json'),'utf8'));
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
 const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);const file=path.resolve(root,'.'+pathname);if(!file.startsWith(root+path.sep)&&file!==root){res.writeHead(403).end();return}fs.readFile(file,(err,data)=>{if(err){res.writeHead(404).end('not found');return}res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'}).end(data)})});
 (async()=>{
@@ -29,6 +30,58 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   const builtIn=page.locator('.library-card').filter({hasText:'Cradle Song'});await builtIn.waitFor();await builtIn.locator('.v21-song-details summary').click();
   await builtIn.getByRole('button',{name:'▶ Play'}).click();await page.waitForFunction(()=>document.querySelector('#songSelect')?.value==='cradle');
   assert.equal(await dlg.evaluate(el=>el.open),false,'built-in song selection closes the Library');
+  await page.waitForFunction(ids=>ids.every(id=>window.PianoKingdomLibrary?.songs[id]),sharedCatalog.songs.map(song=>song.id));
+  await page.waitForFunction(()=>window.AariaV21Engine&&document.querySelector('.v21-dock')&&window.AariaPianoNavigation?.openSongs);
+  await page.evaluate(()=>window.AariaPianoNavigation.openSongs());
+  for(const song of sharedCatalog.songs){
+    const card=page.locator('.library-card').filter({hasText:song.title});
+    assert.equal(await card.count(),1,song.title+' appears once in the shared song library');
+    assert.match(await card.locator('.library-meta').textContent(),/Built-in/,song.title+' has the same built-in library status as bundled songs');
+    await card.locator('.v21-song-details summary').click();
+    const actualVersions=await card.locator('.library-version option').evaluateAll(options=>options.map(option=>option.value));
+    const expectedVersions=['original',...['basic','medium','advanced'].filter(level=>song.arrangements?.[level]?.events?.length)];
+    assert.deepEqual(actualVersions,expectedVersions,song.title+' exposes its bundled arrangements');
+  }
+  await page.locator('#closeMySongs').click();
+  for(const song of sharedCatalog.songs){
+    await page.locator('#songPickerButton').click();
+    await page.locator('#v21SongMenu').getByRole('option',{name:song.title,exact:true}).click();
+    const state=await page.evaluate(id=>{
+      const selected=window.PianoKingdomLibrary.songs[id];
+      return {
+        selected:document.querySelector('#songSelect').value,
+        activeId:window.AariaV21Engine.state().songId,
+        sourceEventsMatch:JSON.stringify(EVENTS)===JSON.stringify(selected.events),
+        total:selected.total,
+        eventCount:selected.events.length,
+        hasPlaybackControls:!!document.getElementById('v21Play')&&!!document.getElementById('v21Sound')&&!!document.getElementById('speed')&&!!document.getElementById('v21Zoom'),
+      };
+    },song.id);
+    assert.equal(state.selected,song.id,song.title+' selects from the visible V2.1 song picker');
+    assert.equal(state.activeId,song.id,song.title+' opens in the V2.1 playback engine');
+    assert.equal(state.sourceEventsMatch,true,song.title+' retains the catalogue event data on selection');
+    assert.equal(state.total,song.total,song.title+' retains its measure count');
+    assert.equal(state.eventCount,song.events.length,song.title+' retains its event count');
+    assert.equal(state.hasPlaybackControls,true,song.title+' uses the V2.1 playback controls');
+    await page.evaluate(()=>AariaV21Engine.setMeasure(2));
+    assert.equal((await page.evaluate(()=>AariaV21Engine.state().currentMeasure)),2,song.title+' supports measure navigation');
+    await page.locator('#v21Sound').click();
+    assert.equal(await page.locator('#v21Sound').getAttribute('aria-pressed'),'false',song.title+' supports Sound Off');
+    await page.locator('#v21Sound').click();
+    assert.equal(await page.locator('#v21Sound').getAttribute('aria-pressed'),'true',song.title+' supports Sound On');
+    await page.locator('#speed').evaluate(el=>{el.value='100';el.dispatchEvent(new Event('input',{bubbles:true}))});
+    await page.locator('#v21Play').click();
+    await page.waitForFunction(()=>mode==='countdown');
+    await page.waitForFunction(()=>mode==='follow',{timeout:7000});
+    await page.waitForTimeout(200);
+    assert.equal(await page.evaluate(()=>mode==='follow'&&EVENTS.length>0),true,song.title+' initializes Play Along with its notes');
+    await page.evaluate(()=>AariaV21Engine.setLoop(2,2,true));
+    assert.equal(await page.evaluate(()=>AariaV21Engine.state().loopEnabled),true,song.title+' can loop a selected measure');
+    await page.evaluate(()=>AariaV21Engine.setLoop(1,1,false));
+    await page.locator('#v21Play').click();
+    await page.waitForFunction(()=>mode==='stop'&&pausedMode==='follow');
+  }
+  await page.evaluate(()=>window.PianoKingdomLibrary.selectSong('cradle'));
   await page.evaluate(()=>window.AariaPianoNavigation.openSongs());
   const card=page.locator('.library-card').filter({hasText:'Release 2 Browser Check'});await card.waitFor();await card.locator('.v21-song-details summary').click();
   assert.deepEqual(await card.locator('select option').evaluateAll(opts=>opts.map(o=>o.value)),['original','basic','medium']);
@@ -90,3 +143,4 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   console.log('R2 browser smoke passed: Library selection/playback, single-screen photo import without manual adjustment, minimization, cancel and reload recovery. OMR recognition itself is not exercised by the test worker.');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(err=>{console.error(err);process.exitCode=1});
+
