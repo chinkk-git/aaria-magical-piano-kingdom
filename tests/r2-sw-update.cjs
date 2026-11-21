@@ -129,6 +129,7 @@ const server=http.createServer((req,res)=>{
     await reopened.evaluate(()=>window.AariaOpenSettings());
     await reopened.locator('#appBuildInfo').waitFor({state:'visible'});
     await reopened.waitForFunction(build=>document.querySelector('#appBuildInfo')?.textContent.includes(build),shellName);
+    await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes("You're up to date"),{timeout:15000});
     await reopened.evaluate(()=>{
@@ -162,6 +163,7 @@ const server=http.createServer((req,res)=>{
     assert.ok(!diagnosticText.includes('token=secret')&&!diagnosticText.includes('1000078649.png'),'diagnostics exclude URL tokens and photo filenames');
     await reopened.screenshot({path:'/tmp/pwa-update-settings.png'});
     await context.setOffline(true);
+    await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent==='Offline');
     await context.setOffline(false);
@@ -171,6 +173,7 @@ const server=http.createServer((req,res)=>{
     await busyTab.goto(origin+'/',{waitUntil:'domcontentloaded'});
     await busyTab.waitForFunction(()=>!!window.AariaPwaUpdateCore);
     await busyTab.evaluate(()=>{window.AariaPianoPlaybackIsBusy=()=>true});
+    await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('Pause playback and finish'),{timeout:5000});
     assert.equal(versionCheckRequests,beforeMultiTab,'an active second tab prevents the network version request');
@@ -178,6 +181,7 @@ const server=http.createServer((req,res)=>{
 
     await reopened.evaluate(()=>{window.AariaSongImportIsBusy=()=>true});
     const beforeImportBusy=versionCheckRequests;
+    await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('Pause playback and finish'),{timeout:5000});
     assert.equal(versionCheckRequests,beforeImportBusy,'an active import prevents the network version request');
@@ -189,11 +193,13 @@ const server=http.createServer((req,res)=>{
     assert.equal(versionCheckRequests-beforeRapidClicks,1,'rapid duplicate clicks issue exactly one version request');
 
     versionCheckWorker=oldWorker;
+    await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('published build is older'),{timeout:10000});
     versionCheckWorker=null;
 
     versionCheckStatus=503;
+    await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('version could not be checked'),{timeout:10000});
     versionCheckStatus=200;
@@ -240,6 +246,7 @@ const server=http.createServer((req,res)=>{
     const futureWorker=newWorker.replace(`const CACHE='${shellName}'`,`const CACHE='${nextShellName}'`);
     assert.notEqual(futureWorker,newWorker,'future worker fixture advances the authoritative build identifier');
     versionCheckWorker=futureWorker;servedWorker=futureWorker;
+    await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('Update ready. Restart App when you are ready.'),null,{timeout:15000});
     assert.equal(await reopened.locator('#restartAppUpdate').isVisible(),true,'a waiting worker exposes the explicit Restart App action');
