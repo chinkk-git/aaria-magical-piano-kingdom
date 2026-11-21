@@ -441,3 +441,20 @@ main[data-piano-layout="hero"] .song-picker{min-width:0;width:100%;height:100%;d
 .song-picker-chevron{flex:none;font-size:12px}
 .v21-song-menu{position:fixed;z-index:220;box-sizing:border-box;width:min(320px,calc(100vw - 16px));max-height:min(60vh,420px);overscroll-behavior:contain;touch-action:pan-y}
 @media(orientation:landscape) and (max-height:540px){main[data-piano-layout="hero"] .compact-title{height:44px;min-height:44px}.song-picker #songPickerButton{min-height:40px;font-size:11px}#installHelp{min-height:40px;padding:5px 7px}.v21-overflow-trigger{width:40px;height:40px;min-width:40px;min-height:40px}}
+
+/* V2.1.12: complete names wrap on word boundaries without changing header or game geometry. */
+main[data-piano-layout="hero"] .song-picker #songPickerButton{height:100%;min-height:44px;max-height:100%;align-items:center;white-space:normal;overflow:hidden;text-overflow:clip}
+main[data-piano-layout="hero"] .song-title-label{display:block;min-width:0;max-height:none;overflow:visible;white-space:normal;overflow-wrap:normal;word-break:normal;-webkit-line-clamp:unset;-webkit-box-orient:initial;line-height:1.12;font-size:clamp(11px,3.15vw,13px)}
+main[data-piano-layout="hero"] .song-picker-chevron{flex:none;margin-left:auto}
+.v21-song-details .library-actions button[data-action="rename"]{font-size:14px;font-weight:850}
+.rename-song-dialog form{display:grid;gap:10px}
+.rename-song-dialog label{font-weight:800;color:#ffe7b5}
+.rename-song-dialog input{min-height:48px;width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #d8b6fb88;border-radius:12px;background:#17102e;color:#fff;font:600 16px system-ui}
+.rename-song-dialog input:focus-visible{outline:3px solid #ffe18a;outline-offset:2px}
+.rename-song-dialog [role="status"]{margin:0;color:#ffe2a4}
+main[data-magic-lights]{isolation:isolate}
+main[data-magic-lights]::before{content:"";position:fixed;inset:0;z-index:2;pointer-events:none;mix-blend-mode:screen;opacity:.17;background:radial-gradient(ellipse at 12% 35%,#9a55ff24,transparent 36%),radial-gradient(ellipse at 86% 62%,#8c4aff20,transparent 38%),linear-gradient(116deg,transparent 16%,#8b50ff0d 25%,transparent 36%,transparent 61%,#8b50ff10 72%,transparent 84%),radial-gradient(circle at 34% 27%,#fff0b812 0 1px,transparent 2px),radial-gradient(circle at 77% 44%,#7de8ff13 0 1px,transparent 2px),radial-gradient(circle at 62% 79%,#ff96d812 0 1px,transparent 2px);background-size:100% 100%,100% 100%,220% 180%,100% 100%,100% 100%,100% 100%;background-position:center}
+main[data-magic-lights="playing"]::before{opacity:.27;animation:aaria-light-drift 24s ease-in-out infinite alternate}
+main[data-magic-lights="paused"]::before{animation-play-state:paused}
+@keyframes aaria-light-drift{from{background-position:center,center,0% 45%,center,center,center;opacity:.2}to{background-position:center,center,100% 55%,center,center,center;opacity:.28}}
+@media(prefers-reduced-motion:reduce){main[data-magic-lights]::before{animation:none!important;opacity:.15!important}}
