@@ -76,10 +76,13 @@ jobs:
           APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
         run: node tests/r2-browser-smoke.cjs
       - name: Upload playback state screenshots
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playback-state-evidence-${{ github.event.pull_request.head.sha }}
-          path: /tmp/piano-playback-state-*.png
+          path: |
+            /tmp/piano-playback-state-*.png
+            /tmp/r2-bubble-*.png
           retention-days: 14
           if-no-files-found: error
       - name: Test score correction and arrangement playback
@@ -181,6 +184,7 @@ jobs:
           APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
         run: node tests/neon-label-impact.cjs
       - name: Upload crystal visual evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: piano-hero-crystal-visual-evidence-${{ github.event.pull_request.head.sha }}
@@ -188,6 +192,7 @@ jobs:
           retention-days: 14
           if-no-files-found: error
       - name: Upload responsive playback control screenshots
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: android-landscape-controls-evidence-${{ github.event.pull_request.head.sha }}

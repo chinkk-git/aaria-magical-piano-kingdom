@@ -123,7 +123,7 @@ const server=http.createServer((req,res)=>{
     assert.equal(await reopened.locator('#release2InstallGate').count(),0,'reopening after upgrade shows no OMR installation gate');
     assert.equal(await reopened.locator('body').evaluate(el=>el.innerText.includes('Warning: truncated output')||el.innerText.includes('Total output lines: 196')),false,'reopening after upgrade shows no leaked source warning');
     assert.equal(await reopened.locator('#pianoApp').getAttribute('inert'),null,'the piano is interactive after reopening');
-    assert.equal(await reopened.locator('#v21Play').innerText(),'▶ Play Along','the updated shell exposes the unified Play Along action');
+    const playAlong=reopened.locator('#v21Play');assert.equal(await playAlong.innerText(),'Play Along','the updated shell keeps the current visible Play Along label');assert.equal(await playAlong.getAttribute('aria-label'),'Play Along','the updated Play Along action has its accessible name');assert.equal(await reopened.evaluate(()=>window.AariaV21Engine.state().playbackStatus),'stop','the upgraded player starts from its idle playback state');
     assert.equal(await reopened.locator('#v21Sound').getAttribute('aria-pressed'),'true','Sound defaults on after upgrade');
     assert.equal(await reopened.locator('#playbackModeControls button.listen-toggle').count(),1,'one hidden legacy sound toggle remains as the playback engine preference');
     await reopened.evaluate(()=>window.AariaOpenSettings());

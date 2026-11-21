@@ -79,7 +79,7 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   await page.locator('#makeSong').click();
   await page.waitForFunction(()=>document.querySelector('#scoreImportStatus')?.getAttribute('aria-busy')==='true');
   await page.locator('#keepPlaying').click();assert.equal(await wizard.evaluate(el=>el.open),false,'Magic Bubble minimizes the workshop');
-  const bubble=page.locator('.magic-song-bubble');await bubble.waitFor({state:'visible'});await bubble.click();assert.equal(await wizard.evaluate(el=>el.open),true,'Magic Bubble restores the workshop');
+  const bubble=page.locator('.magic-song-bubble');await bubble.waitFor({state:'visible'});await page.screenshot({path:`/tmp/r2-bubble-minimized-390x844-${process.env.APP_SOURCE_SHA||'local'}.png`});await bubble.click();assert.equal(await wizard.evaluate(el=>el.open),true,'Magic Bubble restores the workshop');
   page.once('dialog',dialog=>dialog.accept());await page.locator('#cancelSongJob').click();await page.waitForFunction(()=>document.querySelector('#makeSong')?.textContent.includes('Continue reading'));
   const saved=await page.evaluate(async()=>new Promise((resolve,reject)=>{const req=indexedDB.open('aaria-piano-workshop',1);req.onerror=()=>reject(req.error);req.onsuccess=()=>{const tx=req.result.transaction('jobs'),get=tx.objectStore('jobs').get('active');get.onsuccess=()=>resolve(get.result)}}));
   assert.equal(saved.photos.length,1);assert.ok(saved.completedPages.length===0||saved.completedPages.every(Boolean));

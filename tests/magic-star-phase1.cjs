@@ -24,6 +24,7 @@ const viewports=[
 titles={measure:'Measure',loop:'Loop',jump:'Jump',practice:'Practice',makeMusic:'Make Music',songs:'My Songs',home:'Home',pianoMode:'Piano Mode',settings:'Settings',updateApp:'Update App'};
 const shots=[],geometryMeasurements=[],geometryFailures=[],interactionFailures=[];let browser,lastPage=null;
 function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math.min(a.bottom,b.bottom)-Math.max(a.y,b.y)>1}
+function hasPressedHighlight(filter){const match=/brightness\(([^)]+)\)/.exec(filter);const amount=match?Number(match[1]):NaN;return Number.isFinite(amount)&&Math.abs(amount-1.3)<=.01&&/drop-shadow\(/.test(filter)}
 (async()=>{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox','--disable-dev-shm-usage']});
@@ -31,7 +32,7 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
  for(let i=0;i<viewports.length;i++){
   const vp=viewports[i],record=i===0||i===1,videoDir=path.join(out,'video-temp');fs.mkdirSync(videoDir,{recursive:true});
   const context=await browser.newContext({viewport:{width:vp.width,height:vp.height},deviceScaleFactor:1,isMobile:vp.mobile,hasTouch:vp.mobile,reducedMotion:'no-preference',serviceWorkers:'block',...(record?{recordVideo:{dir:videoDir,size:{width:vp.width,height:vp.height}}}:{})});
-  await context.addInitScript(side=>{localStorage.setItem('aaria-piano-custom-songs-v1',JSON.stringify([{id:'phase1-fixture',title:'Owner review fixture',events:[{bar:1,at:0,dur:2,midi:60}],total:1,barLengths:[8],bpm:80,imported:true}]));localStorage.setItem('aaria-v21-star-anchor',JSON.stringify({side,y:.32}))},i%2?'right':'left');
+  await context.addInitScript(()=>{localStorage.setItem('aaria-piano-custom-songs-v1',JSON.stringify([{id:'phase1-fixture',title:'Owner review fixture',events:[{bar:1,at:0,dur:2,midi:60}],total:1,barLengths:[8],bpm:80,imported:true}]))});
   const page=await context.newPage(),errors=[],failedAssets=[];lastPage=page;
   page.on('pageerror',e=>{errors.push(e.message);console.error('PAGE ERROR '+e.stack)});page.on('console',m=>{if(m.type()==='error')console.error('BROWSER CONSOLE '+m.text())});
   page.on('requestfailed',r=>{if(/v2\.1-magic-wheel/.test(r.url()))failedAssets.push(r.url())});
@@ -45,6 +46,7 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
   assert.equal(await page.locator('.v21-dock input[type=range]').count(),1,'Speed remains the fourth fixed playback control');
   const star=page.locator('.v21-star'),assembly=page.locator('.v21-star-assembly'),dock=page.locator('.v21-dock'),keys=page.locator('#keys');
   assert.equal(await star.count(),1,'one Magic Star is the assembly hub');
+  const freshAnchor=await page.evaluate(()=>window.AariaV21UI.getState().anchor),freshStar=await star.boundingBox();assert.equal(freshAnchor.side,'right','isolated fresh-install profile defaults the Magic Star to the right');assert.ok(freshStar&&freshStar.x+freshStar.width/2>=vp.width*.6&&freshStar.y<vp.height*.55,'fresh-install Magic Star is visible in the upper-right gameplay region');
   let keyBox=await keys.boundingBox(),dockBox=await dock.boundingBox();
   assert.ok(keyBox&&keyBox.width>0&&keyBox.height>0,'piano keyboard is visible');
   assert.ok(dockBox&&dockBox.y>=0&&dockBox.y+dockBox.height<=vp.height+1,'fixed toolbar remains in safe viewport');
@@ -115,10 +117,10 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
   await checkGroup('music');await capture('02-music-expanded');if(i===0){await captureWheel('music-icons-labels-close-up');await captureWheel('jump-line-after-music')}
   const musicCenter=await star.boundingBox();
   const selectedMusic=page.locator('.v21-wheel-actions:not([hidden]) .v21-wheel-action[data-key="measure"]');
-  await selectedMusic.hover();await page.mouse.down();await page.waitForTimeout(220);const musicFilter=await selectedMusic.evaluate(e=>getComputedStyle(e).filter);if(!/brightness\(1\.3\)/.test(musicFilter)){interactionFailures.push({viewport:vp.name,layout:'classic',action:'measure',expected:'brightness(1.3)',actual:musicFilter});console.error('PRESSED STATE DIAGNOSTIC '+JSON.stringify(interactionFailures.at(-1)))}await capture('04-music-action-pressed');await page.mouse.move(vp.width-2,vp.height-2);await page.mouse.up();
+  await selectedMusic.hover();await page.mouse.down();await page.waitForTimeout(220);const musicFilter=await selectedMusic.evaluate(e=>getComputedStyle(e).filter);if(!hasPressedHighlight(musicFilter)){interactionFailures.push({viewport:vp.name,layout:'classic',action:'measure',expected:'brightness(1.3) within 0.01 and drop shadow',actual:musicFilter});console.error('PRESSED STATE DIAGNOSTIC '+JSON.stringify(interactionFailures.at(-1)))}await capture('04-music-action-pressed');await page.mouse.move(vp.width-2,vp.height-2);await page.mouse.up();
   await star.click();await page.waitForTimeout(210);await checkGroup('navigation');await capture('03-navigation-expanded');if(i===0){await captureWheel('navigation-icons-labels-close-up');await captureWheel('jump-line-after-navigation')}
   const selectedNav=page.locator('.v21-wheel-actions:not([hidden]) .v21-wheel-action[data-key="updateApp"]');
-  await selectedNav.hover();await page.mouse.down();await page.waitForTimeout(220);const navFilter=await selectedNav.evaluate(e=>getComputedStyle(e).filter);if(!/brightness\(1\.3\)/.test(navFilter)){interactionFailures.push({viewport:vp.name,layout:'classic',action:'updateApp',expected:'brightness(1.3)',actual:navFilter});console.error('PRESSED STATE DIAGNOSTIC '+JSON.stringify(interactionFailures.at(-1)))}await capture('05-navigation-action-pressed');await page.mouse.move(vp.width-2,vp.height-2);await page.mouse.up();
+  await selectedNav.hover();await page.mouse.down();await page.waitForTimeout(220);const navFilter=await selectedNav.evaluate(e=>getComputedStyle(e).filter);if(!hasPressedHighlight(navFilter)){interactionFailures.push({viewport:vp.name,layout:'classic',action:'updateApp',expected:'brightness(1.3) within 0.01 and drop shadow',actual:navFilter});console.error('PRESSED STATE DIAGNOSTIC '+JSON.stringify(interactionFailures.at(-1)))}await capture('05-navigation-action-pressed');await page.mouse.move(vp.width-2,vp.height-2);await page.mouse.up();
   await star.click();await page.waitForTimeout(210);await checkGroup('music');
   const musicAfter=await star.boundingBox();assert.ok(musicCenter&&musicAfter,'same star hub remains attached through both wheel groups');
   if(i===0){
@@ -132,6 +134,17 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
   await page.keyboard.press('Escape');await page.waitForTimeout(420);assert.equal(await page.locator('.v21-wheel').isVisible(),false,'Hero wheel closes after group switching');
   await page.locator('#pianoLayoutSelect').evaluate(el=>{el.value='classic';el.dispatchEvent(new Event('change',{bubbles:true}))});await page.waitForTimeout(300);
   assert.equal(await page.locator('.v21-practice-panel').isVisible(),false,'wheel-only test leaves secondary panels untouched');
+  if(i===0){
+   const start=await star.boundingBox(),dragX=vp.width*.25,dragY=Math.min(vp.height*.42,Math.max(40,(start?.y||0)+8));
+   await page.mouse.move((start?.x||0)+27,(start?.y||0)+27);await page.mouse.down();await page.mouse.move(dragX,dragY,{steps:8});await page.mouse.up();await page.waitForTimeout(180);
+   const dragged=await page.evaluate(()=>({anchor:window.AariaV21UI.getState().anchor,saved:JSON.parse(localStorage.getItem('aaria-v21-star-anchor')||'null')}));
+   assert.equal(dragged.anchor.side,'left','dragging moves the star to the left side');assert.equal(dragged.saved.side,'left','dragging persists the selected star side');
+   await page.reload({waitUntil:'domcontentloaded'});await page.waitForSelector('.v21-dock',{timeout:15000});await page.waitForFunction(()=>window.AariaV21UI);await page.waitForTimeout(180);
+   assert.equal(await page.evaluate(()=>window.AariaV21UI.getState().anchor.side),'left','saved star placement survives reload');
+   await page.setViewportSize({width:915,height:412});await page.waitForTimeout(180);
+   const rotated=await page.evaluate(()=>({side:window.AariaV21UI.getState().anchor.side,rect:document.querySelector('.v21-star').getBoundingClientRect().toJSON()}));
+   assert.equal(rotated.side,'left','saved star placement survives orientation change');assert.ok(rotated.rect.x>=0&&rotated.rect.right<=innerWidth&&rotated.rect.y>=0&&rotated.rect.bottom<=innerHeight,'saved placement remains visible after orientation change');
+  }
   if(errors.length)throw Error('Runtime errors: '+errors.join(' | '));if(failedAssets.length)throw Error('Wheel asset errors: '+failedAssets.join(' | '));
   if(record){await context.close();const videoPath=await video.path();fs.renameSync(videoPath,path.join(out,i===0?'magic-star-open-close-group-switching-portrait.webm':'magic-star-open-close-group-switching-landscape.webm'))}else await context.close();
   console.log('PASS '+vp.name+' '+vp.width+'x'+vp.height+' — wheel geometry, actions, collisions, labels, safe viewport, gameplay and fixed controls');
