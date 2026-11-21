@@ -58,10 +58,11 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   assert.equal(await page.locator('#bar').inputValue(),'1','Play Again updates the selected measure control to measure 1');
   await page.screenshot({path:`/tmp/piano-playback-restart-390x844-${process.env.APP_SOURCE_SHA||'local'}.png`});
   await page.setViewportSize({width:844,height:390});await page.locator('#v21Play').click();await page.waitForFunction(()=>mode==='stop'&&pausedMode==='follow');assert.match(await page.locator('#v21Play').textContent(),/Resume/,'playback can be paused before switching layouts');
-  await page.evaluate(()=>applyPianoLayout('classic',false));
-  assert.equal(await page.locator('#primaryModeButton').textContent(), '✨ Learn','Classic Piano keeps its Learn action');
-  await page.locator('#v21Play').click();await page.waitForFunction(()=>mode==='learn',{timeout:5000});
-  assert.equal(await page.evaluate(()=>AariaV21Engine.state().layout),'classic','Classic Play Along retains the interactive learning engine');
+  await page.evaluate(()=>applyPianoLayout('hero',false));
+  assert.equal(await page.locator('#primaryModeButton').textContent(), '▶ Play Along','Hero remains the only exposed gameplay layout');
+  assert.equal(await page.locator('#pianoLayoutSelect option[value=classic]').isDisabled(),true,'Classic is unavailable while its stored preference is preserved');
+  assert.equal(await page.evaluate(()=>AariaV21Engine.state().layout),'hero','the shared engine remains in Hero after the temporary layout gate');
+  await page.locator('#v21Play').click();await page.waitForFunction(()=>mode==='follow',{timeout:5000});
   await page.setViewportSize({width:844,height:390});await page.screenshot({path:`/tmp/piano-playback-state-844x390-${process.env.APP_SOURCE_SHA||'local'}.png`});
 
   const bounds=await page.locator('.v21-star').boundingBox();assert.ok(bounds&&bounds.width>=44&&bounds.height>=44,'Magic Star has a visible touch target');
