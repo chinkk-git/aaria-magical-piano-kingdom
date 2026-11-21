@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-import hashlib, json
+import argparse, hashlib, json
 from pathlib import Path
 
-ROOT = Path("_site")
+parser = argparse.ArgumentParser()
+parser.add_argument("--site", type=Path, default=Path("_site"))
+ROOT = parser.parse_args().site
 CHUNK = 4 * 1024 * 1024
 files = []
 OMR_PREFIXES = ("omr/", "models/", "lib/onnxruntime-web@1.30.0/")

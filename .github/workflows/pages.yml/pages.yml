@@ -3,6 +3,41 @@ name: Build and deploy Piano Kingdom
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/pages.yml/pages.yml
+      - scripts/package-pages.py
+      - scripts/create-r2-install-manifest.py
+      - scripts/verify_pages_package.py
+      - scripts/pages-runtime-assets.txt
+      - tests/pages-package.test.py
+      - assets/**
+      - OMR-THIRD-PARTY-NOTICES.md
+      - song-import.js
+      - my-songs.js
+      - r2-music.js
+      - r2-image.js
+      - r2-install.js
+      - pwa-diagnostics.js
+      - pwa-update.js
+      - piano-geometry.js
+      - manifest.webmanifest
+      - release2-install-manifest.json
+      - icon-192.png
+      - icon-512.png
+      - icon-maskable-512.png
+      - apple-touch-icon.png
+      - index.html
+      - sw.js
+      - v2.1-ui.js
+      - v2.1-ui.css
+      - piano-hero-v2.css
+      - shared-song-loader.js
+      - shared-song-library.json
+      - assets/release2/**
+      - assets/piano-hero-v2/**
+      - assets/v2.1-magic-wheel/**
   workflow_dispatch:
 
 permissions:
@@ -28,27 +63,20 @@ jobs:
           path: omr-source
       - name: Configure Pages
         uses: actions/configure-pages@v5
-      - name: Prepare OMR runtime and local model assets
+      - name: Build the complete Pages runtime from the checked manifest
         run: |
-          cd omr-source
-          bash scripts/fetch-libs.sh
-          bash scripts/fetch-models.sh
-          cd ..
-          rm -rf _site
-          mkdir -p _site/omr _site/models _site/lib/onnxruntime-web@1.30.0 _site/vendor/omr-licenses
-          cp index.html song-import.js sw.js manifest.webmanifest icon-192.png icon-512.png icon-maskable-512.png apple-touch-icon.png _site/
-          cp omr-source/omr-worker.js _site/
-          cp -R omr-source/omr/. _site/omr/
-          cp -R omr-source/models/. _site/models/
-          cp -R omr-source/lib/onnxruntime-web@1.30.0/. _site/lib/onnxruntime-web@1.30.0/
-          cp OMR-THIRD-PARTY-NOTICES.md _site/
-          cp omr-source/LICENSE _site/vendor/omr-licenses/partsong-LICENSE
-          touch _site/.nojekyll
+          (cd omr-source && bash scripts/fetch-libs.sh && bash scripts/fetch-models.sh)
+          python3 scripts/package-pages.py --site _site --omr-source omr-source
+      - name: Verify the deployable Pages artifact before upload
+        run: |
+          python3 scripts/verify_pages_package.py --site _site
+          python3 tests/pages-package.test.py
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
   deploy:
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
