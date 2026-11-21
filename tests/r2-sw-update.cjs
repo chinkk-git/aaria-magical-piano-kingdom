@@ -266,14 +266,14 @@ const server=http.createServer((req,res)=>{
     // Changing only CACHE creates an impossible deployment and correctly makes the updater refuse verification.
     const futureUiScriptUrl=`./v2.1-ui.js?v=${nextShellName}`;
     const futureUiStyleUrl=`./v2.1-ui.css?v=${nextShellName}`;
-    const futureShellHtml=index.replaceAll(v21ScriptUrl,futureUiScriptUrl).replaceAll(v21StyleUrl,futureUiStyleUrl);
-    const futureUpdaterSource=updaterSource.replace(`const APP_BUILD='${shellName}'`,`const APP_BUILD='${nextShellName}'`);
+    const newShellHtml=index.replaceAll(v21ScriptUrl,futureUiScriptUrl).replaceAll(v21StyleUrl,futureUiStyleUrl);
+    const newUpdaterSource=updaterSource.replace(`const APP_BUILD='${shellName}'`,`const APP_BUILD='${nextShellName}'`);
     const futureWorker=newWorker.replaceAll(shellName,nextShellName);
     assert.notEqual(futureWorker,newWorker,'future worker fixture advances the authoritative build identifier');
-    assert.ok(futureShellHtml.includes(futureUiScriptUrl)&&futureShellHtml.includes(futureUiStyleUrl),'future HTML references UI assets matching its build');
-    assert.ok(futureUpdaterSource.includes(`const APP_BUILD='${nextShellName}'`),'future updater declares the new build');
+    assert.ok(newShellHtml.includes(futureUiScriptUrl)&&newShellHtml.includes(futureUiStyleUrl),'future HTML references UI assets matching its build');
+    assert.ok(newUpdaterSource.includes(`const APP_BUILD='${nextShellName}'`),'future updater declares the new build');
     assert.ok(futureWorker.includes(futureUiScriptUrl)&&futureWorker.includes(futureUiStyleUrl),'future worker precaches the matching UI assets');
-    this.futureShellHtml=futureShellHtml;this.futureUpdaterSource=futureUpdaterSource;
+    futureShellHtml=newShellHtml;futureUpdaterSource=newUpdaterSource;
     versionCheckWorker=futureWorker;servedWorker=futureWorker;
     await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
