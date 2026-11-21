@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600" role="img" aria-label="Dimensional purple and gold Magic Star wheel">
+<defs>
+ <linearGradient id="rimGold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff5c8"/><stop offset=".18" stop-color="#f7d987"/><stop offset=".42" stop-color="#bd873d"/><stop offset=".62" stop-color="#ffe6a1"/><stop offset="1" stop-color="#8c5b25"/></linearGradient>
+ <linearGradient id="goldSide" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#d9b46b"/><stop offset=".4" stop-color="#835329"/><stop offset="1" stop-color="#24112e"/></linearGradient>
+ <linearGradient id="amethyst" x1="0" y1="0" x2=".15" y2="1"><stop stop-color="#a879ed"/><stop offset=".12" stop-color="#8051bd"/><stop offset=".43" stop-color="#593480"/><stop offset=".76" stop-color="#3a205d"/><stop offset="1" stop-color="#221236"/></linearGradient>
+ <linearGradient id="violet" x1="0" y1="0" x2=".18" y2="1"><stop stop-color="#a16cde"/><stop offset=".14" stop-color="#7847b1"/><stop offset=".48" stop-color="#503077"/><stop offset=".82" stop-color="#34204f"/><stop offset="1" stop-color="#211333"/></linearGradient>
+ <linearGradient id="royal" x1="0" y1="0" x2=".2" y2="1"><stop stop-color="#9872d9"/><stop offset=".12" stop-color="#7251af"/><stop offset=".46" stop-color="#4e3479"/><stop offset=".82" stop-color="#33214f"/><stop offset="1" stop-color="#201432"/></linearGradient>
+ <linearGradient id="plum" x1="0" y1="0" x2=".2" y2="1"><stop stop-color="#9462d1"/><stop offset=".12" stop-color="#70429f"/><stop offset=".48" stop-color="#4b2d6d"/><stop offset=".82" stop-color="#32204b"/><stop offset="1" stop-color="#201330"/></linearGradient>
+ <linearGradient id="indigo" x1="0" y1="0" x2=".2" y2="1"><stop stop-color="#8760c8"/><stop offset=".12" stop-color="#654298"/><stop offset=".46" stop-color="#46306a"/><stop offset=".82" stop-color="#302049"/><stop offset="1" stop-color="#1f132f"/></linearGradient>
+ <radialGradient id="reflection"><stop stop-color="#fff" stop-opacity=".32"/><stop offset=".34" stop-color="#f6eaff" stop-opacity=".15"/><stop offset="1" stop-color="#e5d0ff" stop-opacity="0"/></radialGradient>
+ <radialGradient id="hubViolet" cx="35%" cy="22%"><stop stop-color="#a67cde"/><stop offset=".38" stop-color="#684398"/><stop offset=".78" stop-color="#3b235b"/><stop offset="1" stop-color="#231437"/></radialGradient>
+
+ <radialGradient id="dome" cx="38%" cy="27%" r="82%"><stop stop-color="#f2dcff" stop-opacity=".40"/><stop offset=".22" stop-color="#bd8ff5" stop-opacity=".22"/><stop offset=".52" stop-color="#7749b4" stop-opacity=".06"/><stop offset=".82" stop-color="#27123d" stop-opacity=".28"/><stop offset="1" stop-color="#10081d" stop-opacity=".58"/></radialGradient>
+ <linearGradient id="specularBand" x1="0" y1="0" x2="0.9" y2="1"><stop stop-color="#fff8df" stop-opacity=".58"/><stop offset=".22" stop-color="#f7eaff" stop-opacity=".22"/><stop offset=".7" stop-color="#caa1ff" stop-opacity=".04"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+ <clipPath id="facet1"><path d="M120 50A250 250 0 0 1 266.95 97.75L171.73 228.81A88 88 0 0 0 120 212Z"/></clipPath>
+ <clipPath id="facet2"><path d="M266.95 97.75A250 250 0 0 1 357.76 222.75L203.69 272.81A88 88 0 0 0 171.73 228.81Z"/></clipPath>
+ <clipPath id="facet3"><path d="M357.76 222.75A250 250 0 0 1 357.76 377.25L203.69 327.19A88 88 0 0 0 203.69 272.81Z"/></clipPath>
+ <clipPath id="facet4"><path d="M357.76 377.25A250 250 0 0 1 266.95 502.25L171.73 371.19A88 88 0 0 0 203.69 327.19Z"/></clipPath>
+ <clipPath id="facet5"><path d="M266.95 502.25A250 250 0 0 1 120 550V388A88 88 0 0 0 171.73 371.19Z"/></clipPath>
+ <filter id="faceShadow" x="-30%" y="-35%" width="170%" height="190%"><feGaussianBlur in="SourceAlpha" stdDeviation="5" result="blur"/><feOffset in="blur" dx="1" dy="8" result="drop"/><feComponentTransfer in="drop"><feFuncA type="linear" slope=".66"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <filter id="hubContact" x="-45%" y="-45%" width="190%" height="200%"><feGaussianBlur in="SourceAlpha" stdDeviation="5" result="blur"/><feOffset in="blur" dy="6" result="drop"/><feComponentTransfer in="drop"><feFuncA type="linear" slope=".72"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <filter id="softHighlight" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="5"/></filter>
+</defs>
+<!-- Raised lower shells: the dark side wall and offset contact shadow make the facets read as solid pieces. -->
+<g fill="#10081d" opacity=".74" transform="translate(0 11)">
+ <path d="M120 300V50A250 250 0 0 1 266.95 97.75L171.73 228.81A88 88 0 0 0 120 212Z"/>
+ <path d="M266.95 97.75A250 250 0 0 1 357.76 222.75L203.69 272.81A88 88 0 0 0 171.73 228.81Z"/>
+ <path d="M357.76 222.75A250 250 0 0 1 357.76 377.25L203.69 327.19A88 88 0 0 0 203.69 272.81Z"/>
+ <path d="M357.76 377.25A250 250 0 0 1 266.95 502.25L171.73 371.19A88 88 0 0 0 203.69 327.19Z"/>
+ <path d="M266.95 502.25A250 250 0 0 1 120 550V388A88 88 0 0 0 171.73 371.19Z"/>
+</g>
+<g stroke-linejoin="round" filter="url(#faceShadow)">
+ <g><path d="M120 50A250 250 0 0 1 266.95 97.75L171.73 228.81A88 88 0 0 0 120 212Z" fill="url(#amethyst)" stroke="url(#rimGold)" stroke-width="4.5"/><path d="M124 58A241 241 0 0 1 258 101" fill="none" stroke="#fff5dc" stroke-opacity=".57" stroke-width="2" stroke-linecap="round"/><path d="M130 69A224 224 0 0 1 246 107" fill="none" stroke="#d7b9ff" stroke-opacity=".31" stroke-width="6" stroke-linecap="round" filter="url(#softHighlight)"/><ellipse cx="181" cy="143" rx="40" ry="74" transform="rotate(28 181 143)" fill="url(#reflection)"/></g>
+ <g><path d="M266.95 97.75A250 250 0 0 1 357.76 222.75L203.69 272.81A88 88 0 0 0 171.73 228.81Z" fill="url(#violet)" stroke="url(#rimGold)" stroke-width="4.5"/><path d="M274 104A241 241 0 0 1 350 216" fill="none" stroke="#fff5dc" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/><path d="M278 115A224 224 0 0 1 339 210" fill="none" stroke="#d7b9ff" stroke-opacity=".26" stroke-width="6" stroke-linecap="round" filter="url(#softHighlight)"/><ellipse cx="272" cy="199" rx="37" ry="72" transform="rotate(58 272 199)" fill="url(#reflection)"/></g>
+ <g><path d="M357.76 222.75A250 250 0 0 1 357.76 377.25L203.69 327.19A88 88 0 0 0 203.69 272.81Z" fill="url(#royal)" stroke="url(#rimGold)" stroke-width="4.5"/><path d="M355 235A241 241 0 0 1 355 365" fill="none" stroke="#fff5dc" stroke-opacity=".48" stroke-width="2" stroke-linecap="round"/><path d="M344 244A224 224 0 0 1 344 356" fill="none" stroke="#d7b9ff" stroke-opacity=".26" stroke-width="6" stroke-linecap="round" filter="url(#softHighlight)"/><ellipse cx="298" cy="300" rx="37" ry="72" transform="rotate(90 298 300)" fill="url(#reflection)"/></g>
+ <g><path d="M357.76 377.25A250 250 0 0 1 266.95 502.25L171.73 371.19A88 88 0 0 0 203.69 327.19Z" fill="url(#plum)" stroke="url(#rimGold)" stroke-width="4.5"/><path d="M350 384A241 241 0 0 1 274 496" fill="none" stroke="#fff5dc" stroke-opacity=".48" stroke-width="2" stroke-linecap="round"/><path d="M339 390A224 224 0 0 1 278 485" fill="none" stroke="#d7b9ff" stroke-opacity=".25" stroke-width="6" stroke-linecap="round" filter="url(#softHighlight)"/><ellipse cx="272" cy="401" rx="37" ry="72" transform="rotate(122 272 401)" fill="url(#reflection)"/></g>
+ <g><path d="M266.95 502.25A250 250 0 0 1 120 550V388A88 88 0 0 0 171.73 371.19Z" fill="url(#indigo)" stroke="url(#rimGold)" stroke-width="4.5"/><path d="M258 496A241 241 0 0 1 124 542" fill="none" stroke="#fff5dc" stroke-opacity=".48" stroke-width="2" stroke-linecap="round"/><path d="M246 485A224 224 0 0 1 130 531" fill="none" stroke="#d7b9ff" stroke-opacity=".24" stroke-width="6" stroke-linecap="round" filter="url(#softHighlight)"/><ellipse cx="181" cy="457" rx="40" ry="74" transform="rotate(152 181 457)" fill="url(#reflection)"/></g>
+</g>
+
+<!-- Domed lacquer caps: clipped to each facet; a lifted oval reflection, dark rolled edge and fine curved light band create readable static depth. -->
+<g stroke-linecap="round" stroke-linejoin="round">
+ <g clip-path="url(#facet1)"><path d="M120 50A250 250 0 0 1 266.95 97.75L171.73 228.81A88 88 0 0 0 120 212Z" fill="url(#dome)"/><ellipse cx="187" cy="133" rx="47" ry="82" transform="rotate(29 187 133)" fill="url(#reflection)" opacity=".78"/><path d="M137 72Q187 82 241 111Q217 126 174 115Q146 106 137 72Z" fill="url(#specularBand)" opacity=".72"/><path d="M129 187Q145 211 169 219" fill="none" stroke="#12091d" stroke-opacity=".44" stroke-width="5"/></g>
+ <g clip-path="url(#facet2)"><path d="M266.95 97.75A250 250 0 0 1 357.76 222.75L203.69 272.81A88 88 0 0 0 171.73 228.81Z" fill="url(#dome)"/><ellipse cx="279" cy="180" rx="39" ry="74" transform="rotate(58 279 180)" fill="url(#reflection)" opacity=".75"/><path d="M278 112Q319 129 342 182Q317 193 300 169Q284 145 278 112Z" fill="url(#specularBand)" opacity=".65"/><path d="M187 236Q195 254 207 262" fill="none" stroke="#12091d" stroke-opacity=".43" stroke-width="5"/></g>
+ <g clip-path="url(#facet3)"><path d="M357.76 222.75A250 250 0 0 1 357.76 377.25L203.69 327.19A88 88 0 0 0 203.69 272.81Z" fill="url(#dome)"/><ellipse cx="300" cy="300" rx="39" ry="76" transform="rotate(90 300 300)" fill="url(#reflection)" opacity=".74"/><path d="M346 247Q360 300 346 353Q321 343 324 300Q326 263 346 247Z" fill="url(#specularBand)" opacity=".62"/><path d="M204 286Q200 300 204 314" fill="none" stroke="#12091d" stroke-opacity=".44" stroke-width="5"/></g>
+ <g clip-path="url(#facet4)"><path d="M357.76 377.25A250 250 0 0 1 266.95 502.25L171.73 371.19A88 88 0 0 0 203.69 327.19Z" fill="url(#dome)"/><ellipse cx="279" cy="420" rx="39" ry="74" transform="rotate(122 279 420)" fill="url(#reflection)" opacity=".74"/><path d="M342 386Q319 442 278 488Q277 456 300 420Q320 396 342 386Z" fill="url(#specularBand)" opacity=".62"/><path d="M205 338Q197 352 188 364" fill="none" stroke="#12091d" stroke-opacity=".44" stroke-width="5"/></g>
+ <g clip-path="url(#facet5)"><path d="M266.95 502.25A250 250 0 0 1 120 550V388A88 88 0 0 0 171.73 371.19Z" fill="url(#dome)"/><ellipse cx="187" cy="466" rx="47" ry="82" transform="rotate(151 187 466)" fill="url(#reflection)" opacity=".74"/><path d="M241 489Q187 518 137 529Q148 493 174 475Q215 463 241 489Z" fill="url(#specularBand)" opacity=".62"/><path d="M169 381Q145 390 129 413" fill="none" stroke="#12091d" stroke-opacity=".44" stroke-width="5"/></g>
+</g>
+<!-- Fine radial seams and continuous outer rail tie the raised pieces into one mechanism. -->
+<path d="M120 50A250 250 0 0 1 120 550" fill="none" stroke="#24132f" stroke-width="13" opacity=".8"/>
+<path d="M120 50A250 250 0 0 1 120 550" fill="none" stroke="url(#rimGold)" stroke-width="5"/>
+<path d="M120 300V50M120 300V550" fill="none" stroke="url(#rimGold)" stroke-width="4" opacity=".92"/>
+<!-- Recessed star socket shares the same purple glass and gold bevel as the segments. -->
+<circle cx="120" cy="300" r="84" fill="#10071c" opacity=".75" filter="url(#hubContact)"/>
+<circle cx="120" cy="300" r="77" fill="url(#goldSide)" stroke="#ffe8aa" stroke-width="1.5" filter="url(#hubContact)"/>
+<circle cx="120" cy="300" r="70" fill="url(#hubViolet)" stroke="url(#rimGold)" stroke-width="5"/>
+<circle cx="120" cy="300" r="61" fill="none" stroke="#f5e8ff" stroke-opacity=".4" stroke-width="1.5"/>
+<ellipse cx="101" cy="275" rx="31" ry="13" transform="rotate(-32 101 275)" fill="#fff" opacity=".17"/>
+</svg>

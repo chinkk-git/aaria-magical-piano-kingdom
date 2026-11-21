@@ -10,7 +10,7 @@ const sw=read('sw.js');
 const music=read('r2-music.js');
 const sharedLoader=read('shared-song-loader.js');
 
-for(const resource of ['./r2-music.js?v=aaria-piano-r2.2','./r2-image.js?v=aaria-piano-r2.2','./song-import.js?v=aaria-piano-r2.5','./my-songs.js?v=aaria-piano-r2.4','./shared-song-loader.js','./r2-install.js?v=aaria-piano-r2.7']){
+for(const resource of ['./r2-music.js?v=aaria-piano-r2.2','./r2-image.js?v=aaria-piano-r2.2','./song-import.js?v=aaria-piano-r2.5','./my-songs.js?v=aaria-piano-r2.5','./shared-song-loader.js','./r2-install.js?v=aaria-piano-r2.7']){
   assert.ok(index.includes(resource),`index loads ${resource}`);
   assert.ok(sw.includes(resource),`service worker precaches ${resource}`);
 }
