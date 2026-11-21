@@ -36,8 +36,9 @@ const viewports=[['Android portrait',390,844,2,true],['Android landscape',844,39
    const chord=window.__arrivals.filter(e=>e.bar===first?.bar&&e.at===first?.at),nearLabels=window.__labels.filter(x=>x.y>x.canvasHeight*.45);
    return{first,chordCount:chord.length,chordPitches:[...new Set(chord.map(e=>e.pitch))],nearLabels:nearLabels.slice(-40),impactClass:key?.classList.contains('impact-lit'),keyAnimation:pseudo?.animationName,keyBoxShadow:style?.boxShadow};
   });
+  console.log('Measure-start impact evidence',JSON.stringify({first:impact.first,chordCount:impact.chordCount,chordPitches:impact.chordPitches,arrivals:await page.evaluate(()=>window.__arrivals.slice(0,12))}));
   assert(impact.first?.visualOnly===true,'a real note-arrival event did not fire');
-  assert(impact.chordCount===3&&impact.chordPitches.length===3,'measure-start chord impacts were duplicated or not coordinated');
+  assert(impact.chordCount===3&&impact.chordPitches.length===3,'measure-start chord impacts were duplicated or not coordinated: '+JSON.stringify({first:impact.first,chordCount:impact.chordCount,chordPitches:impact.chordPitches,arrivals:await page.evaluate(()=>window.__arrivals.slice(0,12))}));
   assert(impact.first.particlesGenerated>=8,'impact event fired but no visible spark particles were generated');
   assert(impact.first.flashDurationMs===360,'normal impact flash duration changed from 360 ms');
   assert(impact.first.effectY<impact.first.keyTop&&impact.first.keyTop-impact.first.effectY>=8,'impact effect remains clipped on the keyboard/canvas boundary');
