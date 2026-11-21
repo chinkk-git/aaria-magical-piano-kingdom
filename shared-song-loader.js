@@ -20,8 +20,10 @@
         existing.sharedCatalog=true;
         if(existing.title!==song.title){
           existing.title=song.title;
-          const option=document.querySelector('#songSelect option[value="'+CSS.escape(song.id)+'"]');
-          if(option)option.textContent=song.title;
+          if(typeof document!=='undefined'&&typeof CSS!=='undefined'){
+            const option=document.querySelector('#songSelect option[value="'+CSS.escape(song.id)+'"]');
+            if(option)option.textContent=song.title;
+          }
         }
         continue;
       }
