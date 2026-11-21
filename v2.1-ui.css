@@ -51,7 +51,7 @@ html[data-v21-ui] .hero-zoom{display:none!important}.v21-speed input{height:40px
 .v21-wheel[data-side="right"] button[data-key="updateApp"]{left:57%;transform:none}
 .v21-wheel button[aria-pressed="true"]{background:linear-gradient(180deg,#fffbd0,#ffd54f 56%,#bb6d11)!important;color:#36114f!important;border-color:#fff7b5!important;box-shadow:inset 0 2px #fff,0 0 18px #ffe36e!important}
 
-.song-picker #songPickerButton{display:block;max-width:min(34vw,300px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff0c5;font-weight:750;pointer-events:none}
+.song-picker #songPickerButton{display:block;max-width:min(34vw,300px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff0c5;font-weight:750;pointer-events:auto}
 
 /* Phase 1: supplied Magic Star artwork with semantic, live action labels. */
 .v21-star{display:grid;place-items:center;padding:0;overflow:hidden;background:transparent;border:0;box-shadow:none;border-radius:50%}
@@ -216,7 +216,7 @@ html[data-v21-ui] .hero-zoom{display:none!important}.v21-speed input{height:40px
 .v21-wheel[data-side="right"] button[data-key="updateApp"]{left:57%;transform:none}
 .v21-wheel button[aria-pressed="true"]{background:linear-gradient(180deg,#fffbd0,#ffd54f 56%,#bb6d11)!important;color:#36114f!important;border-color:#fff7b5!important;box-shadow:inset 0 2px #fff,0 0 18px #ffe36e!important}
 
-.song-picker #songPickerButton{display:block;max-width:min(34vw,300px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff0c5;font-weight:750;pointer-events:none}
+.song-picker #songPickerButton{display:block;max-width:min(34vw,300px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff0c5;font-weight:750;pointer-events:auto}
 
 /* Phase 1: supplied Magic Star artwork with semantic, live action labels. */
 .v21-star{display:grid;place-items:center;padding:0;overflow:hidden;background:transparent;border:0;box-shadow:none;border-radius:50%}
