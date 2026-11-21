@@ -31,8 +31,8 @@ assert.ok(index.includes('id="restartAppUpdate"'),'Settings exposes a conditiona
 assert.ok(index.includes('id="downloadAppDiagnostics"'),'Settings exposes a local diagnostics download');
 assert.ok(index.includes('pwa-diagnostics.js?v=aaria-pwa-diagnostics-1.2'),'diagnostics logger is loaded');
 assert.ok(worker.includes('./pwa-diagnostics.js?v=aaria-pwa-diagnostics-1.2'),'diagnostics logger is cached for offline access');
-assert.ok(index.includes('pwa-update.js?v=aaria-pwa-update-1.2'));
-assert.ok(worker.includes('./pwa-update.js?v=aaria-pwa-update-1.2'),'service worker precaches the updater');
+assert.ok(index.includes('pwa-update.js?v=aaria-pwa-update-1.3'));
+assert.ok(worker.includes('./pwa-update.js?v=aaria-pwa-update-1.3'),'service worker precaches the updater');
 assert.ok(deploy.includes('pwa-update.js'),'Pages build includes the updater source');
 assert.ok(worker.includes('AARIA_GET_BUILD'),'installed service worker reports its actual build');
 assert.ok(worker.includes('AARIA_ACTIVATE_UPDATE'),'waiting update can be activated by explicit user action');
