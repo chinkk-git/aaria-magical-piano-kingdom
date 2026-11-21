@@ -50,7 +50,7 @@ async function snap(page,name,w,h){await page.setViewportSize({width:w,height:h}
   await snap(page,'Magical Piano Hero default home',1180,820);
   await snap(page,'Magical Piano Hero default home',1440,900);
 
-  await page.evaluate(()=>window.AariaOpenSettings());if(!(await page.locator('#pianoLayoutSelect option[value=classic]').isDisabled()))throw Error('Classic Piano must remain unavailable during the temporary Hero-only gate');await page.locator('#closeKeyboardSetup').click();
+  await page.evaluate(()=>window.AariaOpenSettings());if(!(await page.locator('#pianoLayoutSelect option[value=classic]').evaluate(el=>el.disabled)))throw Error('Classic Piano must remain unavailable during the temporary Hero-only gate');await page.locator('#closeKeyboardSetup').click();
 
   await page.evaluate(()=>window.AariaPianoNavigation.openSongs());await page.locator('#mySongsDialog[open]').waitFor({timeout:10000}).catch(()=>{});
   await snap(page,'Magical Song Library',390,844);await snap(page,'Magical Song Library',820,1180);await snap(page,'Magical Song Library',1440,900);
