@@ -226,8 +226,8 @@ const server=http.createServer((req,res)=>{
       const script=await shell.match('./song-import.js?v=aaria-piano-r2.5');
       const updater=await shell.match('./pwa-update.js?v=aaria-pwa-update-1.3');
       const libraryScript=await shell.match('./my-songs.js?v=aaria-piano-r2.6');
-      const v21Script=await shell.match(v21ScriptUrl);
-      const v21Style=await shell.match(v21StyleUrl);
+      const v21Script=await shell.match('./v2.1-ui.js?v=aaria-piano-v2.1.14');
+      const v21Style=await shell.match('./v2.1-ui.css?v=aaria-piano-v2.1.14');
       const styles=await shell.match('./piano-hero-v2.css?v=aaria-piano-v1.14.0');
       const html=await shell.match('./index.html');
       return {
