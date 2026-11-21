@@ -35,7 +35,16 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   await page.evaluate(()=>window.AariaPianoNavigation.openSongs());
   for(const song of sharedCatalog.songs){
     const card=page.locator('.library-card').filter({hasText:song.title});
-    assert.equal(await card.count(),1,song.title+' appears once in the shared song library');
+    const cardCount=await card.count();
+    if(cardCount!==1){
+      const diagnostic=await page.evaluate(()=>({
+        dialogOpen:document.querySelector('#mySongsDialog')?.open,
+        dialogText:document.querySelector('#mySongsDialog')?.textContent?.slice(0,700),
+        cards:[...document.querySelectorAll('#mySongsDialog .library-card')].slice(0,12).map(x=>x.querySelector('.library-title')?.textContent),
+        sharedSongs:Object.values(window.PianoKingdomLibrary?.songs||{}).filter(x=>x?.sharedCatalog).map(x=>({id:x.id,title:x.title})).slice(0,12)
+      }));
+      assert.equal(cardCount,1,song.title+' appears once in the shared song library; runtime='+JSON.stringify(diagnostic));
+    }
     assert.match(await card.locator('.library-meta').textContent(),/Built-in/,song.title+' has the same built-in library status as bundled songs');
     await card.locator('.v21-song-details summary').click();
     const actualVersions=await card.locator('.library-version option').evaluateAll(options=>options.map(option=>option.value));
