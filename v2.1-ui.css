@@ -442,10 +442,11 @@ main[data-piano-layout="hero"] .song-picker{min-width:0;width:100%;height:100%;d
 .v21-song-menu{position:fixed;z-index:220;box-sizing:border-box;width:min(320px,calc(100vw - 16px));max-height:min(60vh,420px);overscroll-behavior:contain;touch-action:pan-y}
 @media(orientation:landscape) and (max-height:540px){main[data-piano-layout="hero"] .compact-title{height:44px;min-height:44px}.song-picker #songPickerButton{min-height:40px;font-size:11px}#installHelp{min-height:40px;padding:5px 7px}.v21-overflow-trigger{width:40px;height:40px;min-width:40px;min-height:40px}}
 
-/* V2.1.12: complete names wrap on word boundaries without changing header or game geometry. */
+/* V2.1.12: full song names wrap by words inside the existing header box. */
 main[data-piano-layout="hero"] .song-picker #songPickerButton{height:100%;min-height:44px;max-height:100%;align-items:center;white-space:normal;overflow:hidden;text-overflow:clip}
 main[data-piano-layout="hero"] .song-title-label{display:block;min-width:0;max-height:none;overflow:visible;white-space:normal;overflow-wrap:normal;word-break:normal;-webkit-line-clamp:unset;-webkit-box-orient:initial;line-height:1.12;font-size:clamp(11px,3.15vw,13px)}
 main[data-piano-layout="hero"] .song-picker-chevron{flex:none;margin-left:auto}
+.v21-song-details summary{content-visibility:visible}
 .v21-song-details .library-actions button[data-action="rename"]{font-size:14px;font-weight:850}
 .rename-song-dialog form{display:grid;gap:10px}
 .rename-song-dialog label{font-weight:800;color:#ffe7b5}
@@ -458,3 +459,10 @@ main[data-magic-lights="playing"]::before,main[data-magic-lights="paused"]::befo
 main[data-magic-lights="paused"]::before{animation-play-state:paused}
 @keyframes aaria-light-drift{from{background-position:center,center,0% 45%,center,center,center;opacity:.2}to{background-position:center,center,100% 55%,center,center,center;opacity:.28}}
 @media(prefers-reduced-motion:reduce){main[data-magic-lights]::before{animation:none!important;opacity:.15!important}}
+/* V2.1.13: give the selected song the usable header width, reserving the
+   independently positioned Install and overflow controls on the right. */
+main[data-piano-layout="hero"] .compact-title .song-picker{position:absolute!important;left:max(4px,env(safe-area-inset-left));right:max(132px,calc(env(safe-area-inset-right) + 132px));top:0;bottom:0;width:auto!important;height:auto!important;min-width:0;z-index:2}
+main[data-piano-layout="hero"] .compact-title .song-picker #songPickerButton{box-sizing:border-box;width:100%!important;max-width:none!important;height:100%;min-height:44px;max-height:none;display:flex;align-items:center;gap:5px;padding:3px 8px;overflow:visible;text-overflow:clip;white-space:normal;text-align:left;font-size:clamp(12px,3.4vw,15px);line-height:1.12}
+main[data-piano-layout="hero"] .compact-title .song-title-label{display:block;flex:1 1 auto;min-width:0;max-height:none;overflow:visible;white-space:normal;overflow-wrap:normal;word-break:normal;text-overflow:clip;-webkit-line-clamp:unset;-webkit-box-orient:initial;font-size:inherit;line-height:inherit}
+main[data-piano-layout="hero"] .compact-title .song-picker-chevron{flex:0 0 auto;margin-left:4px}
+@media(orientation:landscape) and (max-height:540px){main[data-piano-layout="hero"] .compact-title .song-picker{right:max(108px,calc(env(safe-area-inset-right) + 108px))}main[data-piano-layout="hero"] .compact-title .song-picker #songPickerButton{min-height:40px;padding-block:1px;font-size:12px}}
