@@ -142,8 +142,8 @@ jobs:
           test -s evidence/v2.1.12/TEST_RESULTS.md
           test -s evidence/v2.1.12/GEOMETRY.md
           test -s evidence/v2.1.12/recordings/make-music-song-settings-interaction.webm
-          test -s evidence/release2/neon-label-impact/01-android-portrait-note-impact-390x844.png
-          test -s evidence/release2/neon-label-impact/neon-labels-and-magical-impacts-live.webm
+          test -s evidence/release2/neon-label-impact/neon-label-impact-evidence/01-android-portrait-note-impact-390x844.png
+          test -s evidence/release2/neon-label-impact/neon-label-impact-evidence/neon-labels-and-magical-impacts-live.webm
           test -s evidence/release2/crystal-renderer/piano-hero-crystal-evidence/02-android-note-impact-frame-390x844.png
           test -s evidence/release2/magical-note-explosion/magical-note-explosion-390x844.webm
           zip -qr AARIA_V2_1_12_FINAL_OWNER_ACCEPTANCE.zip evidence
