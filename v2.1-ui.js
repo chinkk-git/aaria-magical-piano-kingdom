@@ -54,7 +54,7 @@ function placeOverlay(){
  const upperBottom=Math.min(usableBottom,keyRect?keyRect.top+offsetTop-12:usableBottom),lowerTop=keyRect?keyRect.bottom+offsetTop+12:top;
  const upperRadius=Math.max(0,Math.min(maxByWidth,(upperBottom-top)/2));
  const lowerRadius=Math.max(0,Math.min(maxByWidth,(usableBottom-lowerTop)/2));
- const useBelowKeyboard=lowerRadius>=94&&(anchor.y>.55||upperRadius<94);
+ const useBelowKeyboard=lowerRadius>=94&&(wheelOpen||anchor.y>.55||upperRadius<94);
  const radius=useBelowKeyboard?lowerRadius:upperRadius;
  const regionTop=useBelowKeyboard?lowerTop:top,regionBottom=useBelowKeyboard?usableBottom:upperBottom;
  const minCenter=regionTop+radius,maxCenter=regionBottom-radius;
