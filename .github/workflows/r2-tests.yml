@@ -59,6 +59,7 @@ jobs:
           node --check song-import.js
           node --check my-songs.js
           node --check tests/r2-music.test.js
+          node --check tests/shared-song-library.test.cjs
           node --check tests/r2-integration.test.js
           node --check tests/r2-browser-smoke.cjs
           node --check tests/r2-omr-ground-truth.cjs
@@ -67,6 +68,11 @@ jobs:
           node --check tests/piano-hero-crystal-visual.cjs
       - name: Test difficulty and arrangement rules
         run: node --test tests/r2-music.test.js tests/r2-image.test.js tests/r2-integration.test.js tests/pwa-update.test.js
+      - name: Validate shared song import and runtime registration
+        run: |
+          python3 -m py_compile scripts/import_shared_songs.py
+          python3 tests/shared_song_library.test.py
+          node tests/shared-song-library.test.cjs
       - name: Install pinned Playwright
         run: npm install --no-save --no-package-lock playwright@1.62.1
       - name: Install Chromium for headless acceptance
