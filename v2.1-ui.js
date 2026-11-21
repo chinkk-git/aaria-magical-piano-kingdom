@@ -6,7 +6,7 @@ const labels={measure:'♫|Measure',loop:'↻|Loop',jump:'➜|Jump',practice:'�
 const wheelArt={measure:'original/button_measure.svg',loop:'original/button_loop.svg',jump:'original/button_jump.svg',practice:'original/button_practice.svg',makeMusic:'corrected/button_star.svg',home:'corrected/button_star.svg',songs:'corrected/button_star.svg',pianoMode:'corrected/button_star.svg',settings:'corrected/button_star.svg',updateApp:'corrected/button_star.svg'};
 const wheelAsset=name=>'./assets/v2.1-magic-wheel/'+name;
 
-let wheelOpen=false,menuGroup='primary',activePanel=null,dragging=null,anchor={side:'left',y:.32},loop={start:1,end:1,enabled:false,viewStart:1,viewEnd:32};
+let wheelOpen=false,menuGroup='primary',activePanel=null,dragging=null,anchor={side:'left',y:.32},loop={start:1,end:1,enabled:false,viewStart:1,viewEnd:32},lastPlacement={};
 try{const saved=JSON.parse(localStorage.getItem('aaria-v21-star-anchor')||'null');if(saved&&['left','right'].includes(saved.side)&&Number.isFinite(saved.y))anchor={side:saved.side,y:Math.max(.16,Math.min(.76,saved.y))}}catch{}
 const dock=document.createElement('section');dock.className='v21-dock';dock.setAttribute('aria-label','Music controls');dock.innerHTML='<button type="button" id="v21Play" aria-label="Play Along">▶ Play Along</button><button type="button" id="v21Sound" aria-pressed="true" aria-label="Sound On">🔊 Sound On</button><label class="v21-speed"><span>Speed</span><input id="v21Speed" type="range" min="40" max="120" step="1" aria-label="Playback speed"><output id="v21SpeedValue"></output></label><p id="v21PlaybackStatus" class="v21-sr" aria-live="polite"></p><button type="button" id="v21Zoom" aria-label="Zoom keyboard">🔎 Zoom</button>';
 document.body.append(dock);
@@ -68,6 +68,7 @@ function placeOverlay(){
  const minCenter=regionTop+radius,maxCenter=regionBottom-radius;
  const preferredCenter=useBelowKeyboard?(minCenter+maxCenter)/2:offsetTop+anchor.y*viewH;
  const centerY=Math.max(minCenter,Math.min(maxCenter,preferredCenter));
+ lastPlacement={viewH,viewW,offsetTop,usableBottom,top,upperBottom,lowerTop,upperRadius,lowerRadius,useBelowKeyboard,radius,regionTop,regionBottom,minCenter,maxCenter,preferredCenter,centerY};
  // Keep the resting anchor fixed while groups/actions animate around the hub.
  if(!wheelOpen)anchor.y=(centerY-offsetTop)/viewH;
  const starSize=Math.max(40,Math.min(58,radius*.52));
@@ -122,5 +123,5 @@ const syncTimer=setInterval(()=>{if(!document.documentElement.hasAttribute('data
 const speed=$('speed');if(speed){const label=speed.closest('label');$('speed').value=speed.value;$('speedVal').value=speed.value+'%';if(label){label.classList.add('v21-speed-legacy');$('v21Speed').replaceWith(speed);$('v21SpeedValue').replaceWith($('speedVal'));}speed.setAttribute('aria-label','Playback speed');speed.addEventListener('input',updateDock)}
 $('restart')?.setAttribute('aria-hidden','true');$('restart')?.setAttribute('tabindex','-1');$('prev')?.setAttribute('aria-hidden','true');$('next')?.setAttribute('aria-hidden','true');$('listenToggle')?.setAttribute('aria-hidden','true');$('primaryModeButton')?.setAttribute('aria-hidden','true');$('secondaryModeButton')?.setAttribute('aria-hidden','true');$('pause')?.setAttribute('aria-hidden','true');
 updateDock();resize();
-setTimeout(()=>{clearInterval(syncTimer);updateDock();resize()},1200);window.AariaV21UI={open:openWheel,close:closeWheel,switchGroup:setMenuGroup,getState:()=>({wheelOpen,activePanel,group:menuGroup,loop:{...loop},anchor:{...anchor},geometry:{center:starCenter(),radius:Number.parseFloat(getComputedStyle(assembly).getPropertyValue('--wheel-radius'))||0}})};
+setTimeout(()=>{clearInterval(syncTimer);updateDock();resize()},1200);window.AariaV21UI={open:openWheel,close:closeWheel,switchGroup:setMenuGroup,getState:()=>({wheelOpen,activePanel,group:menuGroup,loop:{...loop},anchor:{...anchor},placement:{...lastPlacement},geometry:{center:starCenter(),radius:Number.parseFloat(getComputedStyle(assembly).getPropertyValue('--wheel-radius'))||0}})};
 })();
