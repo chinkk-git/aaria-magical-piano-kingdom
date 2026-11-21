@@ -56,6 +56,7 @@ function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math
   for(const [key,label] of Object.entries(titles)){assert.match(sourceRoutes,new RegExp(key),'existing action route remains in source: '+key);assert.equal(await page.locator('.v21-wheel-action[data-key="'+key+'"]').getAttribute('aria-label'),label,'action label remains mapped: '+key)}
   const before=await star.boundingBox();assert.ok(before,'floating star has visible geometry');
   async function checkGroup(expected){
+   await page.waitForFunction(keys=>{const actual=[...document.querySelectorAll('.v21-wheel-actions:not([hidden]) .v21-wheel-action')].map(b=>b.dataset.key);return actual.length===keys.length&&actual.every((key,index)=>key===keys[index])},groups[expected],{timeout:2500});
    const visible=page.locator('.v21-wheel-actions:not([hidden]) .v21-wheel-action');
    const actual=await visible.evaluateAll(bs=>bs.map(b=>b.dataset.key));
    assert.deepEqual(actual,groups[expected],expected+' group exposes exactly its five mapped actions');
