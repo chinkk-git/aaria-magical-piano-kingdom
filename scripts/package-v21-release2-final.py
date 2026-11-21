@@ -115,21 +115,48 @@ for token, label in [
 # identified as fixtures and are not evidence of real OMR accuracy.
 r2_groups = [
     ("library", ("selector", "library", "song-selection")),
-    ("workshop", ("workshop", "fastpath", "import")),
-    ("omr-processing", ("omr", "recognition", "processing")),
+    ("workshop", ("workshop", "prescan", "recovery-complete", "import")),
+    ("omr-processing", ("omr", "recognition", "processing", "magic-music-progress")),
     ("correction-review", ("correction", "review")),
     ("arrangements", ("arrangement", "basic", "medium", "advanced")),
-    ("magic-bubble", ("bubble", "minimize", "recovery")),
+    ("magic-bubble", ("bubble", "minimized", "recovery")),
     ("installation-offline", ("install", "progress", "offline")),
-    ("saved-song-playback", ("playback", "saved", "hero")),
+    ("saved-song-playback", ("playback-state", "saved-playback", "piano-playback")),
 ]
 missing = []
+
+def screenshot_orientation(path):
+    name = path.name.lower()
+    if "portrait" in name: return "portrait"
+    if "landscape" in name: return "landscape"
+    if path.suffix.lower() == ".png":
+        try:
+            data = path.read_bytes()[:24]
+            if data[:8] == b"\x89PNG\r\n\x1a\n":
+                width, height = struct.unpack(">II", data[16:24])
+                return "portrait" if height >= width else "landscape"
+        except Exception: pass
+    return None
+
+def matches_group(path, category, words):
+    name = path.name.lower()
+    artifact = path.relative_to(r2).parts[0].lower() if path.is_relative_to(r2) else ""
+    if category == "library":
+        return any(word in name for word in words)
+    if category == "workshop":
+        return any(word in name for word in words) or ("fastpath" in artifact and screenshot_orientation(path) is not None)
+    return any(word in name for word in words)
+
 for category, words in r2_groups:
-    matches = [p for p in r2_images if any(word in str(p).lower() for word in words)]
+    matches = [p for p in r2_images if matches_group(p, category, words)]
+    if category == "workshop":
+        matches.sort(key=lambda p: ("candidate" not in p.name.lower(), "prescan" not in p.name.lower(), p.name))
     for orient in ("portrait", "landscape"):
-        match = next((p for p in matches if orient in str(p).lower()), None)
+        match = next((p for p in matches if screenshot_orientation(p) == orient), None)
         if match:
             fixture = any(word in str(match).lower() for word in ("fixture", "synthetic", "visual-gallery"))
+            if category == "omr-processing" and "android-song-selector-open" in str(match).lower():
+                fixture = True
             add(match, "release2-" + category, category.replace("-", " ").title() + " — " + orient +
                 (" — synthetic UI fixture" if fixture else " — workflow capture"))
         else:
@@ -142,10 +169,10 @@ for orient in ("portrait", "landscape"):
         shutil.copy2(clip, out / "recordings" / clip.name)
         records.append({"file": "recordings/" + clip.name, "label": "Magic Star opening, group switching, and closing — " + orient,
                         "source": str(clip.relative_to(root))})
-r2_clip = next((p for p in files(r2, {".webm", ".mp4"}) if any(w in p.name.lower() for w in ("fastpath", "workshop", "import"))), None)
+r2_clip = next((p for p in files(r2, {".webm", ".mp4"}) if any(w in p.name.lower() for w in ("candidate-omr-playback", "fastpath", "workshop", "import"))), None)
 if r2_clip:
     shutil.copy2(r2_clip, out / "recordings" / ("release2-" + r2_clip.name))
-    records.append({"file": "recordings/release2-" + r2_clip.name, "label": "Workshop import/recovery workflow recording",
+    records.append({"file": "recordings/release2-" + r2_clip.name, "label": "Real-engine OMR-to-playback or Workshop workflow recording",
                     "source": str(r2_clip.relative_to(root))})
 
 def runrow(name, data):
