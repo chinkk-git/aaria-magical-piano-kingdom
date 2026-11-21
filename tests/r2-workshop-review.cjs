@@ -59,7 +59,7 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   assert.ok(bubbleBox.y+bubbleBox.height<=playbackBox.y,'minimized button stays clear of playback controls');
   const sha=process.env.APP_SOURCE_SHA||'local';await page.screenshot({path:`/tmp/issue25-minimized-processing-390x844-${sha}.png`});
   await page.locator('.magic-song-bubble').click();await page.locator('#localSongWizard').waitFor({state:'visible'});
-  await page.waitForTimeout(5000);
+  await page.waitForFunction(()=>/needs help saving/i.test(document.querySelector('#scoreImportStatus')?.textContent||''),{timeout:30000});
   const saveFailureState=await page.evaluate(()=>({status:document.querySelector('#scoreImportStatus')?.textContent,stage:document.querySelector('#workshopStage')?.textContent,pages:document.querySelector('#workshopProgressPages')?.textContent,eta:document.querySelector('#workshopProgressEta')?.textContent,retry:document.querySelector('#retrySongSave')?.hidden,busy:window.AariaSongImportIsBusy?.()}));console.log('save failure state',JSON.stringify({saveFailureState,errors}));
   assert.match(saveFailureState.status,/needs help saving/i,'simulated Library save failure is reported clearly');
   assert.equal(await page.evaluate(()=>Object.values(window.PianoKingdomLibrary.songs).some(song=>song?.title==='Automatic Workshop Song')),false,'storage failure does not claim a saved song');
