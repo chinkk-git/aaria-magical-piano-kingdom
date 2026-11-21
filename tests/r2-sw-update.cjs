@@ -37,6 +37,7 @@ for(const url of [
 }
 assert.ok(fs.readFileSync(path.join(root,'shared-song-loader.js'),'utf8').includes("const path='./shared-song-library.json'"),'shared loader fetches the bundled catalog');
 assert.ok(newWorker.includes("'./shared-song-library.json'"),'worker precaches the bundled catalog');
+for(const asset of ['./assets/v2.1-ui/make-music-3d-with-text.png','./assets/v2.1-ui/disco-star-3d.png']){assert.ok(fs.statSync(path.join(root,asset)).size>0,asset+' is present in the release source');assert.ok(newWorker.includes(asset),asset+' is precached for offline use')}
 assert.match(index,/id="appBuildInfo"[^>]*>Installed build: checking…/);
 assert.match(installer,/__aariaPwaUpdateReloadBound/);
 assert.match(installer,/location\.reload\(\)/);
