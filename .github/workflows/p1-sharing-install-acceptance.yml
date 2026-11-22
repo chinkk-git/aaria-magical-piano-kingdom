@@ -1,0 +1,50 @@
+name: PR #66 sharing and smart install acceptance
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - index.html
+      - assets/social/**
+      - scripts/pages-runtime-assets.txt
+      - tests/social-sharing.test.py
+      - tests/p1-sharing-install-browser.cjs
+      - tests/package-sharing-install-review.py
+      - .github/workflows/piano-deploy.yml
+      - .github/workflows/p1-sharing-install-acceptance.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-and-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install pinned Playwright and Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Run sharing and installation browser acceptance
+        env:
+          APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          EVIDENCE_DIR: ${{ runner.temp }}/pr66-sharing-evidence
+        run: |
+          node --check tests/p1-sharing-install-browser.cjs
+          node tests/p1-sharing-install-browser.cjs
+          python3 tests/package-sharing-install-review.py
+          unzip -t AARIA_PIANO_PR66_SHARING_INSTALL_REVIEW.zip
+      - name: Upload PR #66 browser screenshots and reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: AARIA_PIANO_PR66_SHARING_INSTALL_REVIEW_${{ github.event.pull_request.head.sha || github.sha }}
+          path: AARIA_PIANO_PR66_SHARING_INSTALL_REVIEW.zip
+          retention-days: 90
+          if-no-files-found: error
