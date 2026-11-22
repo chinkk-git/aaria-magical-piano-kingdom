@@ -1,0 +1,60 @@
+name: Royal Concert Hall preview acceptance
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'piano-hero-v2.css'
+      - 'v2.1-ui.css'
+      - 'v2.1-ui.js'
+      - 'pwa-update.js'
+      - 'sw.js'
+      - 'royal-hall.css'
+      - 'royal-hall.js'
+      - 'assets/royal-hall/**'
+      - 'tests/royal-hall-acceptance.cjs'
+      - '.github/workflows/royal-hall-acceptance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visual-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install pinned browser and pixel decoder
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Run deterministic geometry and build regressions
+        run: |
+          node tests/piano-geometry.test.js
+          node tests/pwa-update.test.js
+          node tests/shared-song-library.test.cjs
+      - name: Capture five-viewport before/after evidence
+        env:
+          APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node tests/royal-hall-acceptance.cjs
+      - name: Verify review package
+        if: always()
+        run: |
+          test -s AARIA_ROYAL_CONCERT_HALL_OWNER_REVIEW.zip
+          unzip -t AARIA_ROYAL_CONCERT_HALL_OWNER_REVIEW.zip
+          unzip -Z1 AARIA_ROYAL_CONCERT_HALL_OWNER_REVIEW.zip
+      - name: Upload owner review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AARIA_ROYAL_CONCERT_HALL_OWNER_REVIEW
+          path: AARIA_ROYAL_CONCERT_HALL_OWNER_REVIEW.zip
+          retention-days: 30
+          if-no-files-found: error

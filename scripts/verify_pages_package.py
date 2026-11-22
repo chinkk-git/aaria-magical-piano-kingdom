@@ -15,7 +15,10 @@ from urllib.parse import urljoin, urlparse, unquote
 BASE = "https://chinkk-git.github.io/aaria-magical-piano-kingdom/"
 REQUIRED = (
     "v2.1-ui.js", "v2.1-ui.css", "pwa-update.js", "shared-song-loader.js", "shared-song-library.json",
-    "omr-worker.js", "assets/v2.1-magic-wheel/corrected/panel_measure.svg",
+    "omr-worker.js", "royal-hall.css", "royal-hall.js",
+    "assets/royal-hall/top_valance.png", "assets/royal-hall/left_arch_column.png",
+    "assets/royal-hall/right_arch_column.png", "assets/royal-hall/left_wall_sconce.png",
+    "assets/royal-hall/right_wall_sconce.png", "assets/v2.1-magic-wheel/corrected/panel_measure.svg",
     "assets/v2.1-magic-wheel/corrected/panel_loop.svg",
     "assets/v2.1-magic-wheel/corrected/panel_jump.svg",
     "assets/v2.1-magic-wheel/corrected/panel_practice.svg",

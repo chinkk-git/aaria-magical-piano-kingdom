@@ -12,7 +12,10 @@ from verify_pages_package import verify  # noqa: E402
 
 REQUIRED = (
     "v2.1-ui.js", "v2.1-ui.css", "pwa-update.js", "shared-song-loader.js", "shared-song-library.json",
-    "omr-worker.js", "assets/v2.1-magic-wheel/corrected/panel_measure.svg",
+    "omr-worker.js", "royal-hall.css", "royal-hall.js",
+    "assets/royal-hall/top_valance.png", "assets/royal-hall/left_arch_column.png",
+    "assets/royal-hall/right_arch_column.png", "assets/royal-hall/left_wall_sconce.png",
+    "assets/royal-hall/right_wall_sconce.png", "assets/v2.1-magic-wheel/corrected/panel_measure.svg",
     "assets/v2.1-magic-wheel/corrected/panel_loop.svg",
     "assets/v2.1-magic-wheel/corrected/panel_jump.svg",
     "assets/v2.1-magic-wheel/corrected/panel_practice.svg",
@@ -40,6 +43,8 @@ class PagesPackageGateTests(unittest.TestCase):
                  "Flowers - Miley Sirus", "Beautiful things -  Benson Boone"]
         (self.site / "shared-song-library.json").write_text(json.dumps({"songs": [{"title": s} for s in songs]}))
         (self.site / "pwa-update.js").write_text("const APP_BUILD='aaria-piano-v2.1.10'")
+        (self.site / "royal-hall.css").write_text(".royal-hall-scenery{pointer-events:none}")
+        (self.site / "royal-hall.js").write_text("// optional scenery")
         omr_payload = b"omr-worker"
         (self.site / "omr-worker.js").write_bytes(omr_payload)
         (self.site / "release2-install-manifest.json").write_text(json.dumps({"files": [{
@@ -49,8 +54,10 @@ class PagesPackageGateTests(unittest.TestCase):
             '<link rel="stylesheet" href="./style.css?v=1">'
             '<link rel="stylesheet" href="./v2.1-ui.css?v=aaria-piano-v2.1.10">'
             '<script src="./v2.1-ui.js?v=aaria-piano-v2.1.10"></script>'
-            '<script src="./pwa-update.js"></script><img src="./assets/pixel.png">')
-        precache = ["./", "./index.html", "./v2.1-ui.js", "./v2.1-ui.css",
+            '<script src="./pwa-update.js"></script><link rel="stylesheet" href="./royal-hall.css">'
+            '<script src="./royal-hall.js"></script><img src="./assets/royal-hall/top_valance.png">'
+            '<img src="./assets/pixel.png">')
+        precache = ["./", "./index.html", "./v2.1-ui.js", "./v2.1-ui.css", "./royal-hall.css", "./royal-hall.js",
                     "./shared-song-loader.js", "./shared-song-library.json", "./omr-worker.js",
                     "./style.css", "./assets/pixel.png"] + ["./" + item for item in REQUIRED if item.startswith("assets/")]
         (self.site / "sw.js").write_text("const CACHE='aaria-piano-v2.1.10';const ASSETS=" + json.dumps(precache) + ";")
