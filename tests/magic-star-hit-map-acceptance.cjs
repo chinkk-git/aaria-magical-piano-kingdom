@@ -7,11 +7,11 @@ module.exports=async function runMagicStarAcceptance({browser,server,out}){
  const keys=['measure','loop','jump','practice','songSettings','centerStar'];
  const markers={measure:'#v21Measure',loop:'#v21Timeline',jump:'#v21JumpNow',practice:'#v21PracticePart',songSettings:'#v21SongName'};
  const spots={
-  measure:{center:[930,220],leftBoundary:[844,210],rightBoundary:[1018,220],outerRim:[1008,15],nearCenter:[972,360]},
+  measure:{center:[930,220],leftBoundary:[844,210],rightBoundary:[1018,220],outerRim:[1008,15],nearCenter:[998,343]},
   loop:{center:[710,290],leftBoundary:[635,280],rightBoundary:[835,355],outerRim:[625,305],nearCenter:[875,415]},
-  jump:{center:[680,500],leftBoundary:[558,480],rightBoundary:[840,510],outerRim:[557,500],nearCenter:[864,570]},
+  jump:{center:[680,500],leftBoundary:[558,480],rightBoundary:[840,510],outerRim:[557,500],nearCenter:[860,509]},
   practice:{center:[700,720],leftBoundary:[590,700],rightBoundary:[850,625],outerRim:[650,770],nearCenter:[855,620]},
-  songSettings:{center:[900,820],leftBoundary:[820,800],rightBoundary:[1018,800],outerRim:[900,980],nearCenter:[944,605]}
+  songSettings:{center:[900,820],leftBoundary:[820,800],rightBoundary:[1018,800],outerRim:[900,980],nearCenter:[935,651]}
  };
  const viewports=[
   {width:390,height:844,name:'android-portrait',side:'right'},
