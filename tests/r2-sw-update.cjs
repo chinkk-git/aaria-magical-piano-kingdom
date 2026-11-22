@@ -303,6 +303,8 @@ const server=http.createServer((req,res)=>{
     versionCheckWorker=futureWorker;servedWorker=futureWorker;
     await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
+    await reopened.waitForFunction(()=>document.querySelector('#checkAppUpdate')?.textContent==='Update Version',{timeout:10000});
+    await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('Update ready. Restart App when you are ready.'),null,{timeout:15000});
     assert.equal(await reopened.locator('#restartAppUpdate').isVisible(),true,'a waiting worker exposes the explicit Restart App action');
     await reopened.locator('#restartAppUpdate').click();
