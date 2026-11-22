@@ -54,14 +54,14 @@ jobs:
       - name: Verify review package
         if: success()
         run: |
-          test -s AARIA_ROYAL_HALL_PR62_FINAL_EVIDENCE.zip
-          unzip -t AARIA_ROYAL_HALL_PR62_FINAL_EVIDENCE.zip
-          unzip -Z1 AARIA_ROYAL_HALL_PR62_FINAL_EVIDENCE.zip
+          test -s AARIA_ROYAL_HALL_PR62_RESTORATION_SCREENSHOTS.zip
+          unzip -t AARIA_ROYAL_HALL_PR62_RESTORATION_SCREENSHOTS.zip
+          unzip -Z1 AARIA_ROYAL_HALL_PR62_RESTORATION_SCREENSHOTS.zip
       - name: Upload focused owner review evidence
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: AARIA_ROYAL_HALL_PR62_FINAL_EVIDENCE
-          path: AARIA_ROYAL_HALL_PR62_FINAL_EVIDENCE.zip
+          name: AARIA_ROYAL_HALL_PR62_RESTORATION_SCREENSHOTS
+          path: AARIA_ROYAL_HALL_PR62_RESTORATION_SCREENSHOTS.zip
           retention-days: 30
           if-no-files-found: error

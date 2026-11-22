@@ -22,12 +22,3 @@ html[data-royal-hall="on"][data-royal-hall-frame="b"] .royal-hall-arch{max-width
 html[data-royal-hall="on"][data-royal-hall-frame="b"] .royal-hall-valance{max-height:clamp(46px,20%,132px)}
 @media(max-width:520px){.royal-hall-sconce{display:none}}
 @media(prefers-reduced-motion:reduce){.royal-hall-scenery,.royal-hall-scenery *{animation:none!important;transition:none!important}}
-
-/* The supplied complete PNG replaces every former decorative layer only in
-   optional Royal Hall mode. It is clipped with the playfield, never intercepts
-   input, and remains below the note canvas, keyboard and floating controls. */
-.royal-hall-artwork[hidden]{display:none!important}
-.royal-hall-artwork{position:absolute;z-index:0;display:block;max-width:none;max-height:none;object-fit:fill;pointer-events:none!important;user-select:none;-webkit-user-drag:none}
-html[data-royal-hall="on"] #royalHallArtwork{display:block}
-html[data-royal-hall="on"] #royalHallScenery,
-html[data-royal-hall="on"] #royalVaultRoof{display:none!important}
