@@ -7,11 +7,11 @@ module.exports=async function runMagicStarAcceptance({browser,server,out}){
  const keys=['measure','loop','jump','practice','songSettings','centerStar'];
  const markers={measure:'#v21Measure',loop:'#v21Timeline',jump:'#v21JumpNow',practice:'#v21PracticePart',songSettings:'#v21SongName'};
  const spots={
-  measure:{center:[1000,220],leftBoundary:[844,210],rightBoundary:[1080,220],outerRim:[1095,82],nearCenter:[912,350]},
-  loop:{center:[710,290],leftBoundary:[635,280],rightBoundary:[835,355],outerRim:[625,305],nearCenter:[886,420]},
-  jump:{center:[680,500],leftBoundary:[558,480],rightBoundary:[840,510],outerRim:[535,500],nearCenter:[864,510]},
-  practice:{center:[700,720],leftBoundary:[590,700],rightBoundary:[850,625],outerRim:[600,770],nearCenter:[908,635]},
-  songSettings:{center:[990,820],leftBoundary:[820,800],rightBoundary:[1090,800],outerRim:[1090,925],nearCenter:[906,650]}
+  measure:{center:[1000,220],leftBoundary:[844,210],rightBoundary:[1080,220],outerRim:[1095,82],nearCenter:[930,375]},
+  loop:{center:[710,290],leftBoundary:[635,280],rightBoundary:[835,355],outerRim:[625,305],nearCenter:[900,420]},
+  jump:{center:[680,500],leftBoundary:[558,480],rightBoundary:[840,510],outerRim:[535,500],nearCenter:[875,510]},
+  practice:{center:[700,720],leftBoundary:[590,700],rightBoundary:[850,625],outerRim:[600,770],nearCenter:[925,625]},
+  songSettings:{center:[990,820],leftBoundary:[820,800],rightBoundary:[1090,800],outerRim:[1090,925],nearCenter:[945,650]}
  };
  const viewports=[
   {width:390,height:844,name:'android-portrait',side:'right'},
@@ -41,14 +41,14 @@ module.exports=async function runMagicStarAcceptance({browser,server,out}){
  }
  async function tap(page,key,point,keyboard=false){
   await open(page);
-  const xy=await page.locator('.v21-star-hit-overlay').evaluate((svg,arg)=>{const el=svg.querySelector('[data-key="'+arg.key+'"]'),p=svg.createSVGPoint();p.x=arg.point[0];p.y=arg.point[1];if(!el||!el.isPointInFill(p))return{inside:false};const q=p.matrixTransform(svg.getScreenCTM()),top=document.elementFromPoint(q.x,q.y);return{inside:true,x:q.x,y:q.y,topKey:top?.getAttribute('data-key')||top?.closest('[data-key]')?.getAttribute('data-key')||null}}, {key,point});
-  assert.equal(xy.inside,true,key+' path contains its '+JSON.stringify(point)+' PNG coordinate');assert.equal(xy.topKey,key,'the SVG path is the unique top hit target');
+  const xy=await page.locator('.v21-star-hit-overlay').evaluate((svg,arg)=>{const p=svg.createSVGPoint();p.x=arg.point[0];p.y=arg.point[1];const q=p.matrixTransform(svg.getScreenCTM()),top=document.elementFromPoint(q.x,q.y);if(arg.key==='centerStar'){const r=document.querySelector('.v21-star').getBoundingClientRect();return{inside:q.x>=r.left&&q.x<=r.right&&q.y>=r.top&&q.y<=r.bottom,x:q.x,y:q.y,topKey:top?.closest('.v21-star')?'centerStar':null}}const el=svg.querySelector('[data-key="'+arg.key+'"]');if(!el||!el.isPointInFill(p))return{inside:false};return{inside:true,x:q.x,y:q.y,topKey:top?.getAttribute('data-key')||top?.closest('[data-key]')?.getAttribute('data-key')||null}}, {key,point});
+  assert.equal(xy.inside,true,key+' region contains its '+JSON.stringify(point)+' PNG coordinate');assert.equal(xy.topKey,key,'the intended region is the unique top hit target');
   await page.evaluate(()=>{window.__magicStarCalls=[]});
-  if(keyboard){await page.locator('.v21-wheel-hit[data-key="'+key+'"]').focus();await page.keyboard.press('Enter')}
+  if(keyboard){await page.locator(key==='centerStar'?'.v21-star':'.v21-wheel-hit[data-key="'+key+'"]').focus();await page.keyboard.press('Enter')}
   else await page.mouse.click(xy.x,xy.y);
   if(key==='centerStar'){
    await page.waitForFunction(()=>document.querySelector('.v21-star')?.getAttribute('aria-expanded')==='false'&&document.querySelector('#v21Wheel').hidden);
-   assert.deepEqual(await page.evaluate(()=>window.__magicStarCalls),[],'center path only toggles the menu');await open(page);
+   assert.deepEqual(await page.evaluate(()=>window.__magicStarCalls),[],'center button only toggles the menu');await open(page);
   }else await segmentResult(page,key);
  }
  for(let vi=0;vi<viewports.length;vi++){
@@ -73,6 +73,6 @@ module.exports=async function runMagicStarAcceptance({browser,server,out}){
  await open(videoPage);await videoPage.waitForTimeout(450);for(const key of ['measure','loop','jump','practice','songSettings']){await tap(videoPage,key,spots[key].center);await videoPage.waitForTimeout(120)}await tap(videoPage,'centerStar',[1036,510]);await videoPage.waitForTimeout(350);const tmp=await videoPage.video().path();await videoPage.close();await videoContext.close();const recording=path.join(out,'recordings','magic-star-six-region-interaction.webm');fs.copyFileSync(tmp,recording);
  const report={artwork:{path:'assets/v2.1-ui/magic-star-3d-jewel-wheel.png',sha256:'0804202d1082bc1cc732f70c8a8f28ae891be53db4b90dd75e7662a22172eede',dimensions:'1536x1024 RGBA'},checks:summary,viewports:viewports.map(v=>({width:v.width,height:v.height,name:v.name,side:v.side,emulated:true})),liveResize:'PASS — shared PNG/SVG bounds and Jump handler after 390x844 to 844x390 resize',screenshots:['screenshots/magic-star-390x844-collapsed.png','screenshots/magic-star-390x844-expanded.png'],recording:'recordings/magic-star-six-region-interaction.webm',physicalDevicesTested:false};
  fs.writeFileSync(path.join(out,'MAGIC_STAR_HIT_MAP.json'),JSON.stringify(report,null,2));
- fs.writeFileSync(path.join(out,'MAGIC_STAR_HIT_MAP.md'),'# Pixel-aligned Magic Star acceptance\n\n- Source PNG: 1536×1024 RGBA; SHA-256 `0804202d1082bc1cc732f70c8a8f28ae891be53db4b90dd75e7662a22172eede`.\n- PNG and SVG overlay share the original 1536×1024 viewBox, responsive bounds, and parent transform.\n- Five independent segment paths reuse the existing five action handlers; the central-star path reuses the existing expand/collapse logic.\n- At Android portrait, every segment was tapped at its visual center, both divider sides, outer rim, hub edge and by keyboard. Each tap invoked exactly one intended handler; the center path only expanded/collapsed.\n- Android landscape, iPad portrait/landscape, desktop, both star sides, and live portrait-to-landscape resize passed center routing and image/overlay alignment. All are Chromium emulation, not physical-device tests.\n- Expanded/collapsed screenshots and the six-region interaction recording are included.\n\n| Viewport | Region | Point | Trigger | Result |\n|---|---|---|---|---|\n'+summary.map(x=>'| '+x.viewport+' | '+x.key+' | '+x.point+' | '+x.triggered+' | '+x.result+' |').join('\n')+'\n');
+ fs.writeFileSync(path.join(out,'MAGIC_STAR_HIT_MAP.md'),'# Pixel-aligned Magic Star acceptance\n\n- Source PNG: 1536×1024 RGBA; SHA-256 `0804202d1082bc1cc732f70c8a8f28ae891be53db4b90dd75e7662a22172eede`.\n- PNG and five SVG segment paths share the original 1536×1024 viewBox, responsive bounds, and parent transform.\n- Five independent segment paths reuse the existing five action handlers; the existing native center-star button remains the sixth control and keeps its expand/collapse and keyboard behavior.\n- At Android portrait, every segment was tapped at its visual center, both divider sides, outer rim, hub edge and by keyboard. Each tap invoked exactly one intended handler; center-star taps only expanded/collapsed.\n- Android landscape, iPad portrait/landscape, desktop, both star sides, and live portrait-to-landscape resize passed center routing and image/overlay alignment. All are Chromium emulation, not physical-device tests.\n- Expanded/collapsed screenshots and the six-region interaction recording are included.\n\n| Viewport | Region | Point | Trigger | Result |\n|---|---|---|---|---|\n'+summary.map(x=>'| '+x.viewport+' | '+x.key+' | '+x.point+' | '+x.triggered+' | '+x.result+' |').join('\n')+'\n');
  return {summary,shots,recording};
 };
