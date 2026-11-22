@@ -14,7 +14,7 @@ required = {
 items: list[tuple[str, bytes]] = []
 with ZipFile(royal_zip) as archive:
     for name in archive.namelist():
-        if name.lower().endswith('.png') and '/screenshots/' in name:
+        if name.lower().endswith('.png') and 'screenshots/' in name:
             leaf = Path(name).name
             area = 'magic-star' if leaf.startswith('magic-star-') else 'royal-hall'
             items.append((f'{area}/{leaf}', archive.read(name)))
