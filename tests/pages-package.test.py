@@ -15,7 +15,7 @@ REQUIRED = (
     "omr-worker.js", "royal-hall.css", "royal-hall.js", "royal-vault.css", "royal-vault.js",
     "assets/royal-hall/top_valance.png", "assets/royal-hall/left_arch_column.png",
     "assets/royal-hall/right_arch_column.png", "assets/royal-hall/left_wall_sconce.png",
-    "assets/royal-hall/right_wall_sconce.png", "assets/royal-hall/vault/01_vaulted_arch_ribs.svg", "assets/royal-hall/vault/02_translucent_ceiling_panels.svg",
+    "assets/royal-hall/right_wall_sconce.png", "assets/royal-hall/royal_concert_hall_complete_1672x941.png", "assets/royal-hall/vault/01_vaulted_arch_ribs.svg", "assets/royal-hall/vault/02_translucent_ceiling_panels.svg",
     "assets/royal-hall/vault/03_side_cornice_rails.svg", "assets/royal-hall/vault/04_warm_arch_lights.svg",
     "assets/royal-hall/vault/05_depth_atmosphere.svg", "assets/v2.1-magic-wheel/corrected/panel_measure.svg",
     "assets/v2.1-magic-wheel/corrected/panel_loop.svg",

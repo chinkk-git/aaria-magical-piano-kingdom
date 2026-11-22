@@ -2,13 +2,13 @@
    unchanged highway vanishing point and stays below its canvas. */
 (()=>{
  'use strict';
- const root=document.getElementById('heroPlayfield'),canvas=document.getElementById('rain'),roof=document.getElementById('royalVaultRoof');
+ const root=document.getElementById('heroPlayfield'),canvas=document.getElementById('rain'),roof=document.getElementById('royalVaultRoof'),integratedHall=document.getElementById('royalHallArtwork');
  if(!root||!canvas||!roof)return;
  const layers=[...roof.querySelectorAll('.royal-vault-layer')];
  let queued=false;
  function align(){
   queued=false;
-  if(document.documentElement.dataset.royalHall!=='on'||document.querySelector('main')?.dataset.pianoLayout!=='hero'){
+  if(document.documentElement.dataset.royalHall!=='on'||document.querySelector('main')?.dataset.pianoLayout!=='hero'||(integratedHall&&!integratedHall.hidden)){
    roof.hidden=true;return;
   }
   const r=root.getBoundingClientRect(),c=canvas.getBoundingClientRect();
@@ -24,5 +24,6 @@
  if('ResizeObserver'in window){const ro=new ResizeObserver(schedule);ro.observe(root);ro.observe(canvas)}
  window.addEventListener('resize',schedule,{passive:true});window.addEventListener('orientationchange',schedule,{passive:true});
  new MutationObserver(schedule).observe(document.documentElement,{attributes:true,attributeFilter:['data-royal-hall']});
+ if(integratedHall)new MutationObserver(schedule).observe(integratedHall,{attributes:true,attributeFilter:['hidden']});
  schedule();
 })();
