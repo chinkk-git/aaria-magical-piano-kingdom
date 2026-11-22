@@ -27,7 +27,7 @@
   const channel=('BroadcastChannel'in root)?new root.BroadcastChannel(CHANNEL_NAME):null;
   function renderState(message,working=false){
     state.message=message||'';
-    check.textContent=state.phase==='available'?'Update Version':state.phase==='ready'?'Update Ready':state.phase==='downloading'?'Downloading…':state.phase==='checking'?'Checking…':state.phase==='failed'&&!state.available?'Try Again':'Check for Updates';
+    check.textContent=state.phase==='available'?'Update Version':state.phase==='ready'?'Update Ready':state.phase==='downloading'?'Downloading…':state.phase==='checking'?'Checking…':'Check for Updates';
     check.disabled=state.phase==='checking'||state.phase==='downloading'||state.phase==='ready';
     restart.hidden=state.phase!=='ready';
     status.setAttribute('aria-busy',working?'true':'false');
@@ -77,7 +77,7 @@
   async function refreshUpdate(options={}){
     const announce=options.announce!==false;
     if(checkInFlight)return checkInFlight;
-    const hadConfirmedAvailability=state.available;
+    const priorPhase=state.phase,hadConfirmedAvailability=state.available;
     checkInFlight=Promise.resolve().then(async()=>{
       setPhase('checking',announce?'Checking for updates…':'',{available:state.available,working:announce});
       log('update',{state:'checking',result:'started',automatic:!announce});
@@ -110,7 +110,7 @@
           }
           const pending=reg.waiting;
           if(pending){waiting=pending;setPhase('ready','Update ready. Restart App when you are ready.',{available:true,publishedBuild:published,installedBuild:current});return state}
-          setPhase('upToDate',announce?"You're up to date: "+current:'',{available:false,publishedBuild:published,installedBuild:current});
+          setPhase('upToDate',(announce||priorPhase!=='upToDate')?"You're up to date: "+current:'',{available:false,publishedBuild:published,installedBuild:current});
           log('update',{state:'up-to-date',current,published,result:'same-build'});
           return state
         }
@@ -185,7 +185,7 @@
     }finally{busy=false}
   }
   restart.addEventListener('click',activateWaiting);
-  check.addEventListener('click',()=>state.available?startUpdate():refreshUpdate({announce:true}));
+  check.addEventListener('click',async()=>{if(state.available){await startUpdate();return}if(!await allTabsSafe()){setStatus('Pause playback and finish or close song editing before checking for updates.');return}await refreshUpdate({announce:true})});
   root.AariaPwaUpdateState={getState:()=>({...state}),check:()=>refreshUpdate({announce:true})};
   if(root.navigator?.serviceWorker){
     root.navigator.serviceWorker.addEventListener('message',event=>{const data=event.data||{};if(data.type==='AARIA_SW_INSTALL_ERROR'){lastInstallError=String(data.detail||'Unknown service worker install error').slice(0,180);if(busy)setPhase('failed','Update failed: '+lastInstallError,{available:true});log('update',{state:'failed',category:'http',result:'failed'})}});

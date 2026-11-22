@@ -53,7 +53,7 @@ assert.ok(index.includes('Check for Updates'),'Settings includes an update actio
 assert.ok(newWorker.includes("/^aaria-piano-v\\d+\\.\\d+\\.\\d+$/.test(key)"),'activation only removes prior versioned app-shell caches');
 assert.match(newWorker,/if\(!self\.registration\.active\)await self\.skipWaiting\(\)/,'updates wait for the user while first install still controls the app');
 assert.match(newWorker,/AARIA_ACTIVATE_UPDATE/,'Restart App activates a waiting update');
-assert.match(fs.readFileSync(path.join(root,'pwa-update.js'),'utf8'),/busy=true;check\.disabled=true;setStatus\('Checking…',true\);log\('update',\{state:'checking',result:'started'\}\);try\{if\(!root\.navigator\.onLine\)/,'the check is serialized before asynchronous multi-tab coordination');
+assert.match(fs.readFileSync(path.join(root,'pwa-update.js'),'utf8'),/async function allTabsSafe\(\)/,'the updater retains its shared local and cross-tab safety check');
 
 let servedWorker=oldWorker;
 let serveNewShell=false,failShellAsset=false,failedShellAssetRequests=0;
