@@ -61,5 +61,5 @@ async function verifyInteractions(page,includePlayback=false){
  const py=`import zipfile,sys\nout=sys.argv[1]\nitems=sys.argv[2:]\nwith zipfile.ZipFile(out,'w',zipfile.ZIP_DEFLATED) as z:\n for item in items:\n  arc,src=item.split('=',1); z.write(src,arc)\n`;
  execFileSync('python3',['-c',py,zip,...entries.map(([name,file])=>`${name}=${file}`)]);
  if(execFileSync('unzip',['-Z1',zip],{encoding:'utf8'}).includes('.zip'))throw Error('Evidence ZIP must not contain a nested archive');
- console.log(JSON.stringify({zip,sha,interactions,files:entries.map(([name])=>name),viewports:results.map(r=>r.geometry.viewport)},null,2));await context.close();await browser.close();await new Promise(r=>server.close(r));
+ console.log(JSON.stringify({zip,sha,interactions:results.map(r=>({device:r.device,...r.interactions})),files:entries.map(([name])=>name),viewports:results.map(r=>r.geometry.viewport)},null,2));await context.close();await browser.close();await new Promise(r=>server.close(r));
 })().catch(async e=>{console.error(e);try{await context?.close()}catch{}try{await browser?.close()}catch{}try{server?.close()}catch{}process.exitCode=1});
