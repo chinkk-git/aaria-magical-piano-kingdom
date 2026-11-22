@@ -1,7 +1,8 @@
 # Release 2 owner device-testing checklist
 
 **Updated:** 2026-11-19  
-**Current production baseline:** `f9739d0071e6e8586e3d9f1b5a049cea9b50534f`, app build `aaria-piano-v1.20.3`. GitHub Pages deploy workflow run [#44585961860](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44585961860) succeeded.  
+**Current production baseline:** `335fb3d6f0b6d00d749afdcd7da212fe4d39a5c6`, expected app build `aaria-piano-v1.20.4`. Pages deploy run [#44614631492](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44614631492) succeeded; live Settings build identity remains **NOT VERIFIED** (see final integration status below).  
+succeeded.  
 **Physical-device results:** PENDING. Chromium emulation is not a physical-device result.
 
 ## Android installed PWA — owner run
@@ -145,3 +146,30 @@ The current baseline remains production main `f9739d0071e6e8586e3d9f1b5a049cea9b
 | Playback completion and Play Again | [#42](https://github.com/chinkk-git/aaria-magical-piano-kingdom/pull/42), `12813501a84b566779b2375c4a08b4d4caa2327c` | Combined run [#44605132631](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44605132631) passed browser regression and pinned actual-engine OMR semantic acceptance. Chromium artifact [#14569958368](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44605132631/artifacts/14569958368). |
 
 The actual-engine fixture matched all 8 expected pitches and measure/onset/duration events through recognition, production MusicXML conversion, Basic arrangement, save, Library reopen and the playback scheduler. It produced two 8-tick bars at 72 BPM with about 0.83-second quarter-note gaps. This is Chromium CI evidence, not a device run. Physical Android/iPhone/iPad/MacBook acceptance remains **PENDING**. OMR redistribution/provenance remains **LEGAL REVIEW REQUIRED**. No code PR is merged/deployed and Release 2 is not owner-approved.
+
+
+## Worker 1 final integration and production status — 2026-11-19 18:03 BRT
+
+This is the latest status and supersedes earlier draft-only and pre-deployment snapshots above. It records publication of the authorized functional improvements only; it does not mark all Release 2 owner/device or licensing gates complete.
+
+| Item | Final status / evidence |
+|---|---|
+| PR #40 — update check and safe restart | Merged as `f3789b9626bef188c7cf17454800db95e6a04837`. |
+| PR #42 — playback completion / Play Again | Merged as `335fb3d6f0b6d00d749afdcd7da212fe4d39a5c6`. |
+| Final integrated main commit | `335fb3d6f0b6d00d749afdcd7da212fe4d39a5c6`. |
+| GitHub Pages | Deploy run [#44614631492](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44614631492) completed successfully for the final integrated commit. |
+| Production URL | https://chinkk-git.github.io/aaria-magical-piano-kingdom/ |
+| Expected production app build | `aaria-piano-v1.20.4`, confirmed in merged `pwa-update.js` and service-worker cache identifier. |
+| Live UI version verification | **NOT VERIFIED**: production Settings shows “Installed build: not verified yet”; Check for Updates then reports the active-task safety message while visible playback is idle and the song editor is closed. This remains a production verification issue; deployment success is not treated as proof of runtime version identification. |
+| Live app/navigation | Production loaded the Magical Piano Hero home; opening Magical Song Library succeeded. |
+| CI — integrated Release 2 | [#44613963886](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44613963886) passed applicable validation, installer/recovery, visual gallery, Android portrait/landscape emulation and playback-state evidence. |
+| CI — updater/data retention + real-engine OMR | [#44613951535](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44613951535) passed both jobs. It covered data/cache retention and the pinned actual-engine fixture. |
+| CI — note effect / Listen preference | [Note explosion #44613963849](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44613963849) and [Listen preference #44613963721](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44613963721) passed. |
+| Real OMR fixture | Actual pinned-engine path passed Image → MusicXML → production timing conversion → Basic arrangement → save → Library → scheduled playback; all 8 expected pitches/timing events matched. Integrated online/offline recognition passed in [#44612917269](https://github.com/chinkk-git/aaria-magical-piano-kingdom/actions/runs/44612917269). |
+| Saved data / OMR cache | Updater regression passed preservation checks for saved songs, favorites, IndexedDB records and verified OMR cache. No migration or deletion was part of these changes. |
+| Physical-device acceptance | **PENDING**. CI viewport coverage is browser emulation, not physical Android/iOS/iPadOS/MacBook testing. Owner checklist above remains unchecked. |
+| OMR legal/provenance clearance | **LEGAL REVIEW REQUIRED**. This work changed no OMR models, datasets, license declarations or dependency packaging. |
+
+### Remaining issue
+
+The installed-build identity/update-check flow needs diagnosis or a physical PWA session that proves the task guard is accurately detecting a genuinely active task. Until the runtime check can identify the installed build, mark that production acceptance row NOT VERIFIED.
