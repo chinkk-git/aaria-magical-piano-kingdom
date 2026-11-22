@@ -12,6 +12,7 @@ on:
       - 'pwa-update.js'
       - 'tests/pwa-update.test.js'
       - 'tests/song-settings-selector-acceptance.cjs'
+      - 'tests/r2-delete-song.cjs'
       - '.github/workflows/song-settings-selector-acceptance.yml'
   workflow_dispatch:
 
@@ -54,6 +55,7 @@ jobs:
           node tests/pwa-update.test.js
           node tests/r2-sw-update.cjs
           node tests/song-settings-selector-acceptance.cjs
+          node tests/r2-delete-song.cjs
           test -s AARIA_SONG_SETTINGS_SELECTOR_OWNER_REVIEW.zip
           unzip -t AARIA_SONG_SETTINGS_SELECTOR_OWNER_REVIEW.zip
       - name: Upload owner review evidence
