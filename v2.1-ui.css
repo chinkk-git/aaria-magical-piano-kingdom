@@ -517,4 +517,4 @@ main[data-piano-layout="hero"] .compact-title .song-picker-chevron{flex:0 0 auto
 .v21-practice-panel[data-panel-kind="songSettings"] .v21-settings-name{background:#170b2b;border-color:#f0ce7b;color:#fff}
 .v21-practice-panel[data-panel-kind="songSettings"] .v21-settings-actions{padding:4px 0}
 .v21-practice-panel[data-panel-kind="songSettings"] button:focus-visible,.v21-practice-panel[data-panel-kind="songSettings"] input:focus-visible{outline:3px solid #fff;outline-offset:2px}
-@media(max-height:520px){.v21-practice-panel[data-panel-kind="songSettings"]{max-height:calc(100dvh - 14px);padding:9px}.v21-practice-panel[data-panel-kind="songSettings"] .v21-panel-head{margin-bottom:6px}.v21-settings-level-options{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-height:520px){.v21-practice-panel[data-panel-kind="songSettings"]{max-height:min(calc(100dvh - 20px),var(--v21-panel-max,calc(100dvh - 14px)));padding:9px}.v21-practice-panel[data-panel-kind="songSettings"] .v21-panel-head{margin-bottom:6px}.v21-settings-level-options{grid-template-columns:repeat(4,minmax(0,1fr))}}
