@@ -42,7 +42,7 @@ const server=http.createServer((req,res)=>{
       menuTrigger.setAttribute('aria-label','More app options, update available');
       button.disabled=false;
       button.textContent='Update Version';
-      status.textContent='Update available: aaria-piano-v2.1.16. Tap Update Version when you are ready.';
+      status.textContent='Update available: aaria-piano-v2.1.17. Tap Update Version when you are ready.';
       status.setAttribute('aria-busy','false')
     });
     assert.equal(await dot.isVisible(),true,'confirmed-update screenshot fixture shows dot');

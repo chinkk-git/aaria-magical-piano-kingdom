@@ -60,18 +60,19 @@ const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 (async()=>{
   const source=fs.readFileSync(require.resolve('../pwa-update.js'),'utf8');
   const storage=new Map();const local=new Map();const localStorage={getItem:key=>local.get(key)||null,setItem:(key,val)=>local.set(key,String(val)),removeItem:key=>local.delete(key)};const session={getItem:key=>storage.get(key)||null,setItem:(key,val)=>storage.set(key,String(val)),removeItem:key=>storage.delete(key)};
-  const fixture={currentBuild:'aaria-piano-v2.1.15',publishedBuild:'aaria-piano-v2.1.15',interfaceBuild:'aaria-piano-v2.1.15',storage:session,localStorage,playbackBusy:false,reloads:0,fetchFails:false};
-  let app=makeRuntime(source,fixture);
+  const oldClientSource=source.replace("const APP_BUILD='aaria-piano-v2.1.17'","const APP_BUILD='aaria-piano-v2.1.16'");
+  const fixture={currentBuild:'aaria-piano-v2.1.16',publishedBuild:'aaria-piano-v2.1.16',interfaceBuild:'aaria-piano-v2.1.16',storage:session,localStorage,playbackBusy:false,reloads:0,fetchFails:false};
+  let app=makeRuntime(oldClientSource,fixture);
   await app.win.AariaPwaUpdateState.check();
   assert.equal(app.win.AariaPwaUpdateState.getState().phase,'upToDate');
   assert.equal(app.dot.hidden,true,'same installed and published build has no dot');
 
-  fixture.publishedBuild='aaria-piano-v2.1.16';
+  fixture.publishedBuild='aaria-piano-v2.1.17';
   await app.win.AariaPwaUpdateState.check();
   assert.equal(app.dot.hidden,false,'confirmed newer build shows the notification dot');
   assert.equal(app.nodes.checkAppUpdate.textContent,'Update Version');
-  assert.equal(local.get('aaria-pwa-available-build'),'aaria-piano-v2.1.16','confirmed availability persists across app opens');
-  app=makeRuntime(source,fixture);
+  assert.equal(local.get('aaria-pwa-available-build'),'aaria-piano-v2.1.17','confirmed availability persists across app opens');
+  app=makeRuntime(oldClientSource,fixture);
   assert.equal(app.dot.hidden,false,'reopening the app restores the confirmed update dot');
 
   await app.nodes.checkAppUpdate.fire();
@@ -88,13 +89,13 @@ const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
   await delay(30);
   assert.equal(fixture.reloads,1,'safe restart activates the waiting worker');
 
-  fixture.interfaceBuild='aaria-piano-v2.1.16';
-  const releaseSource=source.replace("const APP_BUILD='aaria-piano-v2.1.15'","const APP_BUILD='aaria-piano-v2.1.16'");
+  fixture.interfaceBuild='aaria-piano-v2.1.17';
+  const releaseSource=source;
   app=makeRuntime(releaseSource,fixture);
   await delay(30);
   assert.equal(app.win.AariaPwaUpdateState.getState().phase,'upToDate');
   assert.equal(app.dot.hidden,true,'post-reload service worker and interface verification clears the dot');
-  assert.match(app.nodes.appUpdateStatus.textContent,/Update installed and verified: aaria-piano-v2\.1\.16/,'background auto-check preserves the verified restart confirmation');
+  assert.match(app.nodes.appUpdateStatus.textContent,/Update installed and verified: aaria-piano-v2\.1\.17/,'background auto-check preserves the verified restart confirmation');
 
   app.win.navigator.onLine=false;
   await app.win.AariaPwaUpdateState.check();
