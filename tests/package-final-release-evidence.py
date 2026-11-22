@@ -21,7 +21,12 @@ with ZipFile(royal_zip) as archive:
 with ZipFile(settings_zip) as archive:
     for name in archive.namelist():
         if name.lower().endswith('.png') and 'screenshots/' in name:
-            items.append((f'song-settings/{Path(name).name}', archive.read(name)))
+            leaf = Path(name).name
+            # The first Android portrait settings capture is a named acceptance screenshot;
+            # the responsive loop starts at Android landscape (viewports.slice(1)).
+            if leaf == '02-song-settings-opaque-no-overlap-390x844.png':
+                leaf = 'viewport-android-portrait-song-settings.png'
+            items.append((f'song-settings/{leaf}', archive.read(name)))
 for file in update_dir.glob('*.png'):
     items.append((f'update-interface/{file.name}', file.read_bytes()))
 
