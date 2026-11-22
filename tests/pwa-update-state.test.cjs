@@ -94,6 +94,7 @@ const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
   await delay(30);
   assert.equal(app.win.AariaPwaUpdateState.getState().phase,'upToDate');
   assert.equal(app.dot.hidden,true,'post-reload service worker and interface verification clears the dot');
+  assert.match(app.nodes.appUpdateStatus.textContent,/Update installed and verified: aaria-piano-v2\.1\.16/,'background auto-check preserves the verified restart confirmation');
 
   app.win.navigator.onLine=false;
   await app.win.AariaPwaUpdateState.check();
@@ -107,3 +108,4 @@ const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
   assert.equal(app.dot.hidden,true,'failed checks do not claim an unconfirmed update');
   console.log('PWA update state acceptance passed (same build, update available, ready, busy restart guard, verified install, offline and failed check).');
 })().catch(error=>{console.error(error);process.exitCode=1});
+
