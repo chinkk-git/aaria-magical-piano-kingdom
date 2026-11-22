@@ -6,15 +6,26 @@ const path=require('node:path');
 const {chromium}=require('playwright');
 
 const root=path.resolve(__dirname,'..');
+const {APP_BUILD,loadedInterfaceBuilds,interfaceMatchesBuild,shouldRefreshStaleInterface}=require('../pwa-update.js');
+const v21ScriptUrl=`./v2.1-ui.js?v=${APP_BUILD}`;
+const v21StyleUrl=`./v2.1-ui.css?v=${APP_BUILD}`;
+const updaterUrl='./pwa-update.js?v=aaria-pwa-update-1.3';
 const sharedCatalog=JSON.parse(fs.readFileSync(path.join(root,'shared-song-library.json'),'utf8'));
 const oldWorker=fs.readFileSync(path.join(__dirname,'fixtures/sw-v1.20.2.js'),'utf8');
 const oldShell=fs.readFileSync(path.join(__dirname,'fixtures/installed-shell-v1.20.2.html'),'utf8');
 const newWorker=fs.readFileSync(path.join(root,'sw.js'),'utf8');
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const updaterSource=fs.readFileSync(path.join(root,'pwa-update.js'),'utf8');
 const installer=fs.readFileSync(path.join(root,'r2-install.js'),'utf8');
 const currentBuild=newWorker.match(/const CACHE='(aaria-piano-v\d+\.\d+\.\d+)'/);
 assert.ok(currentBuild,'service worker declares a versioned app-shell build');
 const shellName=currentBuild[1];
+const uiDoc=(scriptBuild,styleBuild)=>({querySelector(selector){return selector.startsWith('script')?{getAttribute:()=> './v2.1-ui.js?v='+scriptBuild}:{getAttribute:()=> './v2.1-ui.css?v='+styleBuild}}});
+const staleScriptOnly=loadedInterfaceBuilds(uiDoc('aaria-piano-v2.1.13',APP_BUILD));
+const staleStyleOnly=loadedInterfaceBuilds(uiDoc(APP_BUILD,'aaria-piano-v2.1.13'));
+assert.equal(shouldRefreshStaleInterface(staleScriptOnly,APP_BUILD,APP_BUILD),true,'stale JavaScript alone is detected against a current service worker');
+assert.equal(interfaceMatchesBuild(staleStyleOnly,APP_BUILD),false,'stale CSS alone prevents a false current-version match');
+assert.equal(shouldRefreshStaleInterface(staleStyleOnly,APP_BUILD,APP_BUILD),true,'stale CSS alone triggers stale-interface recovery');
 const versionParts=shellName.match(/^aaria-piano-v(\d+)\.(\d+)\.(\d+)$/);
 const nextShellName=`aaria-piano-v${versionParts[1]}.${versionParts[2]}.${Number(versionParts[3])+1}`;
 for(const url of [
@@ -23,8 +34,8 @@ for(const url of [
   './piano-hero-v2.css?v=aaria-piano-v1.14.0',
   './song-import.js?v=aaria-piano-r2.5',
   './my-songs.js?v=aaria-piano-r2.6',
-  './v2.1-ui.js?v=aaria-piano-v2.1.13',
-  './v2.1-ui.css?v=aaria-piano-v2.1.13',
+  v21ScriptUrl,
+  v21StyleUrl,
   './shared-song-loader.js',
   './r2-install.js?v=aaria-piano-r2.7'
 ]){
@@ -33,6 +44,7 @@ for(const url of [
 }
 assert.ok(fs.readFileSync(path.join(root,'shared-song-loader.js'),'utf8').includes("const path='./shared-song-library.json'"),'shared loader fetches the bundled catalog');
 assert.ok(newWorker.includes("'./shared-song-library.json'"),'worker precaches the bundled catalog');
+for(const asset of ['./assets/v2.1-ui/make-music-3d-with-text.png','./assets/v2.1-ui/disco-star-3d.png']){assert.ok(fs.statSync(path.join(root,asset)).size>0,asset+' is present in the release source');assert.ok(newWorker.includes(asset),asset+' is precached for offline use')}
 assert.match(index,/id="appBuildInfo"[^>]*>Installed build: checking…/);
 assert.match(installer,/__aariaPwaUpdateReloadBound/);
 assert.match(installer,/location\.reload\(\)/);
@@ -44,12 +56,14 @@ assert.match(newWorker,/AARIA_ACTIVATE_UPDATE/,'Restart App activates a waiting 
 assert.match(fs.readFileSync(path.join(root,'pwa-update.js'),'utf8'),/busy=true;check\.disabled=true;setStatus\('Checking…',true\);log\('update',\{state:'checking',result:'started'\}\);try\{if\(!root\.navigator\.onLine\)/,'the check is serialized before asynchronous multi-tab coordination');
 
 let servedWorker=oldWorker;
-let serveNewShell=false;
+let serveNewShell=false,failShellAsset=false,failedShellAssetRequests=0;
+let futureShellHtml=null,futureUpdaterSource=null;
 let versionCheckRequests=0,versionCheckStatus=200,versionCheckWorker=null;
 const contentTypes={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.json':'application/json'};
 const server=http.createServer((req,res)=>{
   const requestUrl=new URL(req.url,'http://localhost');
   const pathname=decodeURIComponent(requestUrl.pathname);
+  if(failShellAsset&&pathname==='/assets/v2.1-ui/disco-star-3d.png'){failedShellAssetRequests++;res.writeHead(503,{'content-type':'text/plain'});res.end('simulated interrupted shell asset');return}
   if(pathname==='/sw.js'){
     const isVersionCheck=requestUrl.searchParams.has('version-check');
     if(isVersionCheck)versionCheckRequests++;
@@ -58,6 +72,12 @@ const server=http.createServer((req,res)=>{
   }
   if((pathname==='/'||pathname==='/index.html')&&!serveNewShell){
     res.writeHead(200,{'content-type':contentTypes['.html']});res.end(oldShell);return;
+  }
+  if((pathname==='/'||pathname==='/index.html')&&futureShellHtml){
+    res.writeHead(200,{'content-type':contentTypes['.html']});res.end(futureShellHtml);return;
+  }
+  if(pathname==='/pwa-update.js'&&futureUpdaterSource){
+    res.writeHead(200,{'content-type':contentTypes['.js']});res.end(futureUpdaterSource);return;
   }
 
   const file=pathname==='/'?path.join(root,'index.html'):path.resolve(root,'.'+pathname);
@@ -99,9 +119,27 @@ const server=http.createServer((req,res)=>{
     assert.ok(before.controller,'previous worker controls the fixture before upgrade');
     assert.ok(before.caches.includes('aaria-piano-v1.20.2'),'previous production shell cache is installed');
 
-    await page.evaluate(()=>{window.__oldServiceWorker=navigator.serviceWorker.controller});
+    await page.evaluate(()=>{window.__oldServiceWorker=navigator.serviceWorker.controller;window.__failedInstallStates=[]});
+    await page.evaluate(async()=>{
+      const registration=await navigator.serviceWorker.getRegistration('./');
+      registration.addEventListener('updatefound',()=>{
+        const candidate=registration.installing;
+        candidate?.addEventListener('statechange',()=>window.__failedInstallStates.push(candidate.state));
+      });
+    });
     serveNewShell=true;
     servedWorker=newWorker;
+    failShellAsset=true;
+    await page.evaluate(async()=>{const registration=await navigator.serviceWorker.getRegistration('./');await registration.update()});
+    await page.waitForFunction(()=>window.__failedInstallStates.includes('redundant'),null,{timeout:30000});
+    assert.ok(failedShellAssetRequests>=3,'an interrupted shell asset exhausts the worker’s bounded fetch retries');
+    const afterInterruptedInstall=await page.evaluate(async()=>({controllerRetained:navigator.serviceWorker.controller===window.__oldServiceWorker,activeRetained:(await navigator.serviceWorker.getRegistration('./'))?.active===window.__oldServiceWorker,waiting:!!(await navigator.serviceWorker.getRegistration('./'))?.waiting,caches:await caches.keys()}));
+    assert.equal(afterInterruptedInstall.controllerRetained,true,'failed update installation leaves the old worker controlling the app');
+    assert.equal(afterInterruptedInstall.activeRetained,true,'failed update installation leaves the old worker active');
+    assert.equal(afterInterruptedInstall.waiting,false,'a partial update is never offered for activation');
+    assert.ok(afterInterruptedInstall.caches.includes('aaria-piano-v1.20.2'),'failed update keeps the prior complete app-shell cache');
+    assert.ok(!afterInterruptedInstall.caches.includes(shellName),'failed update removes the incomplete new app-shell cache');
+    failShellAsset=false;
     await page.evaluate(async()=>{
       const registration=await navigator.serviceWorker.getRegistration('./');
       await registration.update();
@@ -219,10 +257,10 @@ const server=http.createServer((req,res)=>{
       const verified=await (await caches.open('aaria-piano-r2-install-v1')).match('./models/verified-fixture.onnx');
       const shell=await caches.open(shellName);
       const script=await shell.match('./song-import.js?v=aaria-piano-r2.5');
-      const updater=await shell.match('./pwa-update.js?v=aaria-pwa-update-1.2');
+      const updater=await shell.match('./pwa-update.js?v=aaria-pwa-update-1.3');
       const libraryScript=await shell.match('./my-songs.js?v=aaria-piano-r2.6');
-      const v21Script=await shell.match('./v2.1-ui.js?v=aaria-piano-v2.1.13');
-      const v21Style=await shell.match('./v2.1-ui.css?v=aaria-piano-v2.1.13');
+      const v21Script=await shell.match('./v2.1-ui.js?v=aaria-piano-v2.1.14');
+      const v21Style=await shell.match('./v2.1-ui.css?v=aaria-piano-v2.1.14');
       const styles=await shell.match('./piano-hero-v2.css?v=aaria-piano-v1.14.0');
       const html=await shell.match('./index.html');
       return {
@@ -246,11 +284,21 @@ const server=http.createServer((req,res)=>{
     assert.match(result.html,/id="songPickerButton"/,'updated song selector HTML is cached');assert.ok(!result.html.includes('release2InstallGate'),'updated shell no longer has the startup gate');
     assert.match(result.v21Script,/id="v21Zoom"/,'fixed toolbar Zoom control is created by the updated app shell');
     assert.match(result.html,/id="appBuildInfo"[^>]*>Installed build: checking…/,'Settings resolves the installed build from its worker');
-    assert.match(result.html,/Speed/,'updated playback label is available');assert.match(result.html,/v2\.1-ui\.js\?v=aaria-piano-v2\.1\.13/,'unified controls script is in the updated shell');assert.match(result.v21Script,/id="v21Play"/,'unified Play Along control is in the V2.1 script');assert.match(result.v21Script,/id="v21Sound"/,'Sound preference control is in the V2.1 script');assert.match(result.html,/note-impact-style/,'note impact key glow styling is in the updated shell');assert.match(result.html,/spawnNoteExplosion/,'note impact implementation is in the updated shell');assert.match(result.html,/NOTE_FX_DURATION\*1000/,'note flash uses millisecond timing in the updated shell');
+    assert.match(result.html,/Speed/,'updated playback label is available');assert.ok(result.html.includes(v21ScriptUrl),'unified controls script is in the updated shell');assert.match(result.v21Script,/id="v21Play"/,'unified Play Along control is in the V2.1 script');assert.match(result.v21Script,/id="v21Sound"/,'Sound preference control is in the V2.1 script');assert.match(result.html,/note-impact-style/,'note impact key glow styling is in the updated shell');assert.match(result.html,/spawnNoteExplosion/,'note impact implementation is in the updated shell');assert.match(result.html,/NOTE_FX_DURATION\*1000/,'note flash uses millisecond timing in the updated shell');
     console.log('PWA update-and-reopen passed: prior v1.19.0 shell and warning/gate were replaced; current Piano Hero opened without OMR setup; localStorage/IndexedDB songs, favorites and verified OMR cache remained intact.');
 
-    const futureWorker=newWorker.replace(`const CACHE='${shellName}'`,`const CACHE='${nextShellName}'`);
+    // A future release must advance the page, updater, UI URLs, and worker together.
+    // Changing only CACHE creates an impossible deployment and correctly makes the updater refuse verification.
+    const futureUiScriptUrl=`./v2.1-ui.js?v=${nextShellName}`;
+    const futureUiStyleUrl=`./v2.1-ui.css?v=${nextShellName}`;
+    const newShellHtml=index.replaceAll(v21ScriptUrl,futureUiScriptUrl).replaceAll(v21StyleUrl,futureUiStyleUrl);
+    const newUpdaterSource=updaterSource.replace(`const APP_BUILD='${shellName}'`,`const APP_BUILD='${nextShellName}'`);
+    const futureWorker=newWorker.replaceAll(shellName,nextShellName);
     assert.notEqual(futureWorker,newWorker,'future worker fixture advances the authoritative build identifier');
+    assert.ok(newShellHtml.includes(futureUiScriptUrl)&&newShellHtml.includes(futureUiStyleUrl),'future HTML references UI assets matching its build');
+    assert.ok(newUpdaterSource.includes(`const APP_BUILD='${nextShellName}'`),'future updater declares the new build');
+    assert.ok(futureWorker.includes(futureUiScriptUrl)&&futureWorker.includes(futureUiStyleUrl),'future worker precaches the matching UI assets');
+    futureShellHtml=newShellHtml;futureUpdaterSource=newUpdaterSource;
     versionCheckWorker=futureWorker;servedWorker=futureWorker;
     await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();

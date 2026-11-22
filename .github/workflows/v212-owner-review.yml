@@ -8,6 +8,7 @@ on:
       - my-songs.js
       - v2.1-ui.js
       - v2.1-ui.css
+      - assets/v2.1-ui/**
       - tests/v212-acceptance.cjs
       - .github/workflows/v212-owner-review.yml
       - docs/V2.1.12-make-music-song-settings.md
@@ -38,16 +39,34 @@ jobs:
         run: node tests/v212-acceptance.cjs
       - name: Verify downloadable review archive
         run: |
-          test -s AARIA_V2_1_12_MAKE_MUSIC_SONG_SETTINGS_OWNER_REVIEW.zip
-          unzip -t AARIA_V2_1_12_MAKE_MUSIC_SONG_SETTINGS_OWNER_REVIEW.zip
-          unzip -Z1 AARIA_V2_1_12_MAKE_MUSIC_SONG_SETTINGS_OWNER_REVIEW.zip | grep -q 'TEST_RESULTS.md'
-          unzip -Z1 AARIA_V2_1_12_MAKE_MUSIC_SONG_SETTINGS_OWNER_REVIEW.zip | grep -q 'recordings/make-music-song-settings-interaction.webm'
-          unzip -Z1 AARIA_V2_1_12_MAKE_MUSIC_SONG_SETTINGS_OWNER_REVIEW.zip | grep -q 'screenshots/11-five-action-wheel-desktop.png'
+          test -s AARIA_V2_1_14_OWNER_REVIEW.zip
+          unzip -t AARIA_V2_1_14_OWNER_REVIEW.zip
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'TEST_RESULTS.md'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'recordings/make-music-song-settings-interaction.webm'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/11-five-action-wheel-desktop.png'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/initial-collapsed.png'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/magic-star-390x844-expanded.png'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'recordings/six-option-interaction-recording.webm'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/00-expanded-wheel.png'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/01-measure-result.png'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/02-loop-result.png'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/03-jump-result.png'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/04-practice-result.png'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/05-song-settings-result.png'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/06-center-collapsed.png'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/06-center-expanded.png'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/visual-reference-comparison.png'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'geometry-report.json'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'interaction-results.md'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'MAGIC_STAR_HIT_MAP.md'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'ASSET_TRACEABILITY.md'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'PRODUCTION_DIAGNOSIS.md'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'BEFORE_AFTER.md'
       - name: Upload exact-head owner review ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: AARIA_V2_1_12_OWNER_REVIEW_${{ github.event.pull_request.head.sha }}
-          path: AARIA_V2_1_12_MAKE_MUSIC_SONG_SETTINGS_OWNER_REVIEW.zip
+          name: AARIA_V2_1_14_OWNER_REVIEW_${{ github.event.pull_request.head.sha }}
+          path: AARIA_V2_1_14_OWNER_REVIEW.zip
           retention-days: 30
           if-no-files-found: error
 
@@ -96,7 +115,7 @@ jobs:
       - name: Download exact-head V2.1.12 feature evidence
         uses: actions/download-artifact@v4
         with:
-          name: AARIA_V2_1_12_OWNER_REVIEW_${{ github.event.pull_request.head.sha }}
+          name: AARIA_V2_1_14_OWNER_REVIEW_${{ github.event.pull_request.head.sha }}
           path: evidence-source/v212
           run-id: ${{ github.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -127,7 +146,7 @@ jobs:
           SOURCE_RUNS: ${{ steps.source-runs.outputs.runs }}
         run: |
           mkdir -p evidence/v2.1.12 evidence/release2/neon-label-impact evidence/release2/crystal-renderer evidence/release2/magical-note-explosion
-          unzip -q evidence-source/v212/AARIA_V2_1_12_MAKE_MUSIC_SONG_SETTINGS_OWNER_REVIEW.zip -d evidence/v2.1.12
+          unzip -q evidence-source/v212/AARIA_V2_1_14_OWNER_REVIEW.zip -d evidence/v2.1.12
           unzip -q evidence-source/r2-neon/neon-label-impact-evidence.zip -d evidence/release2/neon-label-impact
           unzip -q evidence-source/r2-crystal/piano-hero-crystal-visual-evidence.zip -d evidence/release2/crystal-renderer
           cp -R evidence-source/note-explosion/. evidence/release2/magical-note-explosion/
