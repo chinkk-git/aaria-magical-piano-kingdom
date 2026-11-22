@@ -1,4 +1,4 @@
-/* Royal Concert Hall preview: standalone, geometry-read-only scenery mask. */
+/* Royal Concert Hall scenery preference and geometry-read-only scenery mask. */
 (()=>{
  'use strict';
  const KEY='aaria-royal-hall-preview-v1',ROOT=document.documentElement,scene=document.getElementById('royalHallScenery'),choice=document.getElementById('royalHallTheme'),canvas=document.getElementById('rain'),keys=document.getElementById('keys');
@@ -7,8 +7,10 @@
  // The shared note projection uses this same horizon scale and still lands on
  // live key centers at y=landingY.
  const HORIZON_SCALE=1-(1-.28)*.8,SAFE_GAP=24;
- let enabled=false,scheduled=false;
- try{enabled=localStorage.getItem(KEY)==='royal'}catch{}
+ let enabled=true,scheduled=false;
+ // A saved choice is intentional. Missing or unrecognized values mean the
+ // approved Royal Concert Hall default; do not write defaults back on launch.
+ try{enabled=localStorage.getItem(KEY)!=='off'}catch{enabled=true}
  function setEnabled(value,save=true){enabled=!!value;ROOT.dataset.royalHall=enabled?'on':'off';scene.hidden=!enabled;choice.value=enabled?'royal':'off';if(save){try{localStorage.setItem(KEY,enabled?'royal':'off')}catch{}}if(enabled)measureAndMask()}
  function measureAndMask(){scheduled=false;if(!enabled)return;
   const rect=canvas.getBoundingClientRect(),elements=[...keys.querySelectorAll('[data-pitch]')];

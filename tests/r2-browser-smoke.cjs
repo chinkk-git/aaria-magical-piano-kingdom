@@ -122,7 +122,7 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   await page.setViewportSize({width:844,height:390});await page.locator('#v21Play').click();await page.waitForFunction(()=>mode==='stop'&&pausedMode==='follow');assert.match(await page.locator('#v21Play').textContent(),/Resume/,'playback can be paused before switching layouts');
   await page.evaluate(()=>applyPianoLayout('hero',false));
   assert.equal(await page.locator('#primaryModeButton').textContent(), '▶ Play Along','Hero remains the only exposed gameplay layout');
-  assert.equal(await page.locator('#pianoLayoutSelect option[value=classic]').evaluate(el=>el.disabled),true,'Classic is unavailable while its stored preference is preserved');
+  assert.equal(await page.locator('#pianoLayoutSelect option[value=classic]').count(),0,'Classic is absent from the internal layout selector');assert.equal(await page.locator('#pianoLayoutSelect').evaluate(el=>el.hidden),true,'The single-layout internal selector is hidden');assert.equal(await page.evaluate(()=>AariaV21Engine.state().layout),'hero','legacy Classic preferences cannot restore Classic');
   assert.equal(await page.evaluate(()=>AariaV21Engine.state().layout),'hero','the shared engine remains in Hero after the temporary layout gate');
   await page.locator('#v21Play').click();await page.waitForFunction(()=>mode==='follow',{timeout:5000});
   await page.setViewportSize({width:844,height:390});await page.screenshot({path:`/tmp/piano-playback-state-844x390-${process.env.APP_SOURCE_SHA||'local'}.png`});

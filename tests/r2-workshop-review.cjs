@@ -35,7 +35,7 @@ const workerSlowStub=`const xml=${JSON.stringify(xml)};self.onmessage=({data})=>
   await page.goto(`http://127.0.0.1:${server.address().port}/index.html`,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.PianoKingdomLibrary?.saveSong);
   assert.equal(await page.locator('#release2InstallGate').count(),0,'first launch has no mandatory OMR gate');
-  await page.evaluate(()=>window.AariaOpenSettings());await page.locator('#pianoLayoutSelect').selectOption('hero');await page.locator('.keyboard-settings-details summary').click();await page.locator('#saveKeyboardSetup').click();
+  await page.evaluate(()=>window.AariaOpenSettings());await page.locator('.keyboard-settings-details summary').click();await page.locator('#saveKeyboardSetup').click();
   await page.evaluate(()=>window.AariaPianoNavigation.openSongs());await page.locator('#makeNewSong').click();
   const wizard=page.locator('#localSongWizard');await wizard.waitFor({state:'visible'});
   await page.locator('#scoreSongTitle').fill('Automatic Workshop Song');
