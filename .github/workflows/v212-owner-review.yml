@@ -44,7 +44,7 @@ jobs:
           unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'TEST_RESULTS.md'
           unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'recordings/make-music-song-settings-interaction.webm'
           unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/11-five-action-wheel-desktop.png'
-          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/magic-star-390x844-collapsed.png'
+          unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/initial-collapsed.png'
           unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/magic-star-390x844-expanded.png'
           unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'recordings/six-option-interaction-recording.webm'
           unzip -Z1 AARIA_V2_1_14_OWNER_REVIEW.zip | grep -q 'screenshots/00-expanded-wheel.png'
