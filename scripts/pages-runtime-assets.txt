@@ -16,6 +16,8 @@ v2.1-ui.js
 v2.1-ui.css
 royal-hall.css
 royal-hall.js
+royal-vault.css
+royal-vault.js
 manifest.webmanifest
 icon-192.png
 icon-512.png

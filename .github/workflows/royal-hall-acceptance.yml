@@ -1,4 +1,4 @@
-name: Royal Concert Hall preview acceptance
+name: Royal Concert Hall vaulted preview acceptance
 
 on:
   pull_request:
@@ -6,14 +6,20 @@ on:
     paths:
       - 'index.html'
       - 'piano-hero-v2.css'
+      - 'piano-geometry.js'
       - 'v2.1-ui.css'
       - 'v2.1-ui.js'
       - 'pwa-update.js'
       - 'sw.js'
       - 'royal-hall.css'
       - 'royal-hall.js'
+      - 'royal-vault.css'
+      - 'royal-vault.js'
       - 'assets/royal-hall/**'
-      - 'tests/royal-hall-acceptance.cjs'
+      - 'scripts/pages-runtime-assets.txt'
+      - 'scripts/verify_pages_package.py'
+      - 'tests/pages-package.test.py'
+      - 'tests/royal-vault-acceptance.cjs'
       - '.github/workflows/royal-hall-acceptance.yml'
   workflow_dispatch:
 
@@ -23,11 +29,12 @@ permissions:
 jobs:
   visual-and-regression:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -40,21 +47,27 @@ jobs:
           node tests/piano-geometry.test.js
           node tests/pwa-update.test.js
           node tests/shared-song-library.test.cjs
-      - name: Capture five-viewport before/after evidence
+          python3 tests/pages-package.test.py
+          node --check royal-hall.js
+          node --check royal-vault.js
+          node --check tests/royal-vault-acceptance.cjs
+      - name: Capture 14-device-size current versus vaulted evidence
         env:
           APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: node tests/royal-hall-acceptance.cjs
+        run: |
+          node tests/royal-vault-acceptance.cjs
+          zip -qr AARIA_ROYAL_VAULT_ROOF_PR62_EVIDENCE.zip evidence/royal-vault
       - name: Verify review package
         if: always()
         run: |
-          test -s AARIA_ROYAL_CONCERT_HALL_OWNER_REVIEW.zip
-          unzip -t AARIA_ROYAL_CONCERT_HALL_OWNER_REVIEW.zip
-          unzip -Z1 AARIA_ROYAL_CONCERT_HALL_OWNER_REVIEW.zip
-      - name: Upload owner review evidence
+          test -s AARIA_ROYAL_VAULT_ROOF_PR62_EVIDENCE.zip
+          unzip -t AARIA_ROYAL_VAULT_ROOF_PR62_EVIDENCE.zip
+          unzip -Z1 AARIA_ROYAL_VAULT_ROOF_PR62_EVIDENCE.zip
+      - name: Upload vaulted roof owner review evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: AARIA_ROYAL_CONCERT_HALL_OWNER_REVIEW
-          path: AARIA_ROYAL_CONCERT_HALL_OWNER_REVIEW.zip
+          name: AARIA_ROYAL_VAULT_ROOF_PR62_EVIDENCE
+          path: AARIA_ROYAL_VAULT_ROOF_PR62_EVIDENCE.zip
           retention-days: 30
           if-no-files-found: error

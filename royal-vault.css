@@ -1,0 +1,11 @@
+/* Optional vaulted theatre roof. It is painted behind the note canvas. */
+.royal-vault-roof[hidden]{display:none!important}
+.royal-vault-roof{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none;user-select:none;contain:layout paint;}
+.royal-vault-layer{position:absolute;display:block;width:0;height:0;max-width:none;max-height:none;object-fit:fill;pointer-events:none;user-select:none;-webkit-user-drag:none;}
+.royal-vault-panels{opacity:.72}
+.royal-vault-atmosphere{opacity:.58}
+.royal-vault-ribs{filter:drop-shadow(0 1px 3px #10051eaa)}
+.royal-vault-cornice{opacity:.84}
+.royal-vault-lights{opacity:.64}
+html[data-royal-hall="on"] .royal-vault-roof{display:block}
+@media(prefers-reduced-motion:reduce){.royal-vault-roof,.royal-vault-roof *{animation:none!important;transition:none!important}}
