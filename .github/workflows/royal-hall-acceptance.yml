@@ -58,13 +58,13 @@ jobs:
           node tests/royal-vault-acceptance.cjs
           zip -qr AARIA_ROYAL_VAULT_ROOF_PR62_EVIDENCE.zip evidence/royal-vault
       - name: Verify review package
-        if: always()
+        if: success()
         run: |
           test -s AARIA_ROYAL_VAULT_ROOF_PR62_EVIDENCE.zip
           unzip -t AARIA_ROYAL_VAULT_ROOF_PR62_EVIDENCE.zip
           unzip -Z1 AARIA_ROYAL_VAULT_ROOF_PR62_EVIDENCE.zip
       - name: Upload vaulted roof owner review evidence
-        if: always()
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: AARIA_ROYAL_VAULT_ROOF_PR62_EVIDENCE
