@@ -3,11 +3,11 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {chromium}=require('playwright'),{PNG}=require('pngjs');
 const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'evidence/royal-hall-final');
 const targets=[
- ['Motorola Edge 50 Fusion','portrait',412,915,.90],['Motorola Edge 50 Fusion','landscape',915,412,.82],
- ['iPhone 13/14','portrait',390,844,.90],['iPhone 13/14','landscape',844,390,.82],
- ['iPhone 15/16','portrait',393,852,.90],['iPhone 15/16','landscape',852,393,.82],
- ['iPad 10th gen','portrait',820,1180,.85],['iPad 10th gen','landscape',1180,820,.80],
- ['iPad Pro 11-inch','portrait',834,1194,.85],['iPad Pro 11-inch','landscape',1194,834,.80]
+ ['Motorola Edge 50 Fusion','portrait',412,915,90],['Motorola Edge 50 Fusion','landscape',915,412,82],
+ ['iPhone 13/14','portrait',390,844,90],['iPhone 13/14','landscape',844,390,82],
+ ['iPhone 15/16','portrait',393,852,90],['iPhone 15/16','landscape',852,393,82],
+ ['iPad 10th gen','portrait',820,1180,85],['iPad 10th gen','landscape',1180,820,80],
+ ['iPad Pro 11-inch','portrait',834,1194,85],['iPad Pro 11-inch','landscape',1194,834,80]
 ];
 let browser,server;
 function serve(){return http.createServer((req,res)=>{const u=new URL(req.url,'http://localhost'),route=decodeURIComponent(u.pathname),file=path.resolve(ROOT,'.'+(route==='/'?'/index.html':route));if(!file.startsWith(ROOT+path.sep)){res.writeHead(403).end();return}fs.readFile(file,(e,b)=>{if(e){res.writeHead(404).end('not found');return}res.writeHead(200,{'Content-Type':({'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.json':'application/json'}[path.extname(file)]||'application/octet-stream'),'Cache-Control':'no-store'}).end(b)})})}
