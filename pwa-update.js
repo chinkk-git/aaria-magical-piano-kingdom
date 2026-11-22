@@ -1,6 +1,6 @@
 (function(root){
   'use strict';
-  const APP_BUILD='aaria-piano-v2.1.14';
+  const APP_BUILD='aaria-piano-v2.1.15';
   const EXPECTED_KEY='aaria-pwa-expected-build';
   const CHANNEL_NAME='aaria-pwa-update-check';
   function parseBuildId(source){const match=String(source||'').match(/const\s+CACHE\s*=\s*['"]([^'"]+)['"]/);return match?.[1]||null}
