@@ -1,0 +1,67 @@
+name: Royal Concert Hall vaulted preview acceptance
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'piano-hero-v2.css'
+      - 'piano-geometry.js'
+      - 'v2.1-ui.css'
+      - 'v2.1-ui.js'
+      - 'pwa-update.js'
+      - 'sw.js'
+      - 'royal-hall.css'
+      - 'royal-hall.js'
+      - 'royal-vault.css'
+      - 'royal-vault.js'
+      - 'assets/royal-hall/**'
+      - 'scripts/pages-runtime-assets.txt'
+      - 'scripts/verify_pages_package.py'
+      - 'tests/pages-package.test.py'
+      - 'tests/royal-vault-acceptance.cjs'
+      - 'tests/royal-hall-final-comparison.cjs'
+      - '.github/workflows/royal-hall-acceptance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visual-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install pinned browser and pixel decoder
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Run focused visual-geometry and syntax checks
+        run: |
+          node --check royal-hall.js
+          node --check royal-vault.js
+          node --check tests/royal-hall-final-comparison.cjs
+      - name: Capture focused Royal Hall comparisons and geometry
+        run: |
+          node tests/royal-hall-final-comparison.cjs
+      - name: Verify review package
+        if: success()
+        run: |
+          test -s AARIA_ROYAL_HALL_PR62_RESTORATION_SCREENSHOTS.zip
+          unzip -t AARIA_ROYAL_HALL_PR62_RESTORATION_SCREENSHOTS.zip
+          unzip -Z1 AARIA_ROYAL_HALL_PR62_RESTORATION_SCREENSHOTS.zip
+      - name: Upload focused owner review evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AARIA_ROYAL_HALL_PR62_RESTORATION_SCREENSHOTS
+          path: AARIA_ROYAL_HALL_PR62_RESTORATION_SCREENSHOTS.zip
+          retention-days: 30
+          if-no-files-found: error
