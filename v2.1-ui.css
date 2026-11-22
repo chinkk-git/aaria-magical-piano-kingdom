@@ -499,3 +499,4 @@ main[data-piano-layout="hero"] .compact-title .song-picker-chevron{flex:0 0 auto
 .v21-star .v21-star-art-source-crop,.v21-star[aria-expanded="true"] .v21-star-art-source-crop{filter:none!important}
 .v21-star:focus-visible{outline:3px solid #fff1a5!important;outline-offset:3px!important}
 .v21-star-assembly .v21-star{overflow:hidden!important}
+.v21-star .v21-star-art-source-crop{clip-path:ellipse(24.5% 16% at 25% 49.8%)!important}
