@@ -490,3 +490,11 @@ main[data-piano-layout="hero"] .compact-title .song-picker-chevron{flex:0 0 auto
 /* Keep the supplied left-side wheel mirror active while expanded; preserve artwork and SVG hit-map alignment. */
 .v21-star-assembly[data-side="left"] .v21-wheel[data-state="open"] .v21-wheel-visual{transform:scaleX(-1)!important}
 .v21-make-music{touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}.v21-make-music[data-dragging="true"]{cursor:grabbing;animation-play-state:paused}.v21-make-music-art{pointer-events:none;-webkit-user-drag:none}
+
+/* Match the collapsed trigger to the approved center in the six-piece Magic Star art.
+   The existing center-star.png is used as a source crop, so open and closed artwork share pixels. */
+.v21-star{overflow:hidden!important;border:0!important;padding:0!important;background:transparent!important;box-shadow:none!important}
+.v21-star-art-source-crop{position:absolute!important;left:0!important;top:-105%!important;width:205%!important;height:310%!important;max-width:none!important;max-height:none!important;object-fit:fill!important;pointer-events:none!important;filter:none!important}
+.v21-star[aria-expanded="true"]{filter:none!important;box-shadow:none!important}
+.v21-star .v21-star-art-source-crop,.v21-star[aria-expanded="true"] .v21-star-art-source-crop{filter:none!important}
+.v21-star:focus-visible{outline:3px solid #fff1a5!important;outline-offset:3px!important}
