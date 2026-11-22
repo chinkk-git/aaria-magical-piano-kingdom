@@ -15,7 +15,7 @@ function sideBySide(leftBuf,rightBuf){const l=PNG.sync.read(leftBuf),r=PNG.sync.
 (async()=>{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
  const opts={headless:true,args:['--no-sandbox']};if(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH)opts.executablePath=process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
- const browser=await chromium.launch(opts),context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true,reducedMotion:'reduce'}),page=await context.newPage(),errors=[];
+ const browser=await chromium.launch(opts),context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true,reducedMotion:'reduce'}),page=await context.newPage(),errors=[];page.setDefaultTimeout(15000);page.setDefaultNavigationTimeout(15000);
  page.on('pageerror',e=>errors.push(String(e)));page.on('requestfailed',r=>{if(!r.url().startsWith('data:'))errors.push('request failed '+r.url()+' '+r.failure()?.errorText)});
  await page.addInitScript(()=>{localStorage.setItem('aaria-piano-layout-v1','hero');localStorage.removeItem('aaria-royal-hall-preview-v1')});
  await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
@@ -23,7 +23,7 @@ function sideBySide(leftBuf,rightBuf){const l=PNG.sync.read(leftBuf),r=PNG.sync.
  await page.evaluate(()=>{const gate=document.querySelector('#release2InstallGate'),app=document.querySelector('#pianoApp');if(gate)gate.hidden=true;if(app){app.inert=false;app.removeAttribute('aria-hidden')}document.body.classList.remove('r2-installing')});
  const defaultPreview=await page.evaluate(()=>({value:document.querySelector('#royalHallTheme')?.value,hidden:document.querySelector('#royalHallScenery')?.hidden,rootValue:document.documentElement.dataset.royalHall}));if(defaultPreview.value!=='off'||!defaultPreview.hidden)throw Error('Royal Hall must be off and hidden by default: '+JSON.stringify(defaultPreview));const before={},after={},diffs=[],pixelResults=[],screens=[];
  for(let i=0;i<viewports.length;i++){
-  const[label,w,h]=viewports[i];await page.setViewportSize({width:w,height:h});await wait(220);
+  const[label,w,h]=viewports[i];console.log('Starting viewport '+label+' ('+w+'x'+h+')');await page.setViewportSize({width:w,height:h});await wait(220);
   await page.evaluate(()=>{window.AariaV21Engine?.setMeasure(1);window.AariaV21Engine?.setSpeed(75)});await page.waitForTimeout(50);
   const bGeom=await geometry(page);if(bGeom.viewport.scrollWidth>w)throw Error(label+' has horizontal overflow before theme');
   const baseline=await page.screenshot({path:path.join(shotDir,`${String(i+1).padStart(2,'0')}-original-${w}x${h}.png`)});before[`${w}x${h}`]=bGeom;
@@ -32,9 +32,9 @@ function sideBySide(leftBuf,rightBuf){const l=PNG.sync.read(leftBuf),r=PNG.sync.
   const royal=await page.screenshot({path:path.join(shotDir,`${String(i+1).padStart(2,'0')}-royal-hall-${w}x${h}.png`)});after[`${w}x${h}`]=aGeom;
   const d=compareGeometry(bGeom,aGeom);diffs.push({viewport:`${w}x${h}`,changes:d.filter(x=>x.delta!==0||x.countBefore!==x.countAfter)});
   if(diffs.at(-1).changes.length)throw Error(label+' protected DOM geometry changed: '+JSON.stringify(diffs.at(-1).changes.slice(0,8)));
-  const px=pixelMasks(baseline,royal,bGeom);delete px.diffPng;pixelResults.push({viewport:`${w}x${h}`,...px});
+  const px=pixelMasks(baseline,royal,bGeom),diffPng=px.diffPng;delete px.diffPng;pixelResults.push({viewport:`${w}x${h}`,...px});
   if(px.runwayDiff||px.keysDiff)throw Error(label+' changed pixels inside the projected highway or keyboard mask: '+JSON.stringify(px));
-  const full=pixelMasks(baseline,royal,bGeom);fs.writeFileSync(path.join(shotDir,`${String(i+1).padStart(2,'0')}-pixel-diff-${w}x${h}.png`),full.diffPng);fs.writeFileSync(path.join(shotDir,`${String(i+1).padStart(2,'0')}-comparison-${w}x${h}.png`),sideBySide(baseline,royal));
+  fs.writeFileSync(path.join(shotDir,`${String(i+1).padStart(2,'0')}-pixel-diff-${w}x${h}.png`),diffPng);fs.writeFileSync(path.join(shotDir,`${String(i+1).padStart(2,'0')}-comparison-${w}x${h}.png`),sideBySide(baseline,royal));console.log('Captured and verified viewport '+w+'x'+h);
   screens.push({viewport:`${w}x${h}`,original:`${String(i+1).padStart(2,'0')}-original-${w}x${h}.png`,royal:`${String(i+1).padStart(2,'0')}-royal-hall-${w}x${h}.png`,comparison:`${String(i+1).padStart(2,'0')}-comparison-${w}x${h}.png`,pixelDiff:`${String(i+1).padStart(2,'0')}-pixel-diff-${w}x${h}.png`});
   await page.locator('.v21-overflow-trigger').click();await page.locator('#v21SettingsAction').click();await page.locator('#royalHallTheme').selectOption('off');await page.locator('#closeKeyboardSetup').click();await wait(150);
  }
