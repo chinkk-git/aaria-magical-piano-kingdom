@@ -486,3 +486,6 @@ main[data-piano-layout="hero"] .compact-title .song-picker-chevron{flex:0 0 auto
 .v21-star-assembly .v21-wheel[data-state="open"] + .v21-star{pointer-events:none!important;clip-path:circle(50%)!important;border-color:transparent!important;background:transparent!important;box-shadow:none!important;filter:none!important}
 .v21-star-assembly .v21-wheel[data-state="open"] + .v21-star .v21-star-art{opacity:0!important;visibility:hidden!important}
 @media(prefers-reduced-motion:reduce){.v21-star-assembly .v21-wheel-visual{transition-duration:1ms!important}}
+
+/* Keep the supplied left-side wheel mirror active while expanded; preserve artwork and SVG hit-map alignment. */
+.v21-star-assembly[data-side="left"] .v21-wheel[data-state="open"] .v21-wheel-visual{transform:scaleX(-1)!important}
