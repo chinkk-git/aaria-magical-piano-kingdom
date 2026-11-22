@@ -21,6 +21,12 @@ on:
       - 'tests/package-final-release-evidence.py'
       - '.github/workflows/final-release-evidence.yml'
 
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tests/package-final-release-evidence.py'
+      - '.github/workflows/final-release-evidence.yml'
+
 permissions:
   contents: read
 
