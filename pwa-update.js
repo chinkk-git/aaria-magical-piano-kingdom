@@ -82,7 +82,7 @@
       setPhase('checking',announce?'Checking for updates…':'',{available:state.available,working:announce});
       log('update',{state:'checking',result:'started',automatic:!announce});
       try{
-        if(!root.navigator?.onLine){setPhase('offline','Connect to the internet to check for updates.',{available:state.available});return state}
+        if(!root.navigator?.onLine){setPhase('offline','Offline. Connect to the internet to check for updates.',{available:state.available});return state}
         if(!root.navigator?.serviceWorker){setPhase('failed','This browser cannot check app updates.',{available:state.available});return state}
         const reg=await root.navigator.serviceWorker.getRegistration('./');
         if(!reg){setPhase('failed','The app update service is not ready. Reopen the app online and try again.',{available:state.available});return state}
@@ -153,7 +153,7 @@
       if(!reg)throw new Error('The app update service is not ready. Reopen the app online and try again.');
       registration=reg;
       const [current,published]=await Promise.all([installedBuild(reg),latestBuild()]);
-      if(!root.navigator.onLine){setPhase('offline','Connect to the internet to update the app.',{available:true});return}
+      if(!root.navigator.onLine){setPhase('offline','Offline. Connect to the internet to update the app.',{available:true});return}
       if(!current)throw new Error('The installed app build could not be confirmed. Reopen the app online and try again.');
       if(compareBuilds(published,current)<=0){waiting=reg.waiting||null;await refreshUpdate({announce:true});return}
       state.available=true;state.publishedBuild=published;state.installedBuild=current;

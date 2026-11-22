@@ -209,7 +209,7 @@ const server=http.createServer((req,res)=>{
     await context.setOffline(true);
     await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
-    await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent==='Offline');
+    await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.startsWith('Offline'));
     await context.setOffline(false);
 
     const beforeMultiTab=versionCheckRequests;
