@@ -7,11 +7,11 @@ module.exports=async function runMagicStarAcceptance({browser,server,out}){
  const keys=['measure','loop','jump','practice','songSettings','centerStar'];
  const markers={measure:'#v21Measure',loop:'#v21Timeline',jump:'#v21JumpNow',practice:'#v21PracticePart',songSettings:'#v21SongName'};
  const spots={
-  measure:{center:[1000,220],leftBoundary:[844,210],rightBoundary:[1080,220],outerRim:[1095,82],nearCenter:[930,375]},
-  loop:{center:[710,290],leftBoundary:[635,280],rightBoundary:[835,355],outerRim:[625,305],nearCenter:[900,420]},
-  jump:{center:[680,500],leftBoundary:[558,480],rightBoundary:[840,510],outerRim:[535,500],nearCenter:[875,510]},
-  practice:{center:[700,720],leftBoundary:[590,700],rightBoundary:[850,625],outerRim:[600,770],nearCenter:[925,625]},
-  songSettings:{center:[990,820],leftBoundary:[820,800],rightBoundary:[1090,800],outerRim:[1090,925],nearCenter:[945,650]}
+  measure:{center:[1000,220],leftBoundary:[844,210],rightBoundary:[1080,220],outerRim:[1095,82],nearCenter:[930,352]},
+  loop:{center:[710,290],leftBoundary:[635,280],rightBoundary:[835,355],outerRim:[625,305],nearCenter:[890,415]},
+  jump:{center:[680,500],leftBoundary:[558,480],rightBoundary:[840,510],outerRim:[535,500],nearCenter:[864,570]},
+  practice:{center:[700,720],leftBoundary:[590,700],rightBoundary:[850,625],outerRim:[600,770],nearCenter:[866,610]},
+  songSettings:{center:[990,820],leftBoundary:[820,800],rightBoundary:[1090,800],outerRim:[1090,925],nearCenter:[944,605]}
  };
  const viewports=[
   {width:390,height:844,name:'android-portrait',side:'right'},
