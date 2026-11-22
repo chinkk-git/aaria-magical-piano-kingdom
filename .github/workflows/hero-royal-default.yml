@@ -1,0 +1,60 @@
+name: Hero + Royal Concert Hall default
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'v2.1-ui.js'
+      - 'v2.1-ui.css'
+      - 'royal-hall.js'
+      - 'royal-hall.css'
+      - 'royal-vault.js'
+      - 'royal-vault.css'
+      - 'assets/royal-hall/**'
+      - 'tests/hero-royal-default.cjs'
+      - 'tests/v21-ui.cjs'
+      - 'tests/r2-browser-smoke.cjs'
+      - 'tests/r2-visual-gallery.cjs'
+      - '.github/workflows/hero-royal-default.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  default-launch-and-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Check JavaScript syntax
+        run: |
+          node --check royal-hall.js
+          node --check v2.1-ui.js
+          node --check tests/hero-royal-default.cjs
+          node --check tests/v21-ui.cjs
+      - name: Verify Hero + Royal Hall startup and capture screenshots
+        env:
+          APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node tests/hero-royal-default.cjs
+      - name: Verify screenshot ZIP
+        run: |
+          test -s AARIA_HERO_ROYAL_DEFAULT_REVIEW.zip
+          python3 -c 'import sys,zipfile; z=zipfile.ZipFile(sys.argv[1]); bad=z.testzip(); assert bad is None, bad; print("ZIP integrity PASS:", len(z.namelist()), "files")' AARIA_HERO_ROYAL_DEFAULT_REVIEW.zip
+      - name: Upload screenshot evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: AARIA_HERO_ROYAL_DEFAULT_REVIEW
+          path: AARIA_HERO_ROYAL_DEFAULT_REVIEW.zip
+          retention-days: 30
+          if-no-files-found: error
