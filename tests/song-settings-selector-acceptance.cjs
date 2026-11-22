@@ -77,6 +77,28 @@ async function openSettings(page) {
   await page.locator('#v21SongSettingsForm').waitFor({ state: 'visible' });
 }
 
+async function getSongLevelGeometry(page) {
+  return page.locator('.v21-level-button').evaluateAll(buttons => buttons.map(button => {
+    const rect = button.getBoundingClientRect();
+    return { label: button.textContent.trim(), disabled: button.disabled, x: rect.x, y: rect.y, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height, clientWidth: button.clientWidth, scrollWidth: button.scrollWidth, fontSize: getComputedStyle(button).fontSize };
+  }));
+}
+
+function assertSongLevelGeometry(buttons, viewport, context) {
+  assert.deepEqual(buttons.map(button => button.label), ['Original', 'Basic', 'Medium', 'Advanced']);
+  for (const button of buttons) {
+    assert.ok(button.width >= 40 && button.height >= 40, `${context} ${button.label} touch target is too small: ${JSON.stringify(button)}`);
+    assert.ok(button.scrollWidth <= button.clientWidth + 1, `${context} ${button.label} label overflows its button: ${JSON.stringify(button)}`);
+    assert.ok(button.x >= 0 && button.y >= 0 && button.right <= viewport.width && button.bottom <= viewport.height, `${context} ${button.label} exceeds viewport: ${JSON.stringify(button)}`);
+  }
+  for (let i = 0; i < buttons.length; i++) for (let j = i + 1; j < buttons.length; j++) {
+    const a = buttons[i], b = buttons[j];
+    const overlapX = Math.min(a.right, b.right) - Math.max(a.x, b.x);
+    const overlapY = Math.min(a.bottom, b.bottom) - Math.max(a.y, b.y);
+    assert.ok(overlapX <= 0 || overlapY <= 0, `${context} ${a.label} overlaps ${b.label}`);
+  }
+}
+
 async function openSongMenu(page) {
   await page.locator('#songPickerButton').click();
   await page.locator('#v21SongMenu').waitFor({ state: 'visible' });
@@ -177,8 +199,10 @@ async function main() {
     assert.equal(modal.ariaModal, 'true');
     assert.equal(modal.mainInert, true, 'background app is inert while modal is open');
     assert.equal(modal.starInert, true, 'Magic Star cannot receive background input while modal is open');
+    const portraitLevels = await getSongLevelGeometry(page);
+    assertSongLevelGeometry(portraitLevels, { width: 390, height: 844 }, 'Android portrait');
     assert.ok(modal.rect.x >= 0 && modal.rect.y >= 0 && modal.rect.right <= 390 && modal.rect.bottom <= 844);
-    geometry.push({ viewport: 'android-portrait', width: 390, height: 844, modal });
+    geometry.push({ viewport: 'android-portrait', width: 390, height: 844, modal, levelButtons: portraitLevels });
     await page.locator('#v21CancelSongSettings').click();
     await page.waitForFunction(() => document.querySelector('.v21-practice-panel')?.hidden);
     assert.equal(await page.locator('.v21-make-music').evaluate(el => getComputedStyle(el).visibility), 'visible');
@@ -289,9 +313,11 @@ async function main() {
         return { x: r.x, y: r.y, right: r.right, bottom: r.bottom, width: r.width, height: r.height, bg: style.backgroundColor, scrollHeight: el.scrollHeight, clientHeight: el.clientHeight };
       });
       assert.equal(bounds.bg, 'rgb(36, 16, 63)');
+      const levelButtons = await getSongLevelGeometry(page);
+      assertSongLevelGeometry(levelButtons, viewport, `${viewport.name} Song Settings`);
       assert.ok(bounds.x >= 0 && bounds.y >= 0 && bounds.right <= viewport.width && bounds.bottom <= viewport.height,
         `${viewport.name} settings exceeds viewport ${viewport.width}x${viewport.height}: ${JSON.stringify(bounds)}`);
-      geometry.push({ viewport: viewport.name, width: viewport.width, height: viewport.height, menu: menuRect, modal: bounds });
+      geometry.push({ viewport: viewport.name, width: viewport.width, height: viewport.height, menu: menuRect, modal: bounds, levelButtons });
       await page.screenshot({ path: path.join(output, `screenshots/viewport-${viewport.name}-song-settings.png`) });
       await page.keyboard.press('Escape');
       await page.waitForFunction(() => document.querySelector('.v21-practice-panel')?.hidden);
