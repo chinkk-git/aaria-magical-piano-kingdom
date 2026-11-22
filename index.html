@@ -170,7 +170,7 @@ const PianoHeroVisual=(()=>{
   bloom.addColorStop(.25,'#d982ff32');bloom.addColorStop(1,'#9c50ff00');
   ctx.fillStyle=bloom;ctx.fillRect(0,0,w,Math.min(hitY,hitY*.72));
   // In Royal Hall, put the existing starburst directly behind the disco ball.
-  const sx=w*.5,starR=clamp(w*.018,5,12),orbRadius=clamp(w*.026,7,12),royalPreview=document.documentElement.dataset.royalHall==='on'&&document.querySelector('main')?.dataset.pianoLayout==='hero',legacyOrbY=Math.max(orbRadius*1.95,hitY*.025),legacyStarY=legacyOrbY+orbRadius+starR*2.5+6,royalStarY=royalPreview?(()=>{const playfield=document.getElementById('heroPlayfield')?.getBoundingClientRect(),canvasRect=document.getElementById('rain')?.getBoundingClientRect();return playfield&&canvasRect?clamp(playfield.height*.43-(canvasRect.top-playfield.top),orbRadius*2.3,hitY-orbRadius*2.3):legacyStarY})():legacyStarY,orbY=royalPreview?royalStarY:legacyOrbY,sy=royalPreview?royalStarY:legacyStarY,burstR=Math.min(w*.23,hitY*.42);
+  const sx=w*.5,starR=clamp(w*.018,5,12),orbRadius=clamp(w*.026,7,12),royalPreview=document.documentElement.dataset.royalHall==='on'&&document.querySelector('main')?.dataset.pianoLayout==='hero',legacyOrbY=Math.max(orbRadius*1.95,hitY*.025),legacyStarY=legacyOrbY+orbRadius+starR*2.5+6,royalStarY=royalPreview?clamp(hitY*(w>hitY?0.2:0.28),orbRadius*2.5,hitY-orbRadius*2.5):legacyStarY,orbY=royalPreview?royalStarY:legacyOrbY,sy=royalPreview?royalStarY:legacyStarY,burstR=Math.min(w*.23,hitY*.42);
   const burst=ctx.createRadialGradient(sx,sy,0,sx,sy,burstR);
   burst.addColorStop(0,'#fffef1'+Math.round(240*pulse).toString(16).padStart(2,'0'));
   burst.addColorStop(.035,'#fff3c9'+Math.round(185*pulse).toString(16).padStart(2,'0'));
@@ -301,7 +301,7 @@ function draw(now=performance.now()){
  const vanishX=w*.5,hitY=hero?geo.landingY:h-8;g.clearRect(0,0,w,h);
  const current=barStart(bar)+beat,activePitches=new Set(),reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  if(hero){
-  const bg=g.createLinearGradient(0,0,0,h);bg.addColorStop(0,'#1a0a3be8');bg.addColorStop(.56,'#291050d8');bg.addColorStop(1,'#100827f2');g.fillStyle=bg;g.fillRect(0,0,w,h);
+  const royalPreview=document.documentElement.dataset.royalHall==='on'&&document.querySelector('main')?.dataset.pianoLayout==='hero',bg=g.createLinearGradient(0,0,0,h);if(royalPreview){bg.addColorStop(0,'#1a0a3b88');bg.addColorStop(.56,'#291050ad');bg.addColorStop(1,'#100827e8')}else{bg.addColorStop(0,'#1a0a3be8');bg.addColorStop(.56,'#291050d8');bg.addColorStop(1,'#100827f2')}g.fillStyle=bg;g.fillRect(0,0,w,h);
   for(const [pitch,key] of geo.keys){if(key.isBlack)continue;const top=window.PianoGeometry.projectLane(geo,pitch,0,vanishX,.28),bottom=window.PianoGeometry.projectLane(geo,pitch,hitY,vanishX,.28);if(!top||!bottom)continue;g.beginPath();g.moveTo(top.left,0);g.lineTo(top.right,0);g.lineTo(bottom.right,hitY);g.lineTo(bottom.left,hitY);g.closePath();g.fillStyle=pitch%12===0?'#fff4d50d':'#d8b6ff0a';g.fill();g.strokeStyle='#efd9ff25';g.lineWidth=1;g.stroke()}
   for(const edge of [0,w]){const top=vanishX+(edge-vanishX)*.28;g.beginPath();g.moveTo(top,0);g.lineTo(edge,hitY);g.strokeStyle='#f0c66c88';g.lineWidth=2;g.shadowColor='#d992ff';g.shadowBlur=9;g.stroke();g.shadowBlur=0}
   for(let i=1;i<=5;i++){const depth=i/6,y=hitY*depth,left=vanishX+(0-vanishX)*(.28+.72*depth),right=vanishX+(w-vanishX)*(.28+.72*depth);g.beginPath();g.moveTo(left,y);g.lineTo(right,y);g.strokeStyle='#ffe8b51a';g.lineWidth=1;g.stroke()}

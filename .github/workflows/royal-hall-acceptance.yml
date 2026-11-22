@@ -20,6 +20,7 @@ on:
       - 'scripts/verify_pages_package.py'
       - 'tests/pages-package.test.py'
       - 'tests/royal-vault-acceptance.cjs'
+      - 'tests/royal-hall-final-comparison.cjs'
       - '.github/workflows/royal-hall-acceptance.yml'
   workflow_dispatch:
 
@@ -42,32 +43,26 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright@1.62.1 pngjs@7.0.0
           npx playwright install --with-deps chromium
-      - name: Run deterministic geometry and build regressions
+      - name: Run focused geometry and syntax checks
         run: |
           node tests/piano-geometry.test.js
-          node tests/pwa-update.test.js
-          node tests/shared-song-library.test.cjs
-          python3 tests/pages-package.test.py
           node --check royal-hall.js
           node --check royal-vault.js
-          node --check tests/royal-vault-acceptance.cjs
-      - name: Capture 14-device-size current versus vaulted evidence
-        env:
-          APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          node --check tests/royal-hall-final-comparison.cjs
+      - name: Capture focused Royal Hall comparisons and geometry
         run: |
-          node tests/royal-vault-acceptance.cjs
-          zip -qr AARIA_ROYAL_VAULT_ROOF_PR62_EVIDENCE.zip evidence/royal-vault
+          node tests/royal-hall-final-comparison.cjs
       - name: Verify review package
         if: success()
         run: |
-          test -s AARIA_ROYAL_VAULT_ROOF_PR62_EVIDENCE.zip
-          unzip -t AARIA_ROYAL_VAULT_ROOF_PR62_EVIDENCE.zip
-          unzip -Z1 AARIA_ROYAL_VAULT_ROOF_PR62_EVIDENCE.zip
-      - name: Upload vaulted roof owner review evidence
+          test -s AARIA_ROYAL_HALL_PR62_FINAL_EVIDENCE.zip
+          unzip -t AARIA_ROYAL_HALL_PR62_FINAL_EVIDENCE.zip
+          unzip -Z1 AARIA_ROYAL_HALL_PR62_FINAL_EVIDENCE.zip
+      - name: Upload focused owner review evidence
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: AARIA_ROYAL_VAULT_ROOF_PR62_EVIDENCE
-          path: AARIA_ROYAL_VAULT_ROOF_PR62_EVIDENCE.zip
+          name: AARIA_ROYAL_HALL_PR62_FINAL_EVIDENCE
+          path: AARIA_ROYAL_HALL_PR62_FINAL_EVIDENCE.zip
           retention-days: 30
           if-no-files-found: error

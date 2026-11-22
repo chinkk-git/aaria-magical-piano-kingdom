@@ -3,6 +3,8 @@
 .royal-hall-scenery[hidden]{display:none!important}
 .royal-hall-scenery{position:absolute;inset:0;z-index:3;overflow:hidden;pointer-events:none;user-select:none;contain:layout paint;}
 .royal-hall-side{position:absolute;inset:0;overflow:hidden;pointer-events:none;clip-path:polygon(0 0,0 0,0 0);}
+.royal-hall-side::before{content:"";position:absolute;inset:0;opacity:0;pointer-events:none;background:linear-gradient(90deg,#270c2d8c 0%,#59173e55 35%,#ffd36b00 100%);}
+.royal-hall-right::before{transform:scaleX(-1)}
 .royal-hall-valance{position:absolute;top:0;width:36%;height:auto;max-height:clamp(38px,17%,112px);object-fit:contain;object-position:top;filter:drop-shadow(0 3px 8px #17041dcc);}
 .royal-hall-left .royal-hall-valance{left:0;object-position:left top}
 .royal-hall-right .royal-hall-valance{right:0;object-position:right top}
@@ -13,5 +15,10 @@
 .royal-hall-left .royal-hall-sconce{left:4px}
 .royal-hall-right .royal-hall-sconce{right:4px}
 html[data-royal-hall="on"] .royal-hall-scenery{display:block}
+/* Reversible Option B: deepen the side framing in the safe outer wedges.
+   The note canvas, lane projection and keyboard remain unchanged. */
+html[data-royal-hall="on"][data-royal-hall-frame="b"] .royal-hall-side::before{opacity:1}
+html[data-royal-hall="on"][data-royal-hall-frame="b"] .royal-hall-arch{max-width:72%;filter:drop-shadow(0 0 15px #e7a84266)}
+html[data-royal-hall="on"][data-royal-hall-frame="b"] .royal-hall-valance{max-height:clamp(46px,20%,132px)}
 @media(max-width:520px){.royal-hall-sconce{display:none}}
 @media(prefers-reduced-motion:reduce){.royal-hall-scenery,.royal-hall-scenery *{animation:none!important;transition:none!important}}
