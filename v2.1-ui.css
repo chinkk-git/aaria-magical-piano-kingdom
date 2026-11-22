@@ -491,6 +491,10 @@ main[data-piano-layout="hero"] .compact-title .song-picker-chevron{flex:0 0 auto
 .v21-star-assembly[data-side="left"] .v21-wheel[data-state="open"] .v21-wheel-visual{transform:scaleX(-1)!important}
 .v21-make-music{touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}.v21-make-music[data-dragging="true"]{cursor:grabbing;animation-play-state:paused}.v21-make-music-art{pointer-events:none;-webkit-user-drag:none}
 
+/* Update availability is shown without changing the overflow button hit target. */
+.v21-overflow-trigger{position:relative}
+.v21-update-dot{position:absolute;top:3px;right:3px;width:9px;height:9px;border:2px solid #30164f;border-radius:50%;background:#ff5470;box-shadow:0 0 0 1px #ffe49a;pointer-events:none}
+.v21-update-dot[hidden]{display:none}
 /* Match the collapsed trigger to the approved center in the six-piece Magic Star art.
    The existing center-star.png is used as a source crop, so open and closed artwork share pixels. */
 .v21-star{overflow:hidden!important;border:0!important;padding:0!important;background:transparent!important;box-shadow:none!important}

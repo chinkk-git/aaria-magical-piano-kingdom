@@ -53,7 +53,7 @@ assert.ok(index.includes('Check for Updates'),'Settings includes an update actio
 assert.ok(newWorker.includes("/^aaria-piano-v\\d+\\.\\d+\\.\\d+$/.test(key)"),'activation only removes prior versioned app-shell caches');
 assert.match(newWorker,/if\(!self\.registration\.active\)await self\.skipWaiting\(\)/,'updates wait for the user while first install still controls the app');
 assert.match(newWorker,/AARIA_ACTIVATE_UPDATE/,'Restart App activates a waiting update');
-assert.match(fs.readFileSync(path.join(root,'pwa-update.js'),'utf8'),/busy=true;check\.disabled=true;setStatus\('Checking…',true\);log\('update',\{state:'checking',result:'started'\}\);try\{if\(!root\.navigator\.onLine\)/,'the check is serialized before asynchronous multi-tab coordination');
+assert.match(fs.readFileSync(path.join(root,'pwa-update.js'),'utf8'),/async function allTabsSafe\(\)/,'the updater retains its shared local and cross-tab safety check');
 
 let servedWorker=oldWorker;
 let serveNewShell=false,failShellAsset=false,failedShellAssetRequests=0;
@@ -209,13 +209,14 @@ const server=http.createServer((req,res)=>{
     await context.setOffline(true);
     await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
-    await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent==='Offline');
+    await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.startsWith('Offline'));
     await context.setOffline(false);
 
-    const beforeMultiTab=versionCheckRequests;
     const busyTab=await context.newPage();
     await busyTab.goto(origin+'/',{waitUntil:'domcontentloaded'});
     await busyTab.waitForFunction(()=>!!window.AariaPwaUpdateCore);
+    await busyTab.waitForFunction(()=>window.AariaPwaUpdateState&&window.AariaPwaUpdateState.getState().phase!=='checking',{timeout:10000});
+    const beforeMultiTab=versionCheckRequests;
     await busyTab.evaluate(()=>{window.AariaPianoPlaybackIsBusy=()=>true});
     await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
@@ -259,8 +260,8 @@ const server=http.createServer((req,res)=>{
       const script=await shell.match('./song-import.js?v=aaria-piano-r2.5');
       const updater=await shell.match('./pwa-update.js?v=aaria-pwa-update-1.3');
       const libraryScript=await shell.match('./my-songs.js?v=aaria-piano-r2.6');
-      const v21Script=await shell.match('./v2.1-ui.js?v=aaria-piano-v2.1.16');
-      const v21Style=await shell.match('./v2.1-ui.css?v=aaria-piano-v2.1.16');
+      const v21Script=await shell.match('./v2.1-ui.js?v=aaria-piano-v2.1.17');
+      const v21Style=await shell.match('./v2.1-ui.css?v=aaria-piano-v2.1.17');
       const styles=await shell.match('./piano-hero-v2.css?v=aaria-piano-v1.14.0');
       const html=await shell.match('./index.html');
       return {
@@ -301,6 +302,8 @@ const server=http.createServer((req,res)=>{
     futureShellHtml=newShellHtml;futureUpdaterSource=newUpdaterSource;
     versionCheckWorker=futureWorker;servedWorker=futureWorker;
     await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
+    await reopened.locator('#checkAppUpdate').click();
+    await reopened.waitForFunction(()=>document.querySelector('#checkAppUpdate')?.textContent==='Update Version',{timeout:10000});
     await reopened.locator('#checkAppUpdate').click();
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.includes('Update ready. Restart App when you are ready.'),null,{timeout:15000});
     assert.equal(await reopened.locator('#restartAppUpdate').isVisible(),true,'a waiting worker exposes the explicit Restart App action');
