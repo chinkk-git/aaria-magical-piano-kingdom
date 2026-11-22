@@ -169,25 +169,28 @@ const PianoHeroVisual=(()=>{
   bloom.addColorStop(.09,'#ffd56b'+Math.round(57*pulse).toString(16).padStart(2,'0'));
   bloom.addColorStop(.25,'#d982ff32');bloom.addColorStop(1,'#9c50ff00');
   ctx.fillStyle=bloom;ctx.fillRect(0,0,w,Math.min(hitY,hitY*.72));
-  // In Royal Hall, put the existing starburst directly behind the disco ball.
-  const sx=w*.5,starR=clamp(w*.018,5,12),orbRadius=clamp(w*.026,7,12),royalPreview=document.documentElement.dataset.royalHall==='on'&&document.querySelector('main')?.dataset.pianoLayout==='hero',legacyOrbY=Math.max(orbRadius*1.95,hitY*.025),legacyStarY=legacyOrbY+orbRadius+starR*2.5+6,royalStarY=royalPreview?clamp(hitY*(w>hitY?0.2:0.28),orbRadius*2.5,hitY-orbRadius*2.5):legacyStarY,orbY=royalPreview?royalStarY:legacyOrbY,sy=royalPreview?royalStarY:legacyStarY,burstR=Math.min(w*.23,hitY*.42);
-  const burst=ctx.createRadialGradient(sx,sy,0,sx,sy,burstR);
-  burst.addColorStop(0,'#fffef1'+Math.round(240*pulse).toString(16).padStart(2,'0'));
-  burst.addColorStop(.035,'#fff3c9'+Math.round(185*pulse).toString(16).padStart(2,'0'));
-  burst.addColorStop(.16,'#ffd66b55');burst.addColorStop(1,'#f3adff00');
-  ctx.fillStyle=burst;ctx.fillRect(sx-burstR,sy-burstR,burstR*2,burstR*2);
-  for(let i=0;i<11;i++){
-   const spread=(i-5)/5,reach=hitY*(.24+((i*7)%4)*.045),tipX=sx+spread*Math.min(w*.31,reach*.66);
-   ctx.beginPath();ctx.moveTo(sx+(i%2?1:-1),sy+3);
-   ctx.quadraticCurveTo(sx+spread*reach*.18,sy+reach*.34,tipX,sy+reach);
-   ctx.strokeStyle=i%3===0?'#fff0b95c':'#f1d9ff35';ctx.lineWidth=i%3===0?2.1:1.1;
-   ctx.shadowColor=i%3===0?'#ffdf86':'#d992ff';ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;
+  const sx=w*.5,starR=clamp(w*.018,5,12),orbRadius=clamp(w*.026,7,12),royalPreview=document.documentElement.dataset.royalHall==='on'&&document.querySelector('main')?.dataset.pianoLayout==='hero',legacyOrbY=Math.max(orbRadius*1.95,hitY*.025),legacyStarY=legacyOrbY+orbRadius+starR*2.5+6,burstR=Math.min(w*.23,hitY*.42);
+  // Keep the original star/disco composition outside Royal Hall. The Royal
+  // Hall stage is intentionally left clear at its central vanishing point.
+  if(!royalPreview){
+   const burst=ctx.createRadialGradient(sx,legacyStarY,0,sx,legacyStarY,burstR);
+   burst.addColorStop(0,'#fffef1'+Math.round(240*pulse).toString(16).padStart(2,'0'));
+   burst.addColorStop(.035,'#fff3c9'+Math.round(185*pulse).toString(16).padStart(2,'0'));
+   burst.addColorStop(.16,'#ffd66b55');burst.addColorStop(1,'#f3adff00');
+   ctx.fillStyle=burst;ctx.fillRect(sx-burstR,legacyStarY-burstR,burstR*2,burstR*2);
+   for(let i=0;i<11;i++){
+    const spread=(i-5)/5,reach=hitY*(.24+((i*7)%4)*.045),tipX=sx+spread*Math.min(w*.31,reach*.66);
+    ctx.beginPath();ctx.moveTo(sx+(i%2?1:-1),legacyStarY+3);
+    ctx.quadraticCurveTo(sx+spread*reach*.18,legacyStarY+reach*.34,tipX,legacyStarY+reach);
+    ctx.strokeStyle=i%3===0?'#fff0b95c':'#f1d9ff35';ctx.lineWidth=i%3===0?2.1:1.1;
+    ctx.shadowColor=i%3===0?'#ffdf86':'#d992ff';ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;
+   }
+   ctx.save();ctx.translate(sx,legacyStarY);ctx.scale(pulse,pulse);
+   const star=ctx.createRadialGradient(0,0,0,0,0,starR*2.8);
+   star.addColorStop(0,'#ffffff');star.addColorStop(.22,'#fff6d2');star.addColorStop(1,'#ffcf6500');
+   ctx.fillStyle=star;ctx.beginPath();ctx.arc(0,0,starR*2.8,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle='#fffdf0';ctx.beginPath();ctx.moveTo(0,-starR*2.2);ctx.quadraticCurveTo(starR*.18,-starR*.2,starR*2,0);ctx.quadraticCurveTo(starR*.18,starR*.2,0,starR*2.2);ctx.quadraticCurveTo(-starR*.18,starR*.2,-starR*2,0);ctx.quadraticCurveTo(-starR*.18,-starR*.2,0,-starR*2.2);ctx.fill();ctx.restore();
   }
-  ctx.save();ctx.translate(sx,sy);ctx.scale(pulse,pulse);
-  const star=ctx.createRadialGradient(0,0,0,0,0,starR*2.8);
-  star.addColorStop(0,'#ffffff');star.addColorStop(.22,'#fff6d2');star.addColorStop(1,'#ffcf6500');
-  ctx.fillStyle=star;ctx.beginPath();ctx.arc(0,0,starR*2.8,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#fffdf0';ctx.beginPath();ctx.moveTo(0,-starR*2.2);ctx.quadraticCurveTo(starR*.18,-starR*.2,starR*2,0);ctx.quadraticCurveTo(starR*.18,starR*.2,0,starR*2.2);ctx.quadraticCurveTo(-starR*.18,starR*.2,-starR*2,0);ctx.quadraticCurveTo(-starR*.18,-starR*.2,0,-starR*2.2);ctx.fill();ctx.restore();
   // Gold-lit perspective edges retain a bright core and soft reflected falloff.
   for(const side of [-1,1]){
    const edge=side<0?0:w,vanish=sx+(edge-sx)*.28;
@@ -247,8 +250,7 @@ const PianoHeroVisual=(()=>{
    ctx.globalAlpha=pulseStar*.72;ctx.fillStyle=s.gold?'#ffe39a':'#f0c2ff';ctx.beginPath();ctx.moveTo(x,y-r*2.3);ctx.quadraticCurveTo(x-r*.25,y-r*.2,x-r*2.2,y);ctx.quadraticCurveTo(x-r*.25,y+r*.2,x,y+r*2.3);ctx.quadraticCurveTo(x+r*.25,y+r*.2,x+r*2.2,y);ctx.quadraticCurveTo(x+r*.25,y-r*.2,x,y-r*2.3);ctx.fill();
   }
   ctx.globalAlpha=1;
-  const paused=mode==='stop'&&!!pausedMode,rotateOrb=!reduced&&document.visibilityState!=='hidden'&&!paused;
-  discoBall(ctx,sx,orbY,orbRadius,rotateOrb?now*.000075:0,pulse);
+  if(!royalPreview){const paused=mode==='stop'&&!!pausedMode,rotateOrb=!reduced&&document.visibilityState!=='hidden'&&!paused;discoBall(ctx,sx,legacyOrbY,orbRadius,rotateOrb?now*.000075:0,pulse)}
  }
  function discoBall(ctx,x,y,r,angle,pulse){
   ctx.save();ctx.globalAlpha=.78;
