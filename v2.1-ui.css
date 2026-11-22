@@ -489,3 +489,4 @@ main[data-piano-layout="hero"] .compact-title .song-picker-chevron{flex:0 0 auto
 
 /* Keep the supplied left-side wheel mirror active while expanded; preserve artwork and SVG hit-map alignment. */
 .v21-star-assembly[data-side="left"] .v21-wheel[data-state="open"] .v21-wheel-visual{transform:scaleX(-1)!important}
+.v21-make-music{touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}.v21-make-music[data-dragging="true"]{cursor:grabbing;animation-play-state:paused}.v21-make-music-art{pointer-events:none;-webkit-user-drag:none}
