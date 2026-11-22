@@ -12,6 +12,10 @@ const viewports = [
   { name: 'android-landscape', width: 844, height: 390 },
   { name: 'ipad-portrait', width: 834, height: 1194 },
   { name: 'ipad-landscape', width: 1194, height: 834 },
+  { name: 'motorola-edge-50-fusion-portrait-representative', width: 393, height: 873 },
+  { name: 'motorola-edge-50-fusion-landscape-representative', width: 873, height: 393 },
+  { name: 'iphone-portrait-representative', width: 390, height: 844 },
+  { name: 'iphone-landscape-representative', width: 844, height: 390 },
   { name: 'desktop', width: 1440, height: 900 },
 ];
 const mime = {
@@ -243,9 +247,12 @@ async function main() {
     assert.equal(await page.locator('[data-level="medium"]').getAttribute('aria-pressed'), 'true');
     await page.screenshot({ path: path.join(output, 'screenshots/07-medium-reflected-in-song-settings-390x844.png') });
     await page.locator('[data-level="advanced"]').click();
+    assert.equal(await page.locator('[data-level="advanced"]').getAttribute('aria-pressed'), 'true');
+    await page.screenshot({ path: path.join(output, 'screenshots/advanced-selected-before-cancel-390x844.png') });
     await page.locator('#v21CancelSongSettings').click();
     await openSettings(page);
     assert.equal(await page.locator('[data-level="medium"]').getAttribute('aria-pressed'), 'true', 'Cancel discards uncommitted level change');
+    await page.screenshot({ path: path.join(output, 'screenshots/cancel-restored-medium-390x844.png') });
     await page.locator('[data-level="basic"]').click();
     await page.locator('#v21SaveSongSettings').click();
     await page.waitForFunction(id => window.PianoKingdomLibrary.getSelectedArrangement(id) === 'basic', threeId);
@@ -333,7 +340,12 @@ async function main() {
     assert.deepEqual(pageErrors, [], 'no browser JavaScript errors');
 
     fs.writeFileSync(path.join(output, 'geometry-report.json'), JSON.stringify({ viewports: geometry, androidPortraitMenu: menu, browserEmulated: true, physicalDeviceValidation: false }, null, 2));
-    fs.writeFileSync(path.join(output, 'interaction-results.md'), `# Song Settings and integrated selector results\n\nAll captures are Chromium browser emulation on this PR source. No physical Android or iPad device was tested.\n\n| Check | Result | Evidence |\n|---|---|---|\n| Original transparent panel defect | Captured from base source | 00-original-song-settings-defect-390x844.png |\n| Opaque settings panel; Make Music hidden beneath it | PASS | 02-song-settings-opaque-no-overlap-390x844.png |\n| Make Music restored after close | PASS | 03-make-music-restored-after-close-390x844.png |\n| Three available levels; exact Medium arrangement | PASS | 04-song-dropdown-expanded-390x844.png; 06-medium-selected-390x844.png |\n| One available level; unavailable levels omitted | PASS | 09-one-level-song-390x844.png |\n| Legacy song without level metadata; keyboard activation | PASS | automated assertion |\n| Settings synchronization and Cancel semantics | PASS | 07-medium-reflected-in-song-settings-390x844.png; 08-song-settings-saved-basic-390x844.png |\n| Save local name and protect shared name | PASS | automated assertion and local-song data check |\n| Per-song level persistence after reload | PASS | 10-medium-persisted-after-reload-390x844.png |\n| Responsive geometry and keyboard dismissal | PASS | viewport screenshots and geometry-report.json |\n| Offline loaded-song selection | PASS | automated assertion |\n| Keyboard selection | PASS | automated assertion |\n| Arrangement/catalogue musical data unchanged | PASS | deep comparison of source events and metadata |\n\n## Measurements\n\n\`${JSON.stringify(geometry, null, 2)}\`\n`);
+    fs.writeFileSync(path.join(output, 'interaction-results.md'), `# Song Settings and integrated selector results\n\nAll captures are Chromium browser emulation on this PR source. No physical Motorola Edge 50 Fusion, iPhone, or iPad was tested.\n\n| Check | Result | Evidence |\n|---|---|---|\n| Original transparent panel defect | Captured from base source | 00-original-song-settings-defect-390x844.png |\n| Opaque settings panel; Make Music hidden beneath it | PASS | 02-song-settings-opaque-no-overlap-390x844.png |\n| Make Music restored after close | PASS | 03-make-music-restored-after-close-390x844.png |\n| Three available levels; exact Medium arrangement | PASS | 04-song-dropdown-expanded-390x844.png; 06-medium-selected-390x844.png |\n| One available level; unavailable levels omitted | PASS | 09-one-level-song-390x844.png |\n| Legacy song without level metadata; keyboard activation | PASS | automated assertion |\n| Advanced selection draft | PASS | advanced-selected-before-cancel-390x844.png |
+| Cancel discards Advanced and restores saved Medium | PASS | cancel-restored-medium-390x844.png |
+| Basic selection saved | PASS | 08-song-settings-saved-basic-390x844.png |\n| Save local name and protect shared name | PASS | automated assertion and local-song data check |\n| Per-song level persistence after reload | PASS | 10-medium-persisted-after-reload-390x844.png |\n| Motorola Edge 50 Fusion representative Android viewport | PASS | portrait 393x873 and landscape 873x393 screenshots; geometry-report.json |
+| iPhone representative viewport | PASS | portrait 390x844 and landscape 844x390 screenshots; geometry-report.json |
+| iPad representative viewport | PASS | portrait 834x1194 and landscape 1194x834 screenshots; geometry-report.json |
+| Responsive geometry and keyboard dismissal | PASS | viewport screenshots and geometry-report.json |\n| Offline loaded-song selection | PASS | automated assertion |\n| Keyboard selection | PASS | automated assertion |\n| Arrangement/catalogue musical data unchanged | PASS | deep comparison of source events and metadata |\n\n## Measurements\n\n\`${JSON.stringify(geometry, null, 2)}\`\n`);
     fs.writeFileSync(path.join(output, 'test-results.json'), JSON.stringify({ result: 'PASS', baseSha: process.env.BASE_SHA || null, headSha: process.env.APP_SOURCE_SHA || null, results, pageErrors, sourceCatalogueUnchanged: true, physicalDeviceValidation: false }, null, 2));
     await context.close();
     const video = await page.video()?.path();
