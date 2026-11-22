@@ -1,4 +1,5 @@
-/* Final scope: focused launch regression with one Android portrait screenshot. */\n'use strict';
+/* Final scope: focused launch regression with one Android portrait screenshot. */
+'use strict';
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const http=require('node:http');
