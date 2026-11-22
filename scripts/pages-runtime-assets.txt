@@ -28,3 +28,4 @@ assets/piano-hero-v2
 assets/v2.1-magic-wheel
 assets/v2.1-ui
 assets/royal-hall
+assets/social

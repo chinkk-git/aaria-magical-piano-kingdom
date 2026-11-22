@@ -23,6 +23,7 @@ for required in ("get('welcome')==='1'","Install App","Open in Browser","beforei
     assert required in html,f"missing welcome/install behavior: {required}"
 assert html.index('property="og:title"')<html.lower().index("</head>"),"metadata must be server-rendered"
 assert html.count('id="welcomeInstallApp"')==1 and html.count('id="welcomeOpenApp"')==1
+assert "assets/social" in (ROOT/"scripts/pages-runtime-assets.txt").read_text(encoding="utf-8").splitlines(), "sharing artwork missing from GitHub Pages runtime list"
 data=(ROOT/"assets/social/aaria-piano-share.jpg").read_bytes()
 assert data.startswith(bytes((255,216,255))),"sharing image must be JPEG"
 assert len(data)<=500_000,f"image too large: {len(data)} bytes"
