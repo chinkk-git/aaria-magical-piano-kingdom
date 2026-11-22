@@ -490,3 +490,31 @@ main[data-piano-layout="hero"] .compact-title .song-picker-chevron{flex:0 0 auto
 /* Keep the supplied left-side wheel mirror active while expanded; preserve artwork and SVG hit-map alignment. */
 .v21-star-assembly[data-side="left"] .v21-wheel[data-state="open"] .v21-wheel-visual{transform:scaleX(-1)!important}
 .v21-make-music{touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}.v21-make-music[data-dragging="true"]{cursor:grabbing;animation-play-state:paused}.v21-make-music-art{pointer-events:none;-webkit-user-drag:none}
+
+/* Song-and-level chooser; each row is generated from the actual local song schema. */
+.v21-song-menu{z-index:230;max-height:min(72dvh,520px);overscroll-behavior:contain;scrollbar-gutter:stable;container-type:inline-size;background:linear-gradient(145deg,#39165c,#24103f);color:#fff}
+.v21-song-choice-group{padding:7px 4px;border-bottom:1px solid #f3d68a55}
+.v21-song-choice-group:last-child{border-bottom:0}
+.v21-song-choice-versions{box-sizing:border-box;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;align-items:stretch;width:100%;min-width:0}
+.v21-song-choice-versions button{box-sizing:border-box;min-width:0;min-height:44px;margin:0;padding:8px 10px;border:1px solid #f3d68a88;border-radius:11px;background:#ffffff0c;color:#fff;font-size:12px;font-weight:800;text-align:center;white-space:nowrap;word-break:normal;overflow-wrap:normal}
+.v21-song-choice-versions .v21-song-choice-title{grid-column:1/-1;text-align:left;font-size:14px;line-height:1.25;color:#fff0c5;white-space:normal;word-break:normal;overflow-wrap:anywhere}
+.v21-song-choice-versions button[aria-selected="true"]{background:linear-gradient(#ffe99a,#eeb54e);color:#30114e;box-shadow:0 0 0 2px #fff5}
+.v21-song-choice-versions button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+@container (min-width:440px){.v21-song-choice-versions{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.v21-song-menu-error{margin:5px;padding:8px;border-radius:8px;background:#541738;color:#fff}
+.v21-settings-backdrop{position:fixed;inset:0;z-index:72;background:#080313bf;backdrop-filter:blur(1px)}
+.v21-settings-backdrop[hidden]{display:none}
+.v21-make-music.v21-under-song-settings{visibility:hidden;pointer-events:none}
+.v21-practice-panel[data-panel-kind="songSettings"]{box-sizing:border-box;isolation:isolate;z-index:73;max-height:var(--v21-panel-max,calc(100dvh - 24px));padding:14px;overflow:auto;overscroll-behavior:contain;background:#24103f;background-image:linear-gradient(155deg,#351652 0%,#24103f 32%,#2d124b 100%);color:#fff;box-shadow:inset 0 0 0 3px #f88affaa,inset 0 3px 0 #fff8,0 12px 34px #08031dcc,0 0 28px #c53dff55}
+.v21-practice-panel[data-panel-kind="songSettings"] .v21-panel-art{display:none}
+.v21-practice-panel[data-panel-kind="songSettings"]::before{z-index:0}
+.v21-practice-panel[data-panel-kind="songSettings"]>*:not(.v21-panel-art){position:relative;z-index:1}
+.v21-practice-panel[data-panel-kind="songSettings"] .v21-panel-head{background:#39165c;border:1px solid #ffdb7a;border-radius:12px;padding:5px 7px;color:#fff0ad;text-shadow:none}
+.v21-settings-level-options{display:grid;grid-column:1/-1;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.v21-practice-panel[data-panel-kind="songSettings"] .v21-settings-level-options>.v21-level-button{box-sizing:border-box;min-width:42px;width:100%;white-space:normal;overflow-wrap:anywhere;font:800 11px/1.1 system-ui}
+.v21-practice-panel[data-panel-kind="songSettings"] .v21-settings-current,.v21-practice-panel[data-panel-kind="songSettings"] .v21-settings-label,.v21-practice-panel[data-panel-kind="songSettings"] .v21-settings-note,.v21-practice-panel[data-panel-kind="songSettings"] .v21-settings-levels,.v21-practice-panel[data-panel-kind="songSettings"] .v21-status{background:#24103f;border-radius:8px;padding:5px 7px}
+.v21-practice-panel[data-panel-kind="songSettings"] .v21-settings-levels{border-color:#e5bb66}
+.v21-practice-panel[data-panel-kind="songSettings"] .v21-settings-levels p,.v21-practice-panel[data-panel-kind="songSettings"] .v21-settings-note{color:#f2e8ff}
+.v21-practice-panel[data-panel-kind="songSettings"] .v21-settings-name{background:#170b2b;border-color:#f0ce7b;color:#fff}
+.v21-practice-panel[data-panel-kind="songSettings"] .v21-settings-actions{padding:4px 0}
+.v21-practice-panel[data-panel-kind="songSettings"] button:focus-visible,.v21-practice-panel[data-panel-kind="songSettings"] input:focus-visible{outline:3px solid #fff;outline-offset:2px}
+@media(max-height:520px){.v21-practice-panel[data-panel-kind="songSettings"]{max-height:min(calc(100dvh - 20px),var(--v21-panel-max,calc(100dvh - 14px)));padding:9px}.v21-practice-panel[data-panel-kind="songSettings"] .v21-panel-head{margin-bottom:6px}.v21-settings-level-options{grid-template-columns:repeat(4,minmax(0,1fr))}}

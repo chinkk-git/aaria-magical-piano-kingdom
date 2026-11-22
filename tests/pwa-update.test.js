@@ -7,7 +7,7 @@ const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const worker=fs.readFileSync(path.join(root,'sw.js'),'utf8');
 const deploy=fs.readFileSync(path.join(root,'.github/workflows/piano-deploy.yml'),'utf8');
 assert.equal(parseBuildId(worker),APP_BUILD,'page updater and current service worker share the build id');
-assert.equal(APP_BUILD,'aaria-piano-v2.1.15','the corrected interface ships as a new release build');
+assert.equal(APP_BUILD,'aaria-piano-v2.1.16','the corrected interface ships as a new release build');
 const expectedUi=APP_BUILD;
 assert.ok(index.includes('v2.1-ui.js?v='+expectedUi),'production shell pins the V2.1 script to its release build');
 assert.ok(index.includes('v2.1-ui.css?v='+expectedUi),'production shell pins the V2.1 stylesheet to its release build');
