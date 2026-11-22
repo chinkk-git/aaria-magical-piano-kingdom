@@ -1,0 +1,68 @@
+name: Song Settings and level selector acceptance
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'my-songs.js'
+      - 'v2.1-ui.js'
+      - 'v2.1-ui.css'
+      - 'sw.js'
+      - 'index.html'
+      - 'pwa-update.js'
+      - 'tests/pwa-update.test.js'
+      - 'tests/song-settings-selector-acceptance.cjs'
+      - '.github/workflows/song-settings-selector-acceptance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install pinned Chromium test dependencies
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Prepare exact base source for before capture
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/song-settings-base" "$BASE_SHA"
+      - name: Run focused browser, storage, musical and responsive acceptance
+        env:
+          APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASELINE_DIR: ${{ runner.temp }}/song-settings-base
+          SONG_SETTINGS_ARTIFACT_DIR: ${{ runner.temp }}/song-settings-evidence
+        run: |
+          node --check my-songs.js
+          node --check v2.1-ui.js
+          node --check tests/song-settings-selector-acceptance.cjs
+          node tests/shared-song-library.test.cjs
+          node tests/pwa-update.test.js
+          node tests/r2-sw-update.cjs
+          node tests/song-settings-selector-acceptance.cjs
+          test -s AARIA_SONG_SETTINGS_SELECTOR_OWNER_REVIEW.zip
+          unzip -t AARIA_SONG_SETTINGS_SELECTOR_OWNER_REVIEW.zip
+      - name: Upload owner review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AARIA_SONG_SETTINGS_SELECTOR_OWNER_REVIEW
+          path: |
+            AARIA_SONG_SETTINGS_SELECTOR_OWNER_REVIEW.zip
+            ${{ runner.temp }}/song-settings-evidence/**
+          retention-days: 30
+          if-no-files-found: error
