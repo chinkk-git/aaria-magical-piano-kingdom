@@ -212,10 +212,11 @@ const server=http.createServer((req,res)=>{
     await reopened.waitForFunction(()=>document.querySelector('#appUpdateStatus')?.textContent.startsWith('Offline'));
     await context.setOffline(false);
 
-    const beforeMultiTab=versionCheckRequests;
     const busyTab=await context.newPage();
     await busyTab.goto(origin+'/',{waitUntil:'domcontentloaded'});
     await busyTab.waitForFunction(()=>!!window.AariaPwaUpdateCore);
+    await busyTab.waitForFunction(()=>window.AariaPwaUpdateState&&window.AariaPwaUpdateState.getState().phase!=='checking',{timeout:10000});
+    const beforeMultiTab=versionCheckRequests;
     await busyTab.evaluate(()=>{window.AariaPianoPlaybackIsBusy=()=>true});
     await reopened.evaluate(()=>{const trigger=document.querySelector('.v21-overflow-trigger');if(trigger?.getAttribute('aria-expanded')!=='true')trigger?.click()});
     await reopened.locator('#checkAppUpdate').click();
