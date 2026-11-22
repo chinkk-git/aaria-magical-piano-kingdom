@@ -1,0 +1,61 @@
+name: P1 production hotfix acceptance
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - index.html
+      - pwa-update.js
+      - sw.js
+      - v2.1-ui.js
+      - v2.1-ui.css
+      - tests/p1-hotfix-visual-drag.cjs
+      - tests/neon-label-impact.cjs
+      - tests/pwa-update.test.js
+      - .github/workflows/p1-production-hotfix.yml
+
+permissions:
+  contents: read
+
+jobs:
+  p1-hotfix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install pinned Playwright and Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Check JavaScript syntax and PWA build consistency
+        run: |
+          node --check tests/p1-hotfix-visual-drag.cjs
+          node --check v2.1-ui.js
+          node --check pwa-update.js
+          node --check sw.js
+          node tests/pwa-update.test.js
+      - name: Verify note labels and capture playback evidence
+        env:
+          APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+          RUNNER_TEMP: ${{ runner.temp }}
+        run: node tests/neon-label-impact.cjs
+      - name: Verify Make Music touch and mouse drag, tap, and restored visual
+        env:
+          APP_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+          EVIDENCE_DIR: ${{ runner.temp }}/P1_HOTFIX_EVIDENCE
+        run: node tests/p1-hotfix-visual-drag.cjs
+      - name: Upload exact-head P1 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: P1_HOTFIX_EVIDENCE_${{ github.event.pull_request.head.sha }}
+          path: |
+            P1_HOTFIX_EVIDENCE.zip
+            ${{ runner.temp }}/P1_HOTFIX_EVIDENCE/
+            ${{ runner.temp }}/neon-label-impact-evidence/
+          retention-days: 30
+          if-no-files-found: error
