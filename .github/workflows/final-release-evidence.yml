@@ -1,0 +1,60 @@
+name: Final integrated release screenshots
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'my-songs.js'
+      - 'pwa-update.js'
+      - 'sw.js'
+      - 'v2.1-ui.js'
+      - 'v2.1-ui.css'
+      - 'royal-hall.css'
+      - 'royal-hall.js'
+      - 'royal-vault.css'
+      - 'royal-vault.js'
+      - 'assets/royal-hall/**'
+      - 'tests/royal-hall-final-comparison.cjs'
+      - 'tests/song-settings-selector-acceptance.cjs'
+      - 'tests/pwa-update-visual.cjs'
+      - 'tests/package-final-release-evidence.py'
+      - '.github/workflows/final-release-evidence.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  capture-integrated-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install pinned Chromium dependencies
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Capture Hall, Magic Star, Song Settings, and update states
+        env:
+          SONG_SETTINGS_ARTIFACT_DIR: ${{ runner.temp }}/song-settings-evidence
+          EVIDENCE_DIR: ${{ runner.temp }}/pwa-update-evidence
+        run: |
+          node tests/royal-hall-final-comparison.cjs
+          node tests/song-settings-selector-acceptance.cjs
+          node tests/pwa-update-visual.cjs
+          PWA_UPDATE_EVIDENCE_DIR="$EVIDENCE_DIR" python3 tests/package-final-release-evidence.py
+          unzip -t AARIA_PIANO_FINAL_RELEASE_EVIDENCE.zip
+          unzip -Z1 AARIA_PIANO_FINAL_RELEASE_EVIDENCE.zip
+      - name: Upload final integrated screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: AARIA_PIANO_FINAL_RELEASE_EVIDENCE
+          path: AARIA_PIANO_FINAL_RELEASE_EVIDENCE.zip
+          retention-days: 90
+          if-no-files-found: error
