@@ -3,7 +3,10 @@
  'use strict';
  const KEY='aaria-royal-hall-preview-v1',ROOT=document.documentElement,scene=document.getElementById('royalHallScenery'),choice=document.getElementById('royalHallTheme'),canvas=document.getElementById('rain'),keys=document.getElementById('keys');
  if(!scene||!choice||!canvas||!keys||!window.PianoGeometry)return;
- const HORIZON_SCALE=.28,SAFE_GAP=24;
+ // Match the Royal Hall highway experiment: convergence (.72) is reduced 20%.
+ // The shared note projection uses this same horizon scale and still lands on
+ // live key centers at y=landingY.
+ const HORIZON_SCALE=1-(1-.28)*.8,SAFE_GAP=24;
  let enabled=false,scheduled=false;
  try{enabled=localStorage.getItem(KEY)==='royal'}catch{}
  function setEnabled(value,save=true){enabled=!!value;ROOT.dataset.royalHall=enabled?'on':'off';scene.hidden=!enabled;choice.value=enabled?'royal':'off';if(save){try{localStorage.setItem(KEY,enabled?'royal':'off')}catch{}}if(enabled)measureAndMask()}

@@ -112,7 +112,7 @@ noteFxStart.fill(-1);let noteFxCursor=0;
 function clearNoteExplosions(){noteFxStart.fill(-1);noteFlashEnd.fill(0);for(const key of keyboard.querySelectorAll('.impact-lit'))key.classList.remove('impact-lit')}
 function spawnNoteExplosion(note,now,measuredGeometry){
  if(pianoLayout!=='hero')return;
- const midi=+note.midi,geo=measuredGeometry||ensureHeroGeometry(),point=window.PianoGeometry.projectLane(geo,midi,geo.landingY,geo.width*.5,.28);
+ const midi=+note.midi,geo=measuredGeometry||ensureHeroGeometry(),point=window.PianoGeometry.projectLane(geo,midi,geo.landingY,geo.width*.5,activeHeroHorizonScale());
  if(!point||midi<21||midi>108)return;
  const key=keyboard.querySelector('[data-pitch="'+midi+'"]');
  if(!key)return;
@@ -153,6 +153,11 @@ function drawNoteExplosionEffects(g,now){
 }
 function NOTE_FX_COLOR(index){return NOTE_FX_COLORS[index]||NOTE_FX_COLORS[2]}
 const PIXELS_PER_EIGHTH=27;
+// Royal Hall experiment: reduce the existing convergence term (1 - .28 = .72)
+// by 20%, giving .424. Shared note/key projection still lands exactly on each
+// measured key; Classic and default Hero retain their original .28 value.
+const BASE_HORIZON_SCALE=.28,ROYAL_HALL_HORIZON_SCALE=1-(1-BASE_HORIZON_SCALE)*.8;
+function activeHeroHorizonScale(){return document.documentElement.dataset.royalHall==='on'&&document.querySelector('main')?.dataset.pianoLayout==='hero'?ROYAL_HALL_HORIZON_SCALE:BASE_HORIZON_SCALE}
 // Canvas-only visual layer: it shares the measured PianoGeometry projection
 // used by the note lanes and reference keys. It never changes note timing.
 const PianoHeroVisual=(()=>{
@@ -169,7 +174,7 @@ const PianoHeroVisual=(()=>{
   bloom.addColorStop(.09,'#ffd56b'+Math.round(57*pulse).toString(16).padStart(2,'0'));
   bloom.addColorStop(.25,'#d982ff32');bloom.addColorStop(1,'#9c50ff00');
   ctx.fillStyle=bloom;ctx.fillRect(0,0,w,Math.min(hitY,hitY*.72));
-  const sx=w*.5,starR=clamp(w*.018,5,12),orbRadius=clamp(w*.026,7,12),royalPreview=document.documentElement.dataset.royalHall==='on'&&document.querySelector('main')?.dataset.pianoLayout==='hero',legacyOrbY=Math.max(orbRadius*1.95,hitY*.025),legacyStarY=legacyOrbY+orbRadius+starR*2.5+6,burstR=Math.min(w*.23,hitY*.42);
+  const sx=w*.5,starR=clamp(w*.018,5,12),orbRadius=clamp(w*.026,7,12),royalPreview=document.documentElement.dataset.royalHall==='on'&&document.querySelector('main')?.dataset.pianoLayout==='hero',horizonScale=activeHeroHorizonScale(),legacyOrbY=Math.max(orbRadius*1.95,hitY*.025),legacyStarY=legacyOrbY+orbRadius+starR*2.5+6,burstR=Math.min(w*.23,hitY*.42);
   // Keep the original star/disco composition outside Royal Hall. The Royal
   // Hall stage is intentionally left clear at its central vanishing point.
   if(!royalPreview){
@@ -198,7 +203,7 @@ const PianoHeroVisual=(()=>{
    falloff.addColorStop(0,'#ffcf6840');falloff.addColorStop(.42,'#ffcf6814');falloff.addColorStop(1,'#ffcf6800');
    ctx.fillStyle=falloff;ctx.fillRect(Math.min(edge,vanish)-15,0,Math.abs(edge-vanish)+15,hitY);
    ctx.beginPath();ctx.moveTo(vanish,0);ctx.lineTo(edge,hitY);ctx.strokeStyle='#fff0bc';ctx.lineWidth=2.6;ctx.shadowColor='#ffb733';ctx.shadowBlur=16;ctx.stroke();ctx.shadowBlur=0;
-   const shimmer=moving?((t*.12+(side<0?.12:.62))%1):.43,sy2=hitY*shimmer,sx2=sx+(edge-sx)*(.28+.72*shimmer);
+   const shimmer=moving?((t*.12+(side<0?.12:.62))%1):.43,sy2=hitY*shimmer,sx2=sx+(edge-sx)*(horizonScale+(1-horizonScale)*shimmer);
    const glint=ctx.createRadialGradient(sx2,sy2,0,sx2,sy2,22);glint.addColorStop(0,'#fffbe5ee');glint.addColorStop(.22,'#ffd369bb');glint.addColorStop(1,'#ffd36900');ctx.fillStyle=glint;ctx.fillRect(sx2-22,sy2-22,44,44);
   }
   // Three broad S-curves per side, each built from smooth cubic segments and
@@ -272,7 +277,7 @@ const PianoHeroVisual=(()=>{
   const palette=cyan?{face:'#18dafa',light:'#d8ffff',rim:'#8af7ff',side:'#075b88',shadow:'#35ddff'}:gold?{face:'#ffd05b',light:'#fffbe1',rim:'#fff0ae',side:'#84410e',shadow:'#ffba43'}:{face:'#b75cff',light:'#ffe3ff',rim:'#ffc9ff',side:'#581a8c',shadow:'#d052ff'};
   const thick=clamp(bottom.depth*5.5,2.2,6),dx=clamp(bottom.width*.055,1.2,4.5);
   if(isPlaying&&!reduced&&topY>3){
-   const trailEnd=Math.max(0,topY-68),key=geometry?.keys.get(pitch),depth=key?clamp(trailEnd/geometry.landingY,0,1):0,center=key?vanishX+(key.center-vanishX)*depth:top.center,width=key?key.width*(.28+.72*depth):top.width,left=center-width/2,right=center+width/2;
+   const trailEnd=Math.max(0,topY-68),key=geometry?.keys.get(pitch),depth=key?clamp(trailEnd/geometry.landingY,0,1):0,horizonScale=activeHeroHorizonScale(),center=key?vanishX+(key.center-vanishX)*depth:top.center,width=key?key.width*(horizonScale+(1-horizonScale)*depth):top.width,left=center-width/2,right=center+width/2;
    const grad=ctx.createLinearGradient(top.center,topY,center,trailEnd);grad.addColorStop(0,cyan?'#74f7ff80':'#e7b4ff8c');grad.addColorStop(1,cyan?'#26dfff00':'#d25aff00');ctx.fillStyle=grad;ctx.beginPath();ctx.moveTo(top.left,topY);ctx.lineTo(top.right,topY);ctx.lineTo(right,trailEnd);ctx.lineTo(left,trailEnd);ctx.closePath();ctx.shadowColor=palette.shadow;ctx.shadowBlur=8;ctx.fill();ctx.shadowBlur=0;
    for(let j=0;j<4;j++){const q=(j+1)/5,px=top.center+(center-top.center)*q+Math.sin(time*.007+j*2)*3,py=topY+(trailEnd-topY)*q;ctx.globalAlpha=.45+.35*Math.sin(time*.01+j);ctx.fillStyle=j%2?'#fff1c5':palette.rim;ctx.beginPath();ctx.arc(px,py,1.1+(j%2)*.45,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;
   }
@@ -304,9 +309,9 @@ function draw(now=performance.now()){
  const current=barStart(bar)+beat,activePitches=new Set(),reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  if(hero){
   const royalPreview=document.documentElement.dataset.royalHall==='on'&&document.querySelector('main')?.dataset.pianoLayout==='hero',bg=g.createLinearGradient(0,0,0,h);if(royalPreview){bg.addColorStop(0,'#1a0a3b88');bg.addColorStop(.56,'#291050ad');bg.addColorStop(1,'#100827e8')}else{bg.addColorStop(0,'#1a0a3be8');bg.addColorStop(.56,'#291050d8');bg.addColorStop(1,'#100827f2')}g.fillStyle=bg;g.fillRect(0,0,w,h);
-  for(const [pitch,key] of geo.keys){if(key.isBlack)continue;const top=window.PianoGeometry.projectLane(geo,pitch,0,vanishX,.28),bottom=window.PianoGeometry.projectLane(geo,pitch,hitY,vanishX,.28);if(!top||!bottom)continue;g.beginPath();g.moveTo(top.left,0);g.lineTo(top.right,0);g.lineTo(bottom.right,hitY);g.lineTo(bottom.left,hitY);g.closePath();g.fillStyle=pitch%12===0?'#fff4d50d':'#d8b6ff0a';g.fill();g.strokeStyle='#efd9ff25';g.lineWidth=1;g.stroke()}
-  for(const edge of [0,w]){const top=vanishX+(edge-vanishX)*.28;g.beginPath();g.moveTo(top,0);g.lineTo(edge,hitY);g.strokeStyle='#f0c66c88';g.lineWidth=2;g.shadowColor='#d992ff';g.shadowBlur=9;g.stroke();g.shadowBlur=0}
-  for(let i=1;i<=5;i++){const depth=i/6,y=hitY*depth,left=vanishX+(0-vanishX)*(.28+.72*depth),right=vanishX+(w-vanishX)*(.28+.72*depth);g.beginPath();g.moveTo(left,y);g.lineTo(right,y);g.strokeStyle='#ffe8b51a';g.lineWidth=1;g.stroke()}
+  const horizonScale=activeHeroHorizonScale();for(const [pitch,key] of geo.keys){if(key.isBlack)continue;const top=window.PianoGeometry.projectLane(geo,pitch,0,vanishX,horizonScale),bottom=window.PianoGeometry.projectLane(geo,pitch,hitY,vanishX,horizonScale);if(!top||!bottom)continue;g.beginPath();g.moveTo(top.left,0);g.lineTo(top.right,0);g.lineTo(bottom.right,hitY);g.lineTo(bottom.left,hitY);g.closePath();g.fillStyle=pitch%12===0?'#fff4d50d':'#d8b6ff0a';g.fill();g.strokeStyle='#efd9ff25';g.lineWidth=1;g.stroke()}
+  for(const edge of [0,w]){const top=vanishX+(edge-vanishX)*horizonScale;g.beginPath();g.moveTo(top,0);g.lineTo(edge,hitY);g.strokeStyle='#f0c66c88';g.lineWidth=2;g.shadowColor='#d992ff';g.shadowBlur=9;g.stroke();g.shadowBlur=0}
+  for(let i=1;i<=5;i++){const depth=i/6,y=hitY*depth,left=vanishX+(0-vanishX)*(horizonScale+(1-horizonScale)*depth),right=vanishX+(w-vanishX)*(horizonScale+(1-horizonScale)*depth);g.beginPath();g.moveTo(left,y);g.lineTo(right,y);g.strokeStyle='#ffe8b51a';g.lineWidth=1;g.stroke()}
  }else{
   const bg=g.createLinearGradient(0,0,0,h);bg.addColorStop(0,'#24104b');bg.addColorStop(1,'#0d1437');g.fillStyle=bg;g.fillRect(0,0,w,h);
   for(let i=0;i<22;i++){const x=(i*71.73)%w,y=(i*93.17)%h;g.fillStyle='rgba(255,255,255,.18)';g.beginPath();g.arc(x,y,(i%3+1)*.6,0,Math.PI*2);g.fill()}
@@ -321,7 +326,7 @@ function draw(now=performance.now()){
   const color=hero?(handColours?(isLeft?'#67dafa':'#d38aff'):'#c890ff'):(isLeft?'#67dafa':n.verified?'#54d6ae':'#d38aff');
   g.shadowBlur=active?(hero?21:17):(hero?11:8);g.shadowColor=active?(hero?'#ffe17c':'#ffdc73'):color;g.fillStyle=active?(hero?'#ffcf70':'#ffce72'):color;
   if(hero){
-   const bottom=window.PianoGeometry.projectLane(geo,n.midi,y,vanishX,.28),top=window.PianoGeometry.projectLane(geo,n.midi,topY,vanishX,.28);if(!bottom||!top)continue;
+   const horizonScale=activeHeroHorizonScale(),bottom=window.PianoGeometry.projectLane(geo,n.midi,y,vanishX,horizonScale),top=window.PianoGeometry.projectLane(geo,n.midi,topY,vanishX,horizonScale);if(!bottom||!top)continue;
    PianoHeroVisual.crystal(g,top,bottom,topY,y,active?'#ffcf70':color,noteName(n.midi),mode==='listen'||mode==='follow',now,reducedMotion,geo,n.midi,vanishX);
   }else{
    g.fillRect(a.x+1,y-hh,Math.max(3,a.width-2),hh);g.shadowBlur=0;

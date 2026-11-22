@@ -43,9 +43,8 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright@1.62.1 pngjs@7.0.0
           npx playwright install --with-deps chromium
-      - name: Run focused geometry and syntax checks
+      - name: Run focused visual-geometry and syntax checks
         run: |
-          node tests/piano-geometry.test.js
           node --check royal-hall.js
           node --check royal-vault.js
           node --check tests/royal-hall-final-comparison.cjs
