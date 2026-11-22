@@ -19,7 +19,7 @@
   if(!root.document)return;
   const doc=root.document,check=doc.getElementById('checkAppUpdate'),restart=doc.getElementById('restartAppUpdate'),info=doc.getElementById('appBuildInfo'),status=doc.getElementById('appUpdateStatus');
   if(!check||!restart||!info||!status)return;
-  let registration=null,busy=false,waiting=null,pendingQuery=null,lastInstallError=null;
+  let registration=null,busy=false,waiting=null,pendingQuery=null,lastInstallError=null,lastVerifiedBuild=null;
   let persistedAvailableBuild=null;try{persistedAvailableBuild=root.localStorage?.getItem(AVAILABLE_KEY)||null}catch{}
   const state={phase:persistedAvailableBuild?'available':'checking',available:!!persistedAvailableBuild,publishedBuild:persistedAvailableBuild,installedBuild:null,message:''};
   let checkInFlight=null,lastAutomaticCheck=0;
@@ -63,6 +63,7 @@
     const actual=await installedBuild(registration),loaded=loadedInterfaceBuilds(doc);updateInfo(actual);
     if(actual===expected&&interfaceMatchesBuild(loaded,expected)){
       try{root.sessionStorage.removeItem(EXPECTED_KEY)}catch{}
+      lastVerifiedBuild=actual;
       setPhase('upToDate','Update installed and verified: '+actual,{available:false,publishedBuild:actual,installedBuild:actual});
       log('update',{state:'installed',current:actual,result:'restarted'});
     }else if(actual===expected){
@@ -104,6 +105,10 @@
         if(comparison===null)throw new Error('The app versions could not be compared safely.');
         if(comparison<0)throw new Error('The published build is older than the installed build. No update was applied.');
         if(comparison===0){
+          if(lastVerifiedBuild===current&&published===current){
+            setPhase('upToDate','Update installed and verified: '+current,{available:false,publishedBuild:published,installedBuild:current});
+            return state
+          }
           if(root.sessionStorage?.getItem(EXPECTED_KEY)){
             await verifyAfterReload();
             let expectedAfterVerification=null;try{expectedAfterVerification=root.sessionStorage.getItem(EXPECTED_KEY)}catch{}
@@ -208,3 +213,4 @@
   root.addEventListener?.('focus',automaticCheck);
   doc.addEventListener('visibilitychange',()=>{if(doc.visibilityState==='visible')automaticCheck()});
 })(typeof window!=='undefined'?window:globalThis);
+
