@@ -106,7 +106,8 @@
         if(comparison===0){
           if(root.sessionStorage?.getItem(EXPECTED_KEY)){
             await verifyAfterReload();
-            if(state.available)return state
+            let expectedAfterVerification=null;try{expectedAfterVerification=root.sessionStorage.getItem(EXPECTED_KEY)}catch{}
+            if(state.available||!expectedAfterVerification)return state
           }
           const pending=reg.waiting;
           if(pending){waiting=pending;setPhase('ready','Update ready. Restart App when you are ready.',{available:true,publishedBuild:published,installedBuild:current});return state}
