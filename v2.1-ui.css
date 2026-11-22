@@ -492,14 +492,15 @@ main[data-piano-layout="hero"] .compact-title .song-picker-chevron{flex:0 0 auto
 .v21-make-music{touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}.v21-make-music[data-dragging="true"]{cursor:grabbing;animation-play-state:paused}.v21-make-music-art{pointer-events:none;-webkit-user-drag:none}
 
 /* Song-and-level chooser; each row is generated from the actual local song schema. */
-.v21-song-menu{z-index:230;max-height:min(72dvh,520px);overscroll-behavior:contain;scrollbar-gutter:stable;background:linear-gradient(145deg,#39165c,#24103f);color:#fff}
+.v21-song-menu{z-index:230;max-height:min(72dvh,520px);overscroll-behavior:contain;scrollbar-gutter:stable;container-type:inline-size;background:linear-gradient(145deg,#39165c,#24103f);color:#fff}
 .v21-song-choice-group{padding:7px 4px;border-bottom:1px solid #f3d68a55}
 .v21-song-choice-group:last-child{border-bottom:0}
-.v21-song-choice-versions{display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:5px;align-items:stretch}
-.v21-song-choice-versions button{box-sizing:border-box;min-width:0;min-height:44px;margin:0;padding:7px 8px;border:1px solid #f3d68a88;border-radius:11px;background:#ffffff0c;color:#fff;font-size:12px;font-weight:800;text-align:center;overflow-wrap:anywhere}
-.v21-song-choice-versions .v21-song-choice-title{grid-column:1/-1;text-align:left;font-size:14px;line-height:1.25;color:#fff0c5}
+.v21-song-choice-versions{box-sizing:border-box;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;align-items:stretch;width:100%;min-width:0}
+.v21-song-choice-versions button{box-sizing:border-box;min-width:0;min-height:44px;margin:0;padding:8px 10px;border:1px solid #f3d68a88;border-radius:11px;background:#ffffff0c;color:#fff;font-size:12px;font-weight:800;text-align:center;white-space:nowrap;word-break:normal;overflow-wrap:normal}
+.v21-song-choice-versions .v21-song-choice-title{grid-column:1/-1;text-align:left;font-size:14px;line-height:1.25;color:#fff0c5;white-space:normal;word-break:normal;overflow-wrap:anywhere}
 .v21-song-choice-versions button[aria-selected="true"]{background:linear-gradient(#ffe99a,#eeb54e);color:#30114e;box-shadow:0 0 0 2px #fff5}
 .v21-song-choice-versions button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+@container (min-width:440px){.v21-song-choice-versions{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .v21-song-menu-error{margin:5px;padding:8px;border-radius:8px;background:#541738;color:#fff}
 .v21-settings-backdrop{position:fixed;inset:0;z-index:72;background:#080313bf;backdrop-filter:blur(1px)}
 .v21-settings-backdrop[hidden]{display:none}
