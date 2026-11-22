@@ -42,7 +42,7 @@ module.exports=async function runMagicStarAcceptance({browser,server,out}){
  async function tap(page,key,point,keyboard=false){
   await open(page);
   const xy=await page.locator('.v21-star-hit-overlay').evaluate((svg,arg)=>{const p=svg.createSVGPoint();p.x=arg.point[0];p.y=arg.point[1];const q=p.matrixTransform(svg.getScreenCTM()),top=document.elementFromPoint(q.x,q.y);if(arg.key==='centerStar'){const r=document.querySelector('.v21-star').getBoundingClientRect();return{inside:q.x>=r.left&&q.x<=r.right&&q.y>=r.top&&q.y<=r.bottom,x:q.x,y:q.y,topKey:top?.closest('.v21-star')?'centerStar':null}}const el=svg.querySelector('[data-key="'+arg.key+'"]');if(!el||!el.isPointInFill(p))return{inside:false};return{inside:true,x:q.x,y:q.y,topKey:top?.getAttribute('data-key')||top?.closest('[data-key]')?.getAttribute('data-key')||null}}, {key,point});
-  assert.equal(xy.inside,true,key+' region contains its '+JSON.stringify(point)+' PNG coordinate');assert.equal(xy.topKey,key,'the intended region is the unique top hit target');
+  assert.equal(xy.inside,true,key+' region contains its '+JSON.stringify(point)+' PNG coordinate');assert.equal(xy.topKey,key,`${key} ${JSON.stringify(point)}: intended region is the unique top hit target; got ${JSON.stringify(await page.evaluate(({x,y})=>{const e=document.elementFromPoint(x,y);return e?{tag:e.tagName,id:e.id,className:String(e.className),outer:e.outerHTML.slice(0,180)}:null},{x:xy.x,y:xy.y}))}`);
   await page.evaluate(()=>{window.__magicStarCalls=[]});
   if(keyboard){await page.locator(key==='centerStar'?'.v21-star':'.v21-wheel-hit[data-key="'+key+'"]').focus();await page.keyboard.press('Enter')}
   else await page.mouse.click(xy.x,xy.y);
