@@ -489,3 +489,7 @@ main[data-piano-layout="hero"] .compact-title .song-picker-chevron{flex:0 0 auto
 
 .v21-star-assembly[data-side="left"] .v21-wheel[data-state="open"] .v21-wheel-visual{transform:scaleX(-1)}
 .v21-star-assembly[data-side="right"] .v21-wheel[data-state="open"] .v21-wheel-visual{transform:none}
+
+/* Magic Star SVG hit regions remain transparent while preserving visible keyboard focus. */
+.v21-star-hit-overlay .v21-wheel-hit{fill:transparent!important;stroke:transparent!important;stroke-width:0!important;pointer-events:all!important}
+.v21-star-hit-overlay .v21-wheel-hit:focus-visible{fill:#fff2!important;stroke:#fff2a5!important;stroke-width:8!important;stroke-linejoin:round!important;filter:drop-shadow(0 0 8px #ffe06c)}
