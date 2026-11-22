@@ -32,7 +32,7 @@ module.exports=async function runMagicStarAcceptance({browser,server,out}){
   await page.evaluate(()=>{const g=document.querySelector('#release2InstallGate'),a=document.querySelector('#pianoApp');if(g)g.hidden=true;if(a){a.inert=false;a.removeAttribute('aria-hidden')}document.body.classList.remove('r2-installing');window.__magicStarCalls=[];document.addEventListener('click',e=>{const b=e.target.closest('.v21-wheel-action');if(b)window.__magicStarCalls.push(b.dataset.key)})});
   return {context,page};
  }
- async function open(page){if(await page.locator('.v21-star').getAttribute('aria-expanded')==='true')return;await page.locator('.v21-star').click();await page.waitForFunction(()=>{const w=document.querySelector('#v21Wheel');return w&&!w.hidden&&w.dataset.state==='open'})}
+ async function open(page){if(await page.locator('.v21-star').getAttribute('aria-expanded')==='true'){await page.locator('.v21-wheel-visual').evaluate(el=>Promise.all(el.getAnimations().map(a=>a.finished)));return}await page.locator('.v21-star').click();await page.waitForFunction(()=>{const w=document.querySelector('#v21Wheel');return w&&!w.hidden&&w.dataset.state==='open'});await page.locator('.v21-wheel-visual').evaluate(el=>Promise.all(el.getAnimations().map(a=>a.finished)))}
  async function segmentResult(page,key){
   await page.waitForFunction(()=>{const p=document.querySelector('.v21-practice-panel');return p&&!p.hidden});
   assert.ok(await page.locator(markers[key]).count(),key+' opened its existing handler');
