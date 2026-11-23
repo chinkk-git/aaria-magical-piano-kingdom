@@ -532,3 +532,19 @@ main[data-piano-layout="hero"] .compact-title .song-picker-chevron{flex:0 0 auto
 .v21-practice-panel[data-panel-kind="songSettings"] .v21-settings-actions{padding:4px 0}
 .v21-practice-panel[data-panel-kind="songSettings"] button:focus-visible,.v21-practice-panel[data-panel-kind="songSettings"] input:focus-visible{outline:3px solid #fff;outline-offset:2px}
 @media(max-height:520px){.v21-practice-panel[data-panel-kind="songSettings"]{max-height:min(calc(100dvh - 20px),var(--v21-panel-max,calc(100dvh - 14px)));padding:9px}.v21-practice-panel[data-panel-kind="songSettings"] .v21-panel-head{margin-bottom:6px}.v21-settings-level-options{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+
+/* Song picker emphasis and song-level selection states. */
+.song-picker #songPickerButton{position:relative;z-index:5;border:1px solid #e8c579;border-radius:12px;background:linear-gradient(120deg,#4d2878,#211442);transition:transform 170ms ease,box-shadow 170ms ease,border-color 170ms ease}
+.song-picker #songPickerButton[aria-expanded="true"]{transform:scale(1.03);border-color:#ffe08a;box-shadow:0 0 0 1px #ffe08a99,0 0 18px #f5c75a99,0 3px 18px #09051d99}
+.song-picker-chevron{transition:transform 170ms ease}
+.song-picker #songPickerButton[aria-expanded="true"] .song-picker-chevron{transform:rotate(180deg)}
+.v21-song-choice-group{margin:4px 2px;padding:7px;border:1px solid #f3d68a88;border-radius:13px;background:linear-gradient(145deg,#472269,#291447);box-shadow:0 3px 10px #10072277}
+.v21-song-choice-group:last-child{margin-bottom:2px}
+.v21-song-choice-versions .v21-song-choice-title{background:linear-gradient(145deg,#542b7e,#341954);border-color:#eacb8277}
+.v21-song-choice-versions .v21-song-choice-title[aria-selected="true"]{background:linear-gradient(135deg,#9953d8,#5d2d91);color:#fff5d1;border-color:#ffda7d;box-shadow:0 0 0 1px #ffe7a2aa,0 0 14px #f6c75266}
+.v21-song-choice-versions button:active{filter:brightness(1.16);transform:scale(.985)}
+.v21-settings-delete{display:flex;justify-content:flex-end;margin-top:12px;padding-top:11px;border-top:1px solid #f3d68a55}
+.v21-settings-delete button{min-width:44px;min-height:48px;padding:10px 15px;border:1px solid #f3b7aa;border-radius:12px;background:linear-gradient(135deg,#9e3d60,#642343);color:#fff;font-size:14px;font-weight:850;cursor:pointer}
+.v21-settings-delete button:focus-visible{outline:3px solid #ffe08a;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.song-picker #songPickerButton,.song-picker-chevron,.v21-song-choice-versions button{transition:none!important}.song-picker #songPickerButton[aria-expanded="true"],.v21-song-choice-versions button:active{transform:none!important}}
